@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -I libs/
-LDFLAGS = -lGL -lX11 -lpng -lpthread -ldl
+LDFLAGS = -lGL -lX11 -lpng -lpthread -ldl -lstdc++fs
 
 SRC = src/main.cpp \
       src/binary_reader.cpp \
@@ -9,6 +9,8 @@ SRC = src/main.cpp \
       src/entropy.cpp \
       src/histogram.cpp \
       src/screenshot.cpp \
+      src/input_handler.cpp \
+      src/ui_renderer.cpp \
       src/visualizer.cpp
 
 OUT = cantordust
