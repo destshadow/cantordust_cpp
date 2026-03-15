@@ -12,6 +12,9 @@
 #include "binary_format.h"
 #include "ui_renderer.h"
 #include "constants.h"
+#include <future>
+#include <mutex>
+#include <atomic>
 
 class Visualizer : public olc::PixelGameEngine {
 public:
@@ -38,6 +41,7 @@ private:
 
     // --- Utility ---
     void drawSectionOverlay();
+    void drawSpinner(float fElapsedTime);
     std::string getByteInfo(int mouseX, int mouseY) const;
 
     // Visualizzazioni
@@ -61,11 +65,16 @@ private:
 
     // Stato
     ViewMode      m_mode    = ViewMode::DIGRAPH;
-    bool          m_dirty   = false;
+    bool          m_dirty      = false;
+    std::future<void> m_future;
+    std::atomic<bool> m_computing{false};
+    std::atomic<bool> m_dirtyAsync{false};
+    std::mutex        m_dataMutex;
     std::string   m_status;
     std::string   m_initPath;
 
     // Mouse 3D
+    float         m_spinnerAngle = 0.0f;
     bool          m_dragging   = false;
     bool          m_panning    = false;
     int           m_lastMouseX = 0;

@@ -4,16 +4,37 @@
 void Visualizer::drawScrollBars() {}
 
 void Visualizer::recomputeWindow() {
-    auto window = m_navigator.getWindow(m_reader.getBytes());
-    if (window.empty()) return;
-    m_digraph.compute(window);
-    m_dotplot.compute(window);
-    m_entropy.compute(window);
-    m_histogram.compute(window);
-    m_trigraph.compute(m_reader.getBytes(),
-                       m_navigator.getStart(),
-                       m_navigator.getEnd());
-    m_dirty = true;
+    if (m_computing.load()) return;
+    m_computing = true;
+    m_dirty     = false;
+
+    auto   bytes = m_reader.getBytes();
+    size_t start = m_navigator.getStart();
+    size_t end   = m_navigator.getEnd();
+
+    m_future = std::async(std::launch::async,
+                          [this, bytes, start, end]() {
+        // Calcola tutto in locale — nessun accesso ai membri
+        std::vector<uint8_t> window(bytes.begin() + start,
+                                    bytes.begin() + end);
+        DiGraph   dg;  dg.compute(window);
+        DotPlot   dp;  dp.compute(window);
+        Entropy   en;  en.compute(window);
+        Histogram hi;  hi.compute(window);
+        TriGraph  tr;  tr.compute(bytes, start, end);
+
+        // Swap atomico sotto mutex
+        {
+            std::lock_guard<std::mutex> lk(m_dataMutex);
+            m_digraph   = std::move(dg);
+            m_dotplot   = std::move(dp);
+            m_entropy   = std::move(en);
+            m_histogram = std::move(hi);
+            m_trigraph  = std::move(tr);
+            m_dirty     = true;
+        }
+        m_computing = false;
+    });
 }
 
 void Visualizer::loadFile(const std::string& filepath) {
@@ -26,28 +47,42 @@ void Visualizer::loadFile(const std::string& filepath) {
         return;
     }
 
+    // Aspetta eventuale calcolo precedente
+    if (m_future.valid())
+        m_future.wait();
+
     const auto& bytes = m_reader.getBytes();
     m_navigator.setData(bytes, 0);
-
-    // Parsing ELF/PE per le sezioni
     m_parser.parse(bytes);
 
-    m_digraph.compute(bytes);
-    m_dotplot.compute(bytes);
-    m_entropy.compute(bytes);
-    m_histogram.compute(bytes);
-    m_trigraph.compute(bytes);
+    m_computing = true;
+    m_dirty     = false;
+    m_zoom2d    = 1.0f;
+    m_scrollH   = 0.0f;
+    m_scrollV   = 0.0f;
 
-    m_zoom2d  = 1.0f;
-    m_scrollH = 0.0f;
-    m_scrollV = 0.0f;
-    m_dirty   = true;
+    m_future = std::async(std::launch::async, [this, bytes]() {
+        DiGraph   dg;  dg.compute(bytes);
+        DotPlot   dp;  dp.compute(bytes);
+        Entropy   en;  en.compute(bytes);
+        Histogram hi;  hi.compute(bytes);
+        TriGraph  tr;  tr.compute(bytes);
 
-    // Status: mostra formato rilevato
+        {
+            std::lock_guard<std::mutex> lk(m_dataMutex);
+            m_digraph   = std::move(dg);
+            m_dotplot   = std::move(dp);
+            m_entropy   = std::move(en);
+            m_histogram = std::move(hi);
+            m_trigraph  = std::move(tr);
+            m_dirty     = true;
+        }
+        m_computing = false;
+    });
+
+    std::string fmt = m_parser.getFormatName();
+    size_t nsec     = m_parser.getSections().size();
     m_status = "Caricato: " + filepath +
-               "  [" + m_parser.getFormatName() + "]";
-    if (m_parser.hasSections())
-        m_status += "  " +
-                    std::to_string(m_parser.getSections().size()) +
-                    " sezioni";
+               "  [" + fmt + "]" +
+               (nsec > 0 ? "  " + std::to_string(nsec) + " sezioni" : "");
 }

@@ -109,10 +109,8 @@ void BinaryParser::parseELF(const std::vector<uint8_t>& bytes) {
     if (nameSecOff + shentsize <= bytes.size()) {
         if (is64) {
             strtabOff  = read64(bytes, nameSecOff + 0x18);
-            strtabSize = read64(bytes, nameSecOff + 0x20);
         } else {
             strtabOff  = read32(bytes, nameSecOff + 0x10);
-            strtabSize = read32(bytes, nameSecOff + 0x14);
         }
     }
 
