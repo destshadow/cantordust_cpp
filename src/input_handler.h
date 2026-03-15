@@ -19,7 +19,8 @@ enum class ViewMode {
     DIGRAPH   = 0,
     DOTPLOT   = 1,
     ENTROPY   = 2,
-    HISTOGRAM = 3
+    HISTOGRAM = 3,
+    TRIGRAPH3D = 4
 };
 
 class InputHandler {
@@ -51,7 +52,7 @@ private:
     Action handleTextInput(olc::PixelGameEngine* pge);
 
     // Converte un tasto olcPGE in carattere ASCII
-    char keyToChar(olc::PixelGameEngine* pge, olc::Key key);
+    char keyToChar(olc::PixelGameEngine* pge, olc::Key key, bool shift);
 
     bool        m_inputMode    = false;
     std::string m_inputBuffer  = "";

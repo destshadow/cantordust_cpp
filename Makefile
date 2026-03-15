@@ -8,6 +8,9 @@ SRC = src/main.cpp \
       src/dotplot.cpp \
       src/entropy.cpp \
       src/histogram.cpp \
+      src/trigraph.cpp \
+      src/renderer3d.cpp \
+      src/file_navigator.cpp \
       src/screenshot.cpp \
       src/input_handler.cpp \
       src/ui_renderer.cpp \

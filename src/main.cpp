@@ -3,16 +3,12 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    // Se l'utente passa un file da CLI lo usiamo
-    // altrimenti il visualizer carica /bin/ls come demo
     std::string filepath = "";
-    if (argc > 1) {
-        filepath = argv[1];
-        std::cout << "[CantorDust++] File da analizzare: " << filepath << "\n";
-    }
+    if (argc > 1) filepath = argv[1];
 
     Visualizer app(filepath);
-    if (app.Construct(512, 542, 1, 1))
+    // 512 wide, 574 tall = 512 canvas + 26 topbar + 36 bottombar
+    if (app.Construct(512, 574, 1, 1))
         app.Start();
     return 0;
 }
