@@ -5,6 +5,9 @@ LDFLAGS = -lGL -lX11 -lpng -lpthread -ldl
 SRC = src/main.cpp \
       src/binary_reader.cpp \
       src/digraph.cpp \
+      src/dotplot.cpp \
+      src/entropy.cpp \
+      src/histogram.cpp \
       src/screenshot.cpp \
       src/visualizer.cpp
 
