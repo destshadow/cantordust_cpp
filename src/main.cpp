@@ -7,8 +7,7 @@ int main(int argc, char* argv[]) {
     if (argc > 1) filepath = argv[1];
 
     Visualizer app(filepath);
-    // 512 wide, 574 tall = 512 canvas + 26 topbar + 36 bottombar
-    if (app.Construct(512, 574, 1, 1))
+    if (app.Construct(WIN_W, WIN_H, 1, 1))
         app.Start();
     return 0;
 }

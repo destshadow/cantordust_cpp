@@ -5,16 +5,33 @@
 
 void FileNavigator::setData(const std::vector<uint8_t>& bytes,
                              size_t windowSize) {
-    m_totalSize  = bytes.size();
-    m_windowSize = std::min(windowSize, m_totalSize);
-    m_step       = m_windowSize / 16; // step = 1/16 della finestra
+    m_totalSize = bytes.size();
+    if (windowSize == 0 || windowSize >= m_totalSize)
+        m_windowSize = m_totalSize;
+    else
+        m_windowSize = windowSize;
+    m_step  = std::max((size_t)4096, m_windowSize / 16);
+    m_start = 0;
+    m_end   = m_windowSize;
+}
+
+// Reset: torna a mostrare il file intero
+void FileNavigator::resetWindow(const std::vector<uint8_t>& bytes) {
+    m_windowSize = m_totalSize;
+    m_step       = std::max((size_t)4096, m_windowSize / 16);
     m_start      = 0;
     m_end        = m_windowSize;
 }
 
 void FileNavigator::moveForward() {
+    // Se siamo a finestra intera → rimpicciolisci a 25%
+    if (m_windowSize == m_totalSize) {
+        m_windowSize = std::max((size_t)256, m_totalSize / 4);
+        m_step       = std::max((size_t)4096, m_windowSize / 16);
+        m_end        = m_start + m_windowSize;
+        return;
+    }
     if (m_start + m_step + m_windowSize > m_totalSize) {
-        // Vai alla fine senza sforare
         m_end   = m_totalSize;
         m_start = (m_totalSize > m_windowSize)
                   ? m_totalSize - m_windowSize : 0;
@@ -25,16 +42,13 @@ void FileNavigator::moveForward() {
 }
 
 void FileNavigator::moveBackward() {
-    if (m_start < m_step) {
+    if (m_start < m_step)
         m_start = 0;
-    } else {
+    else
         m_start -= m_step;
-    }
     m_end = m_start + m_windowSize;
 }
 
-// Salta a posizione normalizzata [0.0, 1.0]
-// Usato dalla scrollbar: l'utente clicca → calcola la posizione
 void FileNavigator::jumpTo(float normalized) {
     normalized = std::clamp(normalized, 0.0f, 1.0f);
     size_t maxStart = (m_totalSize > m_windowSize)
@@ -50,23 +64,28 @@ float FileNavigator::getNormalized() const {
     return static_cast<float>(m_start) / static_cast<float>(maxStart);
 }
 
-// Formatta la posizione come stringa esadecimale
-// Es: "0x001A2B3C — 0x002A3B4C"
+float FileNavigator::getWindowRatio() const {
+    if (m_totalSize == 0) return 1.0f;
+    return (float)m_windowSize / (float)m_totalSize;
+}
+
 std::string FileNavigator::getPositionString() const {
     std::ostringstream oss;
     oss << "0x" << std::uppercase << std::hex
         << std::setfill('0') << std::setw(8) << m_start
-        << " - 0x"
+        << "-0x"
         << std::setfill('0') << std::setw(8) << m_end;
+    if (m_windowSize == m_totalSize)
+        oss << " (intero)";
+    else {
+        size_t pct = (m_windowSize * 100) / m_totalSize;
+        oss << " (" << std::dec << pct << "%)";
+    }
     return oss.str();
 }
 
-// Ritorna una copia dei byte nella finestra corrente
-// La copia e' necessaria perche' gli algoritmi lavorano
-// su std::vector<uint8_t> indipendente
 std::vector<uint8_t> FileNavigator::getWindow(
     const std::vector<uint8_t>& bytes) const {
-
     if (m_start >= bytes.size()) return {};
     size_t end = std::min(m_end, bytes.size());
     return std::vector<uint8_t>(bytes.begin() + m_start,

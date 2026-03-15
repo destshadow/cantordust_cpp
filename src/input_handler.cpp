@@ -1,5 +1,18 @@
 #include "input_handler.h"
 
+// Posizioni tab — DEVONO corrispondere esattamente a ui_renderer.cpp
+// x, larghezza di ogni tab
+static const struct TabInfo {
+    ViewMode mode;
+    int x, w;
+} TABS[] = {
+    { ViewMode::DIGRAPH,     8, 190 },
+    { ViewMode::DOTPLOT,   208, 190 },
+    { ViewMode::ENTROPY,   408, 190 },
+    { ViewMode::HISTOGRAM, 608, 190 },
+    { ViewMode::TRIGRAPH3D,808, 190 },
+};
+
 Action InputHandler::update(olc::PixelGameEngine* pge, float fElapsedTime) {
     m_cursorBlink += fElapsedTime;
     if (m_inputMode)
@@ -9,26 +22,35 @@ Action InputHandler::update(olc::PixelGameEngine* pge, float fElapsedTime) {
 }
 
 Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
+    // --- Click sulle tab ---
+    // Controlliamo PRIMA del resto per dare priorità al menu
+    if (pge->GetMouse(0).bPressed) {
+        int mx = pge->GetMouseX();
+        int my = pge->GetMouseY();
+        if (my >= 0 && my < TOPBAR_H) {
+            for (auto& t : TABS) {
+                if (mx >= t.x && mx < t.x + t.w) {
+                    m_requestedView  = t.mode;
+                    m_lastClickWasTab = true;
+                    return Action::SWITCH_VIEW;
+                }
+            }
+        }
+    }
+    m_lastClickWasTab = false;
+
+    // --- Tasti 1-5 ---
     if (pge->GetKey(olc::Key::K1).bPressed) {
-        m_requestedView = ViewMode::DIGRAPH;
-        return Action::SWITCH_VIEW;
-    }
+        m_requestedView = ViewMode::DIGRAPH;    return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K2).bPressed) {
-        m_requestedView = ViewMode::DOTPLOT;
-        return Action::SWITCH_VIEW;
-    }
+        m_requestedView = ViewMode::DOTPLOT;    return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K3).bPressed) {
-        m_requestedView = ViewMode::ENTROPY;
-        return Action::SWITCH_VIEW;
-    }
+        m_requestedView = ViewMode::ENTROPY;    return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K4).bPressed) {
-        m_requestedView = ViewMode::HISTOGRAM;
-        return Action::SWITCH_VIEW;
-    }
+        m_requestedView = ViewMode::HISTOGRAM;  return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K5).bPressed) {
-        m_requestedView = ViewMode::TRIGRAPH3D;
-        return Action::SWITCH_VIEW;
-    }
+        m_requestedView = ViewMode::TRIGRAPH3D; return Action::SWITCH_VIEW; }
+
     if (pge->GetKey(olc::Key::O).bPressed) {
         m_inputMode   = true;
         m_inputBuffer = "/";
@@ -42,7 +64,6 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
 }
 
 Action InputHandler::handleTextInput(olc::PixelGameEngine* pge) {
-    // Leggiamo shift una volta sola per tutto il frame
     bool shift = pge->GetKey(olc::Key::SHIFT).bHeld;
 
     for (int k = 0; k < 256; k++) {
@@ -67,16 +88,14 @@ Action InputHandler::handleTextInput(olc::PixelGameEngine* pge) {
             m_inputBuffer += '/';
             continue;
         }
-
-        // Passa shift a keyToChar — e' li' che serve
         char c = keyToChar(pge, key, shift);
         if (c != 0) m_inputBuffer += c;
     }
     return Action::NONE;
 }
 
-// shift e' parametro esplicito — nessuna ambiguita'
-char InputHandler::keyToChar(olc::PixelGameEngine* pge, olc::Key key, bool shift) {
+char InputHandler::keyToChar(olc::PixelGameEngine* pge,
+                              olc::Key key, bool shift) {
     int k  = static_cast<int>(key);
     int kA = static_cast<int>(olc::Key::A);
     int kZ = static_cast<int>(olc::Key::Z);
@@ -89,7 +108,6 @@ char InputHandler::keyToChar(olc::PixelGameEngine* pge, olc::Key key, bool shift
     }
     if (k >= k0 && k <= k9)
         return '0' + (k - k0);
-
     switch (key) {
         case olc::Key::PERIOD: return '.';
         case olc::Key::MINUS:  return shift ? '_' : '-';

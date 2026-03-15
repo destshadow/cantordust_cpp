@@ -14,7 +14,10 @@ SRC = src/main.cpp \
       src/screenshot.cpp \
       src/input_handler.cpp \
       src/ui_renderer.cpp \
-      src/visualizer.cpp
+      src/visualizer.cpp \
+      src/visualizer_2d.cpp \
+      src/visualizer_3d.cpp \
+      src/visualizer_nav.cpp
 
 OUT = cantordust
 

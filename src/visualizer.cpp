@@ -1,9 +1,4 @@
 #include "visualizer.h"
-#include <filesystem>
-
-// Altezze barre — devono corrispondere a ui_renderer.cpp
-static constexpr int TOP_BAR_H    = 26;
-static constexpr int BOTTOM_BAR_H = 36;
 
 Visualizer::Visualizer(const std::string& filepath)
     : m_initPath(filepath) {
@@ -22,7 +17,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     // --- 1. Input ---
     Action action = m_input.update(this, fElapsedTime);
 
-    // --- 2. Esegui azione ---
+    // --- 2. Azioni ---
     switch (action) {
         case Action::SWITCH_VIEW:
             m_mode  = m_input.getRequestedView();
@@ -38,8 +33,6 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                                     std::to_string((int)m_mode) + ".png";
                 Screenshot::save(fname, getCurrentRGB());
                 m_status = "Salvato: " + fname;
-            } else {
-                m_status = "Screenshot 3D non supportato";
             }
             break;
         case Action::CANCEL:
@@ -59,19 +52,31 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         recomputeWindow();
         m_status = "";
     }
+    // Home: reset finestra al file intero
+    if (GetKey(olc::Key::HOME).bPressed) {
+        m_navigator.resetWindow(m_reader.getBytes());
+        recomputeWindow();
+        m_zoom2d  = 1.0f;
+        m_scrollH = 0.0f;
+        m_scrollV = 0.0f;
+        m_status  = "Reset: file intero";
+    }
 
-    // Click sulla scrollbar
+    // Click sulla scrollbar file
     if (GetMouse(0).bHeld &&
-        GetMouseY() > ScreenHeight() - BOTTOM_BAR_H) {
-        float norm = (float)(GetMouseX() - 10) /
-                     (float)(ScreenWidth() - 20);
+        GetMouseY() >= FILE_NAV_Y &&
+        GetMouseY() <  FILE_NAV_Y + FILE_NAV_H) {
+        float norm = (float)(GetMouseX() - 6) /
+                     (float)(WIN_W - 12);
         m_navigator.jumpTo(norm);
         recomputeWindow();
     }
 
-    // --- 4. Input 3D ---
+    // --- 4. Input specifico per modalita' ---
     if (m_mode == ViewMode::TRIGRAPH3D)
         handle3DInput(fElapsedTime);
+    else
+        handle2DInput();
 
     // --- 5. Aggiorna canvas 2D ---
     if (m_dirty && m_mode != ViewMode::TRIGRAPH3D) {
@@ -83,141 +88,33 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     Clear(olc::BLACK);
 
     if (m_mode == ViewMode::TRIGRAPH3D) {
-        int renderH = ScreenHeight() - TOP_BAR_H - BOTTOM_BAR_H;
         m_renderer3d.render(this,
                             m_trigraph.getPoints(),
-                            0, TOP_BAR_H,
-                            ScreenWidth(), renderH);
+                            CANVAS_X, CANVAS_Y,
+                            CANVAS_W, CANVAS_H);
     } else {
-        // Scala il canvas 256x256 per riempire l'area disponibile
-        // tra la topbar e la bottombar
-        float scaleX = (float)ScreenWidth()  / 256.0f;
-        float scaleY = (float)(ScreenHeight() - TOP_BAR_H - BOTTOM_BAR_H)
-                       / 256.0f;
-        DrawDecal({0.0f, (float)TOP_BAR_H}, m_decal,
-                  {scaleX, scaleY});
+        draw2DCanvas();
     }
 
-    drawScrollBar();
-
-    // Costruisce UIState con tutti i dati aggiornati
+    // --- 7. UI ---
     UIState state;
-    state.currentView  = m_mode;
-    state.status       = m_status;
-    state.filepath     = m_reader.getFilepath();
-    state.filesize     = m_reader.getSize();
-    state.position     = m_navigator.isValid()
-                         ? m_navigator.getPositionString() : "";
-    state.fps          = 1.0f / fElapsedTime;
-    state.inputMode    = m_input.isInputMode();
-    state.inputBuffer  = m_input.getInputBuffer();
-    state.cursorBlink  = m_input.getCursorBlink();
+    state.currentView   = m_mode;
+    state.cmdStatus     = m_status;
+    state.filepath      = m_reader.getFilepath();
+    state.filesize      = m_reader.getSize();
+    state.byteInfo      = getByteInfo(GetMouseX(), GetMouseY());
+    state.position      = m_navigator.isValid()
+                          ? m_navigator.getPositionString() : "";
+    state.fileNavPos    = m_navigator.getNormalized();
+    state.fileNavRatio  = m_navigator.getWindowRatio();
+    state.fps           = 1.0f / fElapsedTime;
+    state.zoomLevel     = m_zoom2d;
+    state.scrollH       = m_scrollH;
+    state.scrollV       = m_scrollV;
+    state.inputMode     = m_input.isInputMode();
+    state.inputBuffer   = m_input.getInputBuffer();
+    state.cursorBlink   = m_input.getCursorBlink();
 
     m_ui.draw(this, state);
-
     return true;
-}
-
-void Visualizer::handle3DInput(float fElapsedTime) {
-    if (GetKey(olc::Key::R).bPressed)
-        m_renderer3d.resetRotation();
-
-    if (GetMouse(0).bPressed) {
-        m_dragging   = true;
-        m_lastMouseX = GetMouseX();
-        m_lastMouseY = GetMouseY();
-    }
-    if (GetMouse(0).bReleased)
-        m_dragging = false;
-
-    if (m_dragging) {
-        float dx = (float)(GetMouseX() - m_lastMouseX);
-        float dy = (float)(GetMouseY() - m_lastMouseY);
-        m_renderer3d.rotate(dx, dy);
-        m_lastMouseX = GetMouseX();
-        m_lastMouseY = GetMouseY();
-    }
-
-    if (GetMouseWheel() > 0) m_renderer3d.zoom(+1.0f);
-    if (GetMouseWheel() < 0) m_renderer3d.zoom(-1.0f);
-}
-
-void Visualizer::drawScrollBar() {
-    if (!m_navigator.isValid()) return;
-
-    int sw   = ScreenWidth();
-    int sh   = ScreenHeight();
-    int barY = sh - BOTTOM_BAR_H + 2;
-    int barX = 6;
-    int barW = sw - 12;
-
-    // Track della scrollbar
-    FillRect(barX, barY, barW, 10, olc::Pixel(40, 40, 60));
-    DrawRect(barX, barY, barW, 10, olc::Pixel(80, 80, 120));
-
-    // Cursore proporzionale
-    float ratio   = (float)m_navigator.getWindowSize() /
-                    (float)m_navigator.getTotalSize();
-    int cursorW   = std::max(12, (int)(barW * ratio));
-    int cursorX   = barX + (int)((barW - cursorW) *
-                                  m_navigator.getNormalized());
-
-    FillRect(cursorX, barY, cursorW, 10, olc::Pixel(80, 140, 200));
-    DrawRect(cursorX, barY, cursorW, 10, olc::Pixel(120, 180, 255));
-}
-
-void Visualizer::updateCanvas() {
-    auto rgb = getCurrentRGB();
-    for (int y = 0; y < 256; y++)
-        for (int x = 0; x < 256; x++) {
-            int idx = (y * 256 + x) * 3;
-            m_canvas->SetPixel(x, y, olc::Pixel(
-                rgb[idx], rgb[idx+1], rgb[idx+2]
-            ));
-        }
-    m_decal->Update();
-}
-
-std::vector<uint8_t> Visualizer::getCurrentRGB() const {
-    switch (m_mode) {
-        case ViewMode::DIGRAPH:    return m_digraph.toRGB();
-        case ViewMode::DOTPLOT:    return m_dotplot.toRGB();
-        case ViewMode::ENTROPY:    return m_entropy.toRGB();
-        case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
-        case ViewMode::TRIGRAPH3D: return {};
-    }
-    return {};
-}
-
-void Visualizer::recomputeWindow() {
-    auto window = m_navigator.getWindow(m_reader.getBytes());
-    if (window.empty()) return;
-    m_digraph.compute(window);
-    m_dotplot.compute(window);
-    m_entropy.compute(window);
-    m_histogram.compute(window);
-    m_trigraph.compute(m_reader.getBytes(),
-                       m_navigator.getStart(),
-                       m_navigator.getEnd());
-    m_dirty = true;
-}
-
-void Visualizer::loadFile(const std::string& filepath) {
-    if (!std::filesystem::exists(filepath)) {
-        m_status = "Errore: file non trovato → " + filepath;
-        return;
-    }
-    if (!m_reader.load(filepath)) {
-        m_status = "Errore caricamento: " + filepath;
-        return;
-    }
-    const auto& bytes = m_reader.getBytes();
-    m_navigator.setData(bytes);
-    m_digraph.compute(bytes);
-    m_dotplot.compute(bytes);
-    m_entropy.compute(bytes);
-    m_histogram.compute(bytes);
-    m_trigraph.compute(bytes);
-    m_dirty  = true;
-    m_status = "Caricato: " + filepath;
 }
