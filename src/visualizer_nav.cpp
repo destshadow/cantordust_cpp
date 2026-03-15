@@ -1,11 +1,7 @@
 #include "visualizer.h"
 #include <filesystem>
 
-void Visualizer::drawScrollBars() {
-    // La scrollbar del file (FILE_NAV) e quella del canvas
-    // sono disegnate dall'UIRenderer tramite UIState
-    // Qui gestiamo solo il click sulla FILE_NAV scrollbar
-}
+void Visualizer::drawScrollBars() {}
 
 void Visualizer::recomputeWindow() {
     auto window = m_navigator.getWindow(m_reader.getBytes());
@@ -29,10 +25,12 @@ void Visualizer::loadFile(const std::string& filepath) {
         m_status = "Errore caricamento: " + filepath;
         return;
     }
-    const auto& bytes = m_reader.getBytes();
 
-    // windowSize=0 → finestra = file intero
+    const auto& bytes = m_reader.getBytes();
     m_navigator.setData(bytes, 0);
+
+    // Parsing ELF/PE per le sezioni
+    m_parser.parse(bytes);
 
     m_digraph.compute(bytes);
     m_dotplot.compute(bytes);
@@ -40,11 +38,16 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_histogram.compute(bytes);
     m_trigraph.compute(bytes);
 
-    // Reset zoom 2D al caricamento
     m_zoom2d  = 1.0f;
     m_scrollH = 0.0f;
     m_scrollV = 0.0f;
+    m_dirty   = true;
 
-    m_dirty  = true;
-    m_status = "Caricato: " + filepath;
+    // Status: mostra formato rilevato
+    m_status = "Caricato: " + filepath +
+               "  [" + m_parser.getFormatName() + "]";
+    if (m_parser.hasSections())
+        m_status += "  " +
+                    std::to_string(m_parser.getSections().size()) +
+                    " sezioni";
 }

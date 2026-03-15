@@ -17,7 +17,9 @@ SRC = src/main.cpp \
       src/visualizer.cpp \
       src/visualizer_2d.cpp \
       src/visualizer_3d.cpp \
-      src/visualizer_nav.cpp
+      src/visualizer_nav.cpp \
+      src/visualizer_sections.cpp \
+      src/binary_format.cpp
 
 OUT = cantordust
 

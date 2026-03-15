@@ -9,6 +9,7 @@
 #include "file_navigator.h"
 #include "screenshot.h"
 #include "input_handler.h"
+#include "binary_format.h"
 #include "ui_renderer.h"
 #include "constants.h"
 
@@ -36,6 +37,7 @@ private:
     void draw2DCanvas();
 
     // --- Utility ---
+    void drawSectionOverlay();
     std::string getByteInfo(int mouseX, int mouseY) const;
 
     // Visualizzazioni
@@ -46,7 +48,8 @@ private:
     Histogram     m_histogram;
     TriGraph      m_trigraph;
     Renderer3D    m_renderer3d;
-    FileNavigator m_navigator;
+    FileNavigator  m_navigator;
+    BinaryParser   m_parser;
 
     // Canvas
     olc::Sprite*  m_canvas = nullptr;

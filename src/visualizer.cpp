@@ -94,6 +94,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                             CANVAS_W, CANVAS_H);
     } else {
         draw2DCanvas();
+        drawSectionOverlay();
     }
 
     // --- 7. UI ---
