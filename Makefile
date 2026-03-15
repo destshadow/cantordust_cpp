@@ -5,6 +5,7 @@ LDFLAGS = -lGL -lX11 -lpng -lpthread -ldl
 SRC = src/main.cpp \
       src/binary_reader.cpp \
       src/digraph.cpp \
+      src/screenshot.cpp \
       src/visualizer.cpp
 
 OUT = cantordust
