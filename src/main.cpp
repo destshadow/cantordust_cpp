@@ -1,14 +1,16 @@
 #include "binary_reader.h"
+#include "digraph.h"
 #include <iostream>
 
 int main() {
     BinaryReader reader;
+    DiGraph dg;
+
     if (reader.load("/bin/ls")) {
-        std::cout << "Bytes letti: " << reader.getSize() << "\n";
-        std::cout << "Primi 4 bytes: ";
-        for (int i = 0; i < 4; i++)
-            std::cout << std::hex << (int)reader.getBytes()[i] << " ";
-        std::cout << "\n";
+        dg.compute(reader.getBytes());
+        std::cout << "DiGraph calcolato!\n";
+        std::cout << "Valore massimo: " << dg.getMax() << "\n";
+        std::cout << "Buffer RGB size: " << dg.toRGB().size() << "\n";
     }
     return 0;
 }
