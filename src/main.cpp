@@ -1,5 +1,6 @@
 #include "binary_reader.h"
 #include "digraph.h"
+#include "screenshot.h"
 #include <iostream>
 
 int main() {
@@ -8,9 +9,9 @@ int main() {
 
     if (reader.load("/bin/ls")) {
         dg.compute(reader.getBytes());
-        std::cout << "DiGraph calcolato!\n";
-        std::cout << "Valore massimo: " << dg.getMax() << "\n";
-        std::cout << "Buffer RGB size: " << dg.toRGB().size() << "\n";
+        auto rgb = dg.toRGB();
+        Screenshot::save("test_digraph.png", rgb);
+        std::cout << "Apri test_digraph.png per vedere il risultato!\n";
     }
     return 0;
 }
