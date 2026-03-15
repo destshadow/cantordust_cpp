@@ -1,0 +1,30 @@
+# Build
+cantordust
+build/
+*.o
+*.out
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+python/nn/__pycache__/
+
+# Dataset e output
+dataset/
+*.npz
+export_*.png
+test_*.png
+digraph_export.png
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
