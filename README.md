@@ -4,7 +4,7 @@ Binary visualization tool ispirato al lavoro di [Christopher Domas](https://gith
 
 Visualizza file binari come immagini per identificare pattern, sezioni e anomalie a colpo d'occhio.
 
-![CantorDust++](https://raw.githubusercontent.com/destshadow/cantordust_cpp/main/screenshot.png)
+![CantorDust++](https://raw.githubusercontent.com/destshadow/cantordust_cpp/test_digrapg.png)
 
 ---
 
