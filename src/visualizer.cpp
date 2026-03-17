@@ -15,8 +15,6 @@ bool Visualizer::OnUserCreate() {
 bool Visualizer::OnUserUpdate(float fElapsedTime) {
     bool busy = m_computing.load();
 
-    // Aggiorna canvas solo quando calcolo terminato
-    // e solo dal main thread sotto mutex
     {
         std::lock_guard<std::mutex> lk(m_dataMutex);
         if (m_dirty && !busy) {
@@ -25,14 +23,12 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
     }
 
-    // Input — bloccato durante il calcolo
     Action action = m_input.update(this, fElapsedTime);
 
     if (!busy) {
         switch (action) {
             case Action::SWITCH_VIEW:
-                m_mode   = m_input.getRequestedView();
-                // Rigenera canvas dalla vista appena calcolata
+                m_mode = m_input.getRequestedView();
                 {
                     std::lock_guard<std::mutex> lk(m_dataMutex);
                     updateCanvas();
@@ -56,6 +52,32 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
             default: break;
         }
 
+        // --- Cambio modalita' bpp con [ e ] ---
+        // Solo in vista RAWPIXELS
+        if (m_mode == ViewMode::RAWPIXELS) {
+            bool changed = false;
+            if (GetKey(olc::Key::OEM_4).bPressed) {  // [
+                int m = ((int)m_bppMode - 1 + 5) % 5;
+                m_bppMode = (BppMode)m;
+                changed = true;
+            }
+            if (GetKey(olc::Key::OEM_6).bPressed) {  // ]
+                int m = ((int)m_bppMode + 1) % 5;
+                m_bppMode = (BppMode)m;
+                changed = true;
+            }
+            if (changed) {
+                m_rawpixels.compute(m_reader.getBytes(), m_bppMode);
+                {
+                    std::lock_guard<std::mutex> lk(m_dataMutex);
+                    updateCanvas();
+                }
+                m_status = std::string("BPP: ") +
+                           RawPixels::modeName(m_bppMode) +
+                           "  ([ ] per cambiare)";
+            }
+        }
+
         if (GetKey(olc::Key::RIGHT).bPressed) {
             m_navigator.moveForward();
             recomputeWindow();
@@ -66,7 +88,24 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
             recomputeWindow();
             m_status = "";
         }
-        if (GetKey(olc::Key::HOME).bPressed) {
+        // Tasti [ ] per cambiare modalita bpp (solo in vista RAWPIXELS)
+    if (m_mode == ViewMode::RAWPIXELS) {
+        if (GetKey(olc::Key::OEM_4).bPressed) {
+            int m = ((int)m_bppMode - 1 + 5) % 5;
+            m_bppMode = (BppMode)m;
+            m_rawpixels.compute(m_reader.getBytes(), m_bppMode);
+            m_status = std::string("Modalita: ") + RawPixels::modeName(m_bppMode);
+            updateCanvas();
+        }
+        if (GetKey(olc::Key::OEM_6).bPressed) {
+            int m = ((int)m_bppMode + 1) % 5;
+            m_bppMode = (BppMode)m;
+            m_rawpixels.compute(m_reader.getBytes(), m_bppMode);
+            m_status = std::string("Modalita: ") + RawPixels::modeName(m_bppMode);
+            updateCanvas();
+        }
+    }
+    if (GetKey(olc::Key::HOME).bPressed) {
             m_navigator.resetWindow(m_reader.getBytes());
             recomputeWindow();
             m_zoom2d  = 1.0f;
@@ -85,17 +124,14 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
     }
 
-    // Input modalita'
     if (m_mode == ViewMode::TRIGRAPH3D)
         handle3DInput(fElapsedTime);
     else if (!busy)
         handle2DInput();
 
-    // Rendering
     Clear(olc::BLACK);
 
     if (m_mode == ViewMode::TRIGRAPH3D) {
-        // Copia punti sotto lock per evitare race
         std::vector<Point3D> pts;
         {
             std::lock_guard<std::mutex> lk(m_dataMutex);
@@ -111,9 +147,16 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 
     if (busy) drawSpinner(fElapsedTime);
 
+    // Bpp info nella status bar se in modalita' RAWPIXELS
+    std::string statusStr = m_status;
+    if (m_mode == ViewMode::RAWPIXELS && !busy)
+        statusStr = std::string("[BPP: ") +
+                    RawPixels::modeName(m_bppMode) +
+                    "]  [ ] = cambia  |  " + m_status;
+
     UIState state;
     state.currentView  = m_mode;
-    state.cmdStatus    = busy ? "Calcolo in corso..." : m_status;
+    state.cmdStatus    = busy ? "Calcolo in corso..." : statusStr;
     state.filepath     = m_reader.getFilepath();
     state.filesize     = m_reader.getSize();
     state.byteInfo     = busy ? "" : getByteInfo(GetMouseX(), GetMouseY());

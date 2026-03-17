@@ -11,10 +11,10 @@ void Visualizer::recomputeWindow() {
     auto   bytes = m_reader.getBytes();
     size_t start = m_navigator.getStart();
     size_t end   = m_navigator.getEnd();
+    BppMode bpp  = m_bppMode;
 
     m_future = std::async(std::launch::async,
-                          [this, bytes, start, end]() {
-        // Calcola tutto in locale — nessun accesso ai membri
+                          [this, bytes, start, end, bpp]() {
         std::vector<uint8_t> window(bytes.begin() + start,
                                     bytes.begin() + end);
         DiGraph   dg;  dg.compute(window);
@@ -22,8 +22,8 @@ void Visualizer::recomputeWindow() {
         Entropy   en;  en.compute(window);
         Histogram hi;  hi.compute(window);
         TriGraph  tr;  tr.compute(bytes, start, end);
+        RawPixels rp;  rp.compute(window, bpp);
 
-        // Swap atomico sotto mutex
         {
             std::lock_guard<std::mutex> lk(m_dataMutex);
             m_digraph   = std::move(dg);
@@ -31,6 +31,7 @@ void Visualizer::recomputeWindow() {
             m_entropy   = std::move(en);
             m_histogram = std::move(hi);
             m_trigraph  = std::move(tr);
+            m_rawpixels = std::move(rp);
             m_dirty     = true;
         }
         m_computing = false;
@@ -47,9 +48,7 @@ void Visualizer::loadFile(const std::string& filepath) {
         return;
     }
 
-    // Aspetta eventuale calcolo precedente
-    if (m_future.valid())
-        m_future.wait();
+    if (m_future.valid()) m_future.wait();
 
     const auto& bytes = m_reader.getBytes();
     m_navigator.setData(bytes, 0);
@@ -60,13 +59,16 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_zoom2d    = 1.0f;
     m_scrollH   = 0.0f;
     m_scrollV   = 0.0f;
+    m_bppMode   = BppMode::BPP_8;
 
-    m_future = std::async(std::launch::async, [this, bytes]() {
+    BppMode bpp = m_bppMode;
+    m_future = std::async(std::launch::async, [this, bytes, bpp]() {
         DiGraph   dg;  dg.compute(bytes);
         DotPlot   dp;  dp.compute(bytes);
         Entropy   en;  en.compute(bytes);
         Histogram hi;  hi.compute(bytes);
         TriGraph  tr;  tr.compute(bytes);
+        RawPixels rp;  rp.compute(bytes, bpp);
 
         {
             std::lock_guard<std::mutex> lk(m_dataMutex);
@@ -75,6 +77,7 @@ void Visualizer::loadFile(const std::string& filepath) {
             m_entropy   = std::move(en);
             m_histogram = std::move(hi);
             m_trigraph  = std::move(tr);
+            m_rawpixels = std::move(rp);
             m_dirty     = true;
         }
         m_computing = false;

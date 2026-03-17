@@ -4,12 +4,9 @@
 #include <iomanip>
 
 void Visualizer::updateCanvas() {
-    // TRIGRAPH3D non usa il canvas 2D — skip
     if (m_mode == ViewMode::TRIGRAPH3D) return;
-
     auto rgb = getCurrentRGB();
-    if (rgb.empty()) return;  // protezione extra
-
+    if (rgb.empty()) return;
     for (int y = 0; y < 256; y++)
         for (int x = 0; x < 256; x++) {
             int idx = (y * 256 + x) * 3;
@@ -27,6 +24,7 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
         case ViewMode::ENTROPY:    return m_entropy.toRGB();
         case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
         case ViewMode::TRIGRAPH3D: return {};
+        case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
     }
     return {};
 }
@@ -55,20 +53,15 @@ void Visualizer::draw2DCanvas() {
                        drawX, drawY, scale);
 
     float scaledSize  = 256.0f * scale;
-    float decalLeft   = drawX;
-    float decalTop    = drawY;
-    float decalRight  = drawX + scaledSize;
-    float decalBottom = drawY + scaledSize;
-
-    float clipLeft   = std::max(decalLeft,   (float)CANVAS_X);
-    float clipTop    = std::max(decalTop,    (float)CANVAS_Y);
-    float clipRight  = std::min(decalRight,  (float)(CANVAS_X + CANVAS_W));
-    float clipBottom = std::min(decalBottom, (float)(CANVAS_Y + CANVAS_H));
+    float clipLeft    = std::max(drawX,             (float)CANVAS_X);
+    float clipTop     = std::max(drawY,             (float)CANVAS_Y);
+    float clipRight   = std::min(drawX + scaledSize,(float)(CANVAS_X + CANVAS_W));
+    float clipBottom  = std::min(drawY + scaledSize,(float)(CANVAS_Y + CANVAS_H));
 
     if (clipRight <= clipLeft || clipBottom <= clipTop) return;
 
-    float srcX = (clipLeft   - decalLeft) / scale;
-    float srcY = (clipTop    - decalTop)  / scale;
+    float srcX = (clipLeft   - drawX) / scale;
+    float srcY = (clipTop    - drawY) / scale;
     float srcW = (clipRight  - clipLeft)  / scale;
     float srcH = (clipBottom - clipTop)   / scale;
 
@@ -103,8 +96,7 @@ void Visualizer::handle2DInput() {
         }
     }
 
-    if (m_zoom2d > 1.0f && inCanvas &&
-        !m_input.lastClickWasTab()) {
+    if (m_zoom2d > 1.0f && inCanvas && !m_input.lastClickWasTab()) {
         if (GetMouse(0).bPressed) {
             m_dragging   = true;
             m_lastMouseX = mx;
@@ -127,15 +119,12 @@ void Visualizer::handle2DInput() {
 
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
         my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H) {
-        float norm = (float)(mx - 6) / (float)(CANVAS_W - 12);
-        m_scrollH  = std::clamp(norm, 0.0f, 1.0f);
+        m_scrollH = std::clamp((float)(mx-6)/(float)(CANVAS_W-12), 0.0f, 1.0f);
     }
-
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
         mx >= CANVAS_W && mx < CANVAS_W + SCROLLBAR_V_W &&
         my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H) {
-        float norm = (float)(my - CANVAS_Y) / (float)CANVAS_H;
-        m_scrollV  = std::clamp(norm, 0.0f, 1.0f);
+        m_scrollV = std::clamp((float)(my-CANVAS_Y)/(float)CANVAS_H, 0.0f, 1.0f);
     }
 }
 
@@ -146,19 +135,15 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
     if (mouseY < CANVAS_Y || mouseY >= CANVAS_Y + CANVAS_H) return "";
 
     float drawX, drawY, scale;
-    getCanvasTransform(m_zoom2d, m_scrollH, m_scrollV,
-                       drawX, drawY, scale);
+    getCanvasTransform(m_zoom2d, m_scrollH, m_scrollV, drawX, drawY, scale);
 
-    float relX = ((float)mouseX - drawX) / scale;
-    float relY = ((float)mouseY - drawY) / scale;
-    int cx = (int)relX;
-    int cy = (int)relY;
+    int cx = (int)(((float)mouseX - drawX) / scale);
+    int cy = (int)(((float)mouseY - drawY) / scale);
     if (cx < 0 || cx > 255 || cy < 0 || cy > 255) return "";
 
     std::ostringstream oss;
     if (m_mode == ViewMode::DIGRAPH) {
-        oss << "COPPIA: 0x"
-            << std::uppercase << std::hex
+        oss << "COPPIA: 0x" << std::uppercase << std::hex
             << std::setw(2) << std::setfill('0') << cx
             << " -> 0x"
             << std::setw(2) << std::setfill('0') << cy;
