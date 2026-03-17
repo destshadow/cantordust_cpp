@@ -13,6 +13,7 @@
 #include "binary_format.h"
 #include "raw_pixels.h"
 #include "metric_map.h"
+#include "classifier_model.h"
 #include "constants.h"
 #include <future>
 #include <mutex>
@@ -49,7 +50,8 @@ private:
     FileNavigator m_navigator;
     BinaryParser  m_parser;
     RawPixels     m_rawpixels;
-    MetricMap     m_metricmap;
+    MetricMap        m_metricmap;
+    ClassifierModel  m_classifier;
 
     // Canvas
     olc::Sprite*  m_canvas = nullptr;

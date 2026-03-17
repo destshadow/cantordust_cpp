@@ -32,7 +32,8 @@ SRC = src/main.cpp \
       src/wavelength_rgb.cpp \
       src/hilbert.cpp \
       src/metric_map.cpp \
-      src/ngram_model.cpp
+      src/ngram_model.cpp \
+      src/classifier_model.cpp
 
 OUT = cantordust
 
