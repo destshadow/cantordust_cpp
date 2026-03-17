@@ -28,7 +28,10 @@ SRC = src/main.cpp \
       src/visualizer_nav.cpp \
       src/visualizer_sections.cpp \
       src/binary_format.cpp \
-      src/raw_pixels.cpp
+      src/raw_pixels.cpp \
+      src/wavelength_rgb.cpp \
+      src/hilbert.cpp \
+      src/metric_map.cpp
 
 OUT = cantordust
 

@@ -123,7 +123,7 @@ void RawPixels::compute(const std::vector<uint8_t>& bytes,
         size_t byteIdx = px * bpp;
         if (byteIdx >= bytes.size()) break;
 
-        uint8_t r, g, b;
+        uint8_t r = 0, g = 0, b = 0;
         switch (mode) {
             case BppMode::BPP_8:
                 decodePixel8 (bytes, byteIdx, r, g, b); break;

@@ -1,18 +1,24 @@
 #include "input_handler.h"
 
-static const struct TabInfo {
-    ViewMode mode;
-    int x, w;
-} TABS[] = {
-    { ViewMode::DIGRAPH,     8,  190 },
-    { ViewMode::DOTPLOT,   208,  190 },
-    { ViewMode::ENTROPY,   408,  190 },
-    { ViewMode::HISTOGRAM, 608,  190 },
-    { ViewMode::TRIGRAPH3D,808,  100 },
-    { ViewMode::RAWPIXELS, 910,  100 },
+// Posizioni tab calcolate dinamicamente
+// N=7 tab, FPS_AREA=64px fissi a destra
+// tabW = (screenW - FPS_AREA) / N
+// Ma InputHandler non conosce la screenW →
+// usiamo il metodo GetScreenWidth() di olcPGE
+static const ViewMode TAB_MODES[] = {
+    ViewMode::DIGRAPH,
+    ViewMode::DOTPLOT,
+    ViewMode::ENTROPY,
+    ViewMode::HISTOGRAM,
+    ViewMode::TRIGRAPH3D,
+    ViewMode::RAWPIXELS,
+    ViewMode::METRICMAP,
 };
+static constexpr int N_TABS = 7;
+static constexpr int FPS_AREA = 80;
 
-Action InputHandler::update(olc::PixelGameEngine* pge, float fElapsedTime) {
+Action InputHandler::update(olc::PixelGameEngine* pge,
+                             float fElapsedTime) {
     m_cursorBlink += fElapsedTime;
     if (m_inputMode)
         return handleTextInput(pge);
@@ -21,13 +27,17 @@ Action InputHandler::update(olc::PixelGameEngine* pge, float fElapsedTime) {
 }
 
 Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
+    // Click sulle tab — larghezza calcolata dinamicamente
     if (pge->GetMouse(0).bPressed) {
-        int mx = pge->GetMouseX();
-        int my = pge->GetMouseY();
+        int mx  = pge->GetMouseX();
+        int my  = pge->GetMouseY();
         if (my >= 0 && my < TOPBAR_H) {
-            for (auto& t : TABS) {
-                if (mx >= t.x && mx < t.x + t.w) {
-                    m_requestedView   = t.mode;
+            int sw   = pge->ScreenWidth();
+            int tabW = (sw - FPS_AREA) / N_TABS;
+            for (int i = 0; i < N_TABS; i++) {
+                int tx = i * tabW;
+                if (mx >= tx && mx < tx + tabW) {
+                    m_requestedView   = TAB_MODES[i];
                     m_lastClickWasTab = true;
                     return Action::SWITCH_VIEW;
                 }
@@ -48,6 +58,8 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
         m_requestedView = ViewMode::TRIGRAPH3D; return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K6).bPressed) {
         m_requestedView = ViewMode::RAWPIXELS;  return Action::SWITCH_VIEW; }
+    if (pge->GetKey(olc::Key::K7).bPressed) {
+        m_requestedView = ViewMode::METRICMAP;  return Action::SWITCH_VIEW; }
 
     if (pge->GetKey(olc::Key::O).bPressed) {
         m_inputMode   = true;
@@ -76,7 +88,8 @@ Action InputHandler::handleTextInput(olc::PixelGameEngine* pge) {
     return Action::NONE;
 }
 
-char InputHandler::keyToChar(olc::PixelGameEngine* pge, olc::Key key, bool shift) {
+char InputHandler::keyToChar(olc::PixelGameEngine* pge,
+                              olc::Key key, bool shift) {
     int k  = static_cast<int>(key);
     int kA = static_cast<int>(olc::Key::A);
     int kZ = static_cast<int>(olc::Key::Z);

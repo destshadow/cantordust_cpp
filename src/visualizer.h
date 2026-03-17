@@ -12,6 +12,7 @@
 #include "ui_renderer.h"
 #include "binary_format.h"
 #include "raw_pixels.h"
+#include "metric_map.h"
 #include "constants.h"
 #include <future>
 #include <mutex>
@@ -32,10 +33,12 @@ private:
     void draw2DCanvas();
     void drawScrollBars();
     void drawSectionOverlay();
+    void handleSectionClick();
     void drawSpinner(float fElapsedTime);
     std::vector<uint8_t> getCurrentRGB() const;
     std::string getByteInfo(int mouseX, int mouseY) const;
 
+    // Visualizzazioni
     BinaryReader  m_reader;
     DiGraph       m_digraph;
     DotPlot       m_dotplot;
@@ -46,30 +49,42 @@ private:
     FileNavigator m_navigator;
     BinaryParser  m_parser;
     RawPixels     m_rawpixels;
+    MetricMap     m_metricmap;
 
+    // Canvas
     olc::Sprite*  m_canvas = nullptr;
     olc::Decal*   m_decal  = nullptr;
 
+    // Componenti
     InputHandler  m_input;
     UIRenderer    m_ui;
 
-    ViewMode      m_mode    = ViewMode::DIGRAPH;
-    BppMode       m_bppMode = BppMode::BPP_8;
-    bool          m_dirty   = false;
+    // Stato
+    ViewMode      m_mode      = ViewMode::DIGRAPH;
+    BppMode       m_bppMode   = BppMode::BPP_8;
+    ColorMode     m_colorMode = ColorMode::WAVELENGTH;
+    bool          m_dirty     = false;
     std::string   m_status;
     std::string   m_initPath;
 
+    // Threading
     std::future<void>  m_future;
     std::atomic<bool>  m_computing{false};
     std::mutex         m_dataMutex;
     float              m_spinnerAngle = 0.0f;
 
+    // Mouse
     bool  m_dragging   = false;
     bool  m_panning    = false;
     int   m_lastMouseX = 0;
     int   m_lastMouseY = 0;
 
+    // Zoom 2D
     float m_zoom2d  = 1.0f;
     float m_scrollH = 0.0f;
     float m_scrollV = 0.0f;
+
+    // Sezioni interattive
+    std::vector<SectionInfo> m_sectionInfos;
+    int m_hoveredSection = -1;
 };

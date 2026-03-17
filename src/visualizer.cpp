@@ -28,6 +28,8 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     if (!busy) {
         switch (action) {
             case Action::SWITCH_VIEW:
+                m_dragging = false;
+                m_panning  = false;
                 m_mode = m_input.getRequestedView();
                 {
                     std::lock_guard<std::mutex> lk(m_dataMutex);
@@ -52,6 +54,21 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
             default: break;
         }
 
+        // --- Cambio ColorMode con M (solo in MetricMap)
+        if (m_mode == ViewMode::METRICMAP) {
+            if (GetKey(olc::Key::M).bPressed) {
+                int cm = ((int)m_colorMode + 1) % 4;
+                m_colorMode = (ColorMode)cm;
+                m_metricmap.compute(m_reader.getBytes(),
+                                    m_colorMode, 8);
+                {
+                    std::lock_guard<std::mutex> lk(m_dataMutex);
+                    updateCanvas();
+                }
+                m_status = std::string("MetricMap: ") +
+                           MetricMap::modeName(m_colorMode);
+            }
+        }
         // --- Cambio modalita' bpp con [ e ] ---
         // Solo in vista RAWPIXELS
         if (m_mode == ViewMode::RAWPIXELS) {
@@ -77,6 +94,8 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                            "  ([ ] per cambiare)";
             }
         }
+
+        handleSectionClick();
 
         if (GetKey(olc::Key::RIGHT).bPressed) {
             m_navigator.moveForward();
@@ -168,7 +187,11 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     state.zoomLevel    = m_zoom2d;
     state.scrollH      = m_scrollH;
     state.scrollV      = m_scrollV;
-    state.inputMode    = m_input.isInputMode();
+    state.sections        = m_sectionInfos;
+    state.hoveredSection  = m_hoveredSection;
+    state.mouseX          = GetMouseX();
+    state.mouseY          = GetMouseY();
+    state.inputMode       = m_input.isInputMode();
     state.inputBuffer  = m_input.getInputBuffer();
     state.cursorBlink  = m_input.getCursorBlink();
 

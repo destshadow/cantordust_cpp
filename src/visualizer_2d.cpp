@@ -25,6 +25,7 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
         case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
         case ViewMode::TRIGRAPH3D: return {};
         case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
+        case ViewMode::METRICMAP:  return m_metricmap.getRGB();
     }
     return {};
 }
@@ -81,9 +82,10 @@ void Visualizer::handle2DInput() {
     int my = GetMouseY();
     if (my < TOPBAR_H) return;
 
-    bool inCanvas = (mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W &&
-                     my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H);
+    bool inCanvas  = (mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W &&
+                      my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H);
 
+    // Zoom con rotella
     if (inCanvas) {
         if (GetMouseWheel() > 0)
             m_zoom2d = std::min(16.0f, m_zoom2d * 1.25f);
@@ -96,7 +98,11 @@ void Visualizer::handle2DInput() {
         }
     }
 
-    if (m_zoom2d > 1.0f && inCanvas && !m_input.lastClickWasTab()) {
+    // Pan con drag sinistro
+    // NON iniziare drag se siamo in hover su una sezione
+    bool onSection = (m_hoveredSection >= 0);
+    if (m_zoom2d > 1.0f && inCanvas &&
+        !m_input.lastClickWasTab() && !onSection) {
         if (GetMouse(0).bPressed) {
             m_dragging   = true;
             m_lastMouseX = mx;
@@ -117,15 +123,18 @@ void Visualizer::handle2DInput() {
         m_lastMouseY = my;
     }
 
+    // Scrollbar H canvas
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
-        my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H) {
-        m_scrollH = std::clamp((float)(mx-6)/(float)(CANVAS_W-12), 0.0f, 1.0f);
-    }
+        my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H)
+        m_scrollH = std::clamp((float)(mx-6)/(float)(CANVAS_W-12),
+                                0.0f, 1.0f);
+
+    // Scrollbar V canvas
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
         mx >= CANVAS_W && mx < CANVAS_W + SCROLLBAR_V_W &&
-        my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H) {
-        m_scrollV = std::clamp((float)(my-CANVAS_Y)/(float)CANVAS_H, 0.0f, 1.0f);
-    }
+        my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H)
+        m_scrollV = std::clamp((float)(my-CANVAS_Y)/(float)CANVAS_H,
+                                0.0f, 1.0f);
 }
 
 std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
@@ -135,7 +144,8 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
     if (mouseY < CANVAS_Y || mouseY >= CANVAS_Y + CANVAS_H) return "";
 
     float drawX, drawY, scale;
-    getCanvasTransform(m_zoom2d, m_scrollH, m_scrollV, drawX, drawY, scale);
+    getCanvasTransform(m_zoom2d, m_scrollH, m_scrollV,
+                       drawX, drawY, scale);
 
     int cx = (int)(((float)mouseX - drawX) / scale);
     int cy = (int)(((float)mouseY - drawY) / scale);
@@ -145,8 +155,11 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
     if (m_mode == ViewMode::DIGRAPH) {
         oss << "COPPIA: 0x" << std::uppercase << std::hex
             << std::setw(2) << std::setfill('0') << cx
-            << " -> 0x"
-            << std::setw(2) << std::setfill('0') << cy;
+            << " -> 0x" << std::setw(2) << std::setfill('0') << cy;
+    } else if (m_mode == ViewMode::METRICMAP) {
+        size_t fidx = m_metricmap.fileIndexAt(cx, cy);
+        oss << "FILE IDX: 0x" << std::uppercase << std::hex
+            << std::setw(8) << std::setfill('0') << fidx;
     } else {
         oss << "POS: (" << std::dec << cx << "," << cy << ")";
     }

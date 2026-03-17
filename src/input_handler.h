@@ -16,7 +16,8 @@ enum class ViewMode {
     ENTROPY    = 2,
     HISTOGRAM  = 3,
     TRIGRAPH3D = 4,
-    RAWPIXELS  = 5
+    RAWPIXELS   = 5,
+    METRICMAP  = 6
 };
 
 class InputHandler {
