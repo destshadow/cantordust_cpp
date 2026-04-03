@@ -1,10 +1,6 @@
 #include "input_handler.h"
+#include <algorithm>
 
-// Posizioni tab calcolate dinamicamente
-// N=7 tab, FPS_AREA=64px fissi a destra
-// tabW = (screenW - FPS_AREA) / N
-// Ma InputHandler non conosce la screenW →
-// usiamo il metodo GetScreenWidth() di olcPGE
 static const ViewMode TAB_MODES[] = {
     ViewMode::DIGRAPH,
     ViewMode::DOTPLOT,
@@ -13,9 +9,13 @@ static const ViewMode TAB_MODES[] = {
     ViewMode::TRIGRAPH3D,
     ViewMode::RAWPIXELS,
     ViewMode::METRICMAP,
+    ViewMode::BYTECLOUD,
+    ViewMode::ONETUPLE,
 };
-static constexpr int N_TABS = 7;
-static constexpr int FPS_AREA = 80;
+static constexpr int N_TABS  = 9;
+static constexpr int TAB_W   = 130;
+// Scrollbar alta 12px — più facile da cliccare
+static constexpr int TAB_SB_H = 12;
 
 Action InputHandler::update(olc::PixelGameEngine* pge,
                              float fElapsedTime) {
@@ -27,25 +27,61 @@ Action InputHandler::update(olc::PixelGameEngine* pge,
 }
 
 Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
-    // Click sulle tab — larghezza calcolata dinamicamente
-    if (pge->GetMouse(0).bPressed) {
-        int mx  = pge->GetMouseX();
-        int my  = pge->GetMouseY();
-        if (my >= 0 && my < TOPBAR_H) {
-            int sw   = pge->ScreenWidth();
-            int tabW = (sw - FPS_AREA) / N_TABS;
-            for (int i = 0; i < N_TABS; i++) {
-                int tx = i * tabW;
-                if (mx >= tx && mx < tx + tabW) {
-                    m_requestedView   = TAB_MODES[i];
-                    m_lastClickWasTab = true;
-                    return Action::SWITCH_VIEW;
-                }
-            }
+    int mx = pge->GetMouseX();
+    int my = pge->GetMouseY();
+    int sw = pge->ScreenWidth();
+
+    int totalTabsW = N_TABS * TAB_W;
+    int maxOffset  = std::max(0, totalTabsW - sw);
+
+    // Y della scrollbar = ultima parte della topbar
+    int sbY = TOPBAR_H - TAB_SB_H;
+
+    // --- Scrollbar tab: drag ---
+    if (pge->GetMouse(0).bPressed && my >= sbY && my < TOPBAR_H) {
+        m_tabScrollDragging = true;
+        m_lastMouseX = mx;
+        // Click diretto → salta alla posizione
+        float norm = (float)mx / (float)sw;
+        m_tabScrollOffset = std::clamp((int)(norm * maxOffset),
+                                        0, maxOffset);
+    }
+
+    if (pge->GetMouse(0).bHeld && m_tabScrollDragging) {
+        // Drag: sposta proporzionalmente al movimento
+        int dx = mx - m_lastMouseX;
+        m_lastMouseX = mx;
+        // dx pixel sullo schermo → quanto scrollare?
+        // ratio = totalTabsW / sw
+        float scrollRatio = (float)totalTabsW / (float)sw;
+        m_tabScrollOffset = std::clamp(
+            m_tabScrollOffset + (int)(dx * scrollRatio),
+            0, maxOffset);
+    }
+
+    if (pge->GetMouse(0).bReleased)
+        m_tabScrollDragging = false;
+
+    // --- Click sulle tab ---
+    // Solo nella zona sopra la scrollbar
+    if (pge->GetMouse(0).bPressed &&
+        my >= 0 && my < sbY &&
+        !m_tabScrollDragging) {
+        // mx + offset = posizione virtuale nella lista tab
+        int virtualX = mx + m_tabScrollOffset;
+        int tabIdx   = virtualX / TAB_W;
+        if (tabIdx >= 0 && tabIdx < N_TABS) {
+            m_requestedView   = TAB_MODES[tabIdx];
+            m_lastClickWasTab = true;
+            return Action::SWITCH_VIEW;
         }
     }
-    m_lastClickWasTab = false;
 
+    // Reset flag SOLO se non abbiamo appena cliccato una tab
+    if (!pge->GetMouse(0).bPressed)
+        m_lastClickWasTab = false;
+
+    // --- Tasti 1-9 ---
     if (pge->GetKey(olc::Key::K1).bPressed) {
         m_requestedView = ViewMode::DIGRAPH;    return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K2).bPressed) {
@@ -60,6 +96,10 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
         m_requestedView = ViewMode::RAWPIXELS;  return Action::SWITCH_VIEW; }
     if (pge->GetKey(olc::Key::K7).bPressed) {
         m_requestedView = ViewMode::METRICMAP;  return Action::SWITCH_VIEW; }
+    if (pge->GetKey(olc::Key::K8).bPressed) {
+        m_requestedView = ViewMode::BYTECLOUD;  return Action::SWITCH_VIEW; }
+    if (pge->GetKey(olc::Key::K9).bPressed) {
+        m_requestedView = ViewMode::ONETUPLE;   return Action::SWITCH_VIEW; }
 
     if (pge->GetKey(olc::Key::O).bPressed) {
         m_inputMode   = true;

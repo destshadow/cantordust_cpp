@@ -27,6 +27,7 @@ struct UIState {
     float       zoomLevel   = 1.0f;
     float       scrollH     = 0.0f;
     float       scrollV     = 0.0f;
+    int         tabOffset   = 0;    // prima tab visibile
     bool        inputMode   = false;
     std::string inputBuffer;
     float       cursorBlink = 0.0f;

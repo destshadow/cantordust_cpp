@@ -26,6 +26,8 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
         case ViewMode::TRIGRAPH3D: return {};
         case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
         case ViewMode::METRICMAP:  return m_metricmap.getRGB();
+        case ViewMode::BYTECLOUD:  return m_bytecloud.toRGB();
+        case ViewMode::ONETUPLE:   return m_onetuple.toRGB();
     }
     return {};
 }

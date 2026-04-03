@@ -33,7 +33,10 @@ SRC = src/main.cpp \
       src/hilbert.cpp \
       src/metric_map.cpp \
       src/ngram_model.cpp \
-      src/classifier_model.cpp
+      src/classifier_model.cpp \
+      src/byte_cloud.cpp \
+      src/one_tuple.cpp \
+      src/overview_bar.cpp \
 
 OUT = cantordust
 
@@ -45,3 +48,4 @@ clean:
 
 run: all
 	./$(OUT)
+

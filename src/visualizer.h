@@ -13,11 +13,14 @@
 #include "binary_format.h"
 #include "raw_pixels.h"
 #include "metric_map.h"
+#include "byte_cloud.h"
+#include "one_tuple.h"
 #include "classifier_model.h"
 #include "constants.h"
 #include <future>
 #include <mutex>
 #include <atomic>
+#include "overview_bar.h"
 
 class Visualizer : public olc::PixelGameEngine {
 public:
@@ -51,6 +54,8 @@ private:
     BinaryParser  m_parser;
     RawPixels     m_rawpixels;
     MetricMap        m_metricmap;
+    ByteCloud        m_bytecloud;
+    OneTuple         m_onetuple;
     ClassifierModel  m_classifier;
 
     // Canvas
@@ -65,6 +70,7 @@ private:
     ViewMode      m_mode      = ViewMode::DIGRAPH;
     BppMode       m_bppMode   = BppMode::BPP_8;
     ColorMode     m_colorMode = ColorMode::WAVELENGTH;
+    CurveMode     m_curveMode = CurveMode::HILBERT;
     bool          m_dirty     = false;
     std::string   m_status;
     std::string   m_initPath;
@@ -89,4 +95,8 @@ private:
     // Sezioni interattive
     std::vector<SectionInfo> m_sectionInfos;
     int m_hoveredSection = -1;
+
+    // Overview bar
+    OverviewBar m_overviewBar;
+    bool        m_overviewDragging = false;
 };
