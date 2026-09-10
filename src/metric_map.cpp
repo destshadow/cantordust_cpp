@@ -27,7 +27,7 @@ float MetricMap::localEntropy(const std::vector<uint8_t>& bytes,
         float p = (float)freq[b] / (float)count;
         entropy -= p * std::log2(p);
     }
-    return entropy / 8.0f;
+    return entropy / 4.0f; // Una finestra di 16 campioni ha massimo 4 bit.
 }
 
 WavelengthRGB::RGB MetricMap::colorForByte(
@@ -55,10 +55,11 @@ WavelengthRGB::RGB MetricMap::colorForByte(
         case ColorMode::CLASSIFIER: {
             // Usa la classificazione NGram se disponibile
             // Ogni classe ha un colore distinto tramite WavelengthRGB
-            if (cd && cd->classifications) {
+            if (cd && cd->classifications && cd->blockSize > 0) {
                 size_t blockIdx = file_idx / cd->blockSize;
                 if (blockIdx < cd->classifications->size()) {
                     int cls = (*cd->classifications)[blockIdx];
+                    if (cls < 0 || cls >= NUM_CLASSES) return {128, 128, 128};
                     // Mappa classe [0,16] → lunghezza d'onda [400,780]
                     double t    = (double)cls / (double)(NUM_CLASSES-1);
                     double wave = 400.0 + t * (780.0 - 400.0);
@@ -148,7 +149,7 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
 }
 
 size_t MetricMap::fileIndexAt(int x, int y) const {
-    if (x < 0 || x >= m_size || y < 0 || y >= m_size)
+    if (m_indexMap.empty() || x < 0 || x >= m_size || y < 0 || y >= m_size)
         return 0;
     return m_indexMap[y * m_size + x];
 }

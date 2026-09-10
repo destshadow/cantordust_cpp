@@ -159,7 +159,7 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
             << std::setw(2) << std::setfill('0') << cx
             << " -> 0x" << std::setw(2) << std::setfill('0') << cy;
     } else if (m_mode == ViewMode::METRICMAP) {
-        size_t fidx = m_metricmap.fileIndexAt(cx, cy);
+        size_t fidx = m_navigator.getStart() + m_metricmap.fileIndexAt(cx, cy);
         oss << "FILE IDX: 0x" << std::uppercase << std::hex
             << std::setw(8) << std::setfill('0') << fidx;
     } else {

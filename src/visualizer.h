@@ -25,7 +25,9 @@
 class Visualizer : public olc::PixelGameEngine {
 public:
     Visualizer(const std::string& filepath = "");
+    ~Visualizer() override;
     bool OnUserCreate() override;
+    bool OnUserDestroy() override;
     bool OnUserUpdate(float fElapsedTime) override;
 
 private:
@@ -73,6 +75,7 @@ private:
     CurveMode     m_curveMode = CurveMode::HILBERT;
     bool          m_dirty     = false;
     std::string   m_status;
+    std::string   m_computeError;
     std::string   m_initPath;
 
     // Threading

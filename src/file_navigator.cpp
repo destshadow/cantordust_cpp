@@ -26,7 +26,7 @@ void FileNavigator::resetWindow(const std::vector<uint8_t>& bytes) {
 void FileNavigator::moveForward() {
     // Se siamo a finestra intera → rimpicciolisci a 25%
     if (m_windowSize == m_totalSize) {
-        m_windowSize = std::max((size_t)256, m_totalSize / 4);
+        m_windowSize = std::min(m_totalSize, std::max((size_t)256, m_totalSize / 4));
         m_step       = std::max((size_t)4096, m_windowSize / 16);
         m_end        = m_start + m_windowSize;
         return;
@@ -90,4 +90,11 @@ std::vector<uint8_t> FileNavigator::getWindow(
     size_t end = std::min(m_end, bytes.size());
     return std::vector<uint8_t>(bytes.begin() + m_start,
                                 bytes.begin() + end);
+}
+
+void FileNavigator::selectRange(size_t start, size_t length) {
+    m_start = std::min(start, m_totalSize);
+    m_windowSize = std::min(length, m_totalSize - m_start);
+    m_end = m_start + m_windowSize;
+    m_step = std::max(size_t(1), m_windowSize / 16);
 }

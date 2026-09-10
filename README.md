@@ -4,7 +4,7 @@ Binary visualization tool ispirato al lavoro di [Christopher Domas](https://gith
 
 Visualizza file binari come immagini per identificare pattern, sezioni e anomalie a colpo d'occhio.
 
-![CantorDust++](https://raw.githubusercontent.com/destshadow/cantordust_cpp/test_digrapg.png)
+![CantorDust++](test_digraph.png)
 
 ---
 
@@ -17,6 +17,10 @@ Visualizza file binari come immagini per identificare pattern, sezioni e anomali
 | `3` | Entropy | Entropia di Shannon per sezione |
 | `4` | Histogram | Frequenza di ogni byte value 0-255 |
 | `5` | 3D View | Triple di byte nello spazio 3D |
+| `6` | RawPixels | Interpretazione dei byte come pixel, BPP con `[` e `]` |
+| `7` | MetricMap | Curve Hilbert, Z-order e lineare (`V`); colori con `C` |
+| `8` | ByteCloud | Frequenze dei byte in una griglia esadecimale |
+| `9` | OneTuple | Distribuzione dei byte per gruppi consecutivi |
 
 ---
 
@@ -65,13 +69,13 @@ make
 ### Generale
 | Tasto | Azione |
 |-------|--------|
-| `1-5` | Cambia vista |
+| `1-9` | Cambia vista |
 | `O` | Apri file |
 | `S` | Salva PNG |
 | `←→` | Naviga nel file |
 | `Home` | Reset (file intero) |
 
-### Vista 2D (1-4)
+### Viste 2D (tutte tranne 5)
 | Azione | Effetto |
 |--------|---------|
 | Rotella mouse | Zoom in/out |
@@ -150,3 +154,25 @@ pillow
 ## License
 
 MIT
+
+## Classificatore N-gram e verifiche
+
+La modalità Classifier della MetricMap usa campioni binari in
+`templates/<classe>.bin`, relativi alla directory da cui si avvia il programma.
+I nomi delle classi sono elencati in `src/classifier_model.h` (per esempio
+`ascii.bin`, `x86.bin`, `x64.bin`). I campioni devono contenere almeno 4 byte.
+Le classi prive di campioni non partecipano al confronto. Senza template validi
+la modalità viene saltata con un messaggio; non vengono generate classificazioni
+fittizie. I blocchi troppo corti per un N-gram sono mostrati in grigio.
+Questa è una classificazione statistica, non una rete neurale.
+Le cartelle Python e dataset sono predisposizioni attualmente senza codice.
+
+Eseguire `make test` per i test di regressione senza interfaccia grafica.
+I sorgenti sono in `tests/`, gli eseguibili generati in `build/`.
+
+La selezione di una sezione mostra il suo intervallo esatto; cambiando colori,
+BPP o vista l'intervallo viene mantenuto. Ogni ricalcolo elabora solo la vista
+attiva e copia solo la finestra selezionata. Il file viene comunque caricato
+interamente in memoria; il rendering 3D di file grandi può essere oneroso.
+Il parser supporta ELF32/64 little-endian e PE; ELF big-endian viene rifiutato,
+e le sezioni ELF senza byte nel file (`SHT_NOBITS`, come `.bss`) sono escluse.

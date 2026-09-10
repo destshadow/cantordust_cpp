@@ -4,6 +4,8 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 
 ClassifierModel::ClassifierModel() {}
 
@@ -13,8 +15,10 @@ ClassifierModel::ClassifierModel() {}
 // Es: templates/x86.bin
 bool ClassifierModel::loadTemplates(const std::string& templateDir,
                                      int grams) {
+    if (grams <= 0) throw std::invalid_argument("NGram order must be positive");
     m_grams = grams;
     m_templates.clear();
+    m_blockClassifications.clear();
     m_ready = false;
 
     int loaded = 0;
@@ -27,16 +31,24 @@ bool ClassifierModel::loadTemplates(const std::string& templateDir,
         if (!f.is_open()) {
             std::cerr << "[Classifier] Template non trovato: "
                       << path << "\n";
-            // Crea un modello vuoto come placeholder
-            std::vector<uint8_t> empty(256, (uint8_t)i);
+            // Modello vuoto: questa classe non partecipa al confronto
+            std::vector<uint8_t> empty;
             m_templates.emplace_back(empty, grams);
             continue;
         }
 
-        size_t size = f.tellg();
+        auto fileSize = f.tellg();
+        if (fileSize < grams || fileSize > std::numeric_limits<int>::max()) {
+            m_templates.emplace_back(std::vector<uint8_t>{}, grams);
+            continue;
+        }
+        size_t size = size_t(fileSize);
         f.seekg(0, std::ios::beg);
         std::vector<uint8_t> data(size);
-        f.read(reinterpret_cast<char*>(data.data()), size);
+        if (!f.read(reinterpret_cast<char*>(data.data()), size)) {
+            m_templates.emplace_back(std::vector<uint8_t>{}, grams);
+            continue;
+        }
 
         m_templates.emplace_back(data, grams);
         loaded++;
@@ -60,13 +72,18 @@ void ClassifierModel::generateTemplates(
     const std::vector<std::vector<uint8_t>>& classSamples,
     int grams) {
 
+    if (grams <= 0) throw std::invalid_argument("NGram order must be positive");
     m_grams = grams;
     m_templates.clear();
+    m_blockClassifications.clear();
 
+    if (classSamples.size() > NUM_CLASSES)
+        throw std::invalid_argument("Too many classifier classes");
     for (const auto& sample : classSamples)
         m_templates.emplace_back(sample, grams);
 
-    m_ready = !m_templates.empty();
+    m_ready = std::any_of(m_templates.begin(), m_templates.end(),
+        [](const NGramModel& model) { return model.getModelSize() > 0; });
 }
 
 // --- classify ---
@@ -75,10 +92,11 @@ void ClassifierModel::generateTemplates(
 // con tutti i template — ritorna l'indice del piu' simile
 int ClassifierModel::classify(const std::vector<uint8_t>& data,
                                int low, int high) const {
-    if (m_templates.empty()) return 0;
+    if (m_templates.empty()) return -1;
 
+    if (low < 0 || high < low || size_t(high) > data.size()) return -1;
     int len = high - low;
-    if (len < m_grams) return 0;
+    if (len < m_grams) return -1;
 
     // Costruisce il modello per questo blocco
     NGramModel blockModel(data, low, len, m_grams);
@@ -86,13 +104,14 @@ int ClassifierModel::classify(const std::vector<uint8_t>& data,
     // Confronta con tutti i template
     // Tiene traccia del punteggio massimo
     ExponentialNotation bestScore(0.0);
-    int bestClass = 0;
+    int bestClass = -1;
 
     for (int i = 0; i < (int)m_templates.size(); i++) {
+        if (m_templates[i].getModelSize() == 0) continue;
         ExponentialNotation score =
             blockModel.evaluate(m_templates[i]);
 
-        if (i == 0 || score.greaterThan(bestScore)) {
+        if (bestClass < 0 || score.greaterThan(bestScore)) {
             bestScore = score;
             bestClass = i;
         }
@@ -107,9 +126,12 @@ int ClassifierModel::classify(const std::vector<uint8_t>& data,
 void ClassifierModel::classifyFile(
     const std::vector<uint8_t>& data) {
 
+    m_blockClassifications.clear();
     if (!m_ready || data.empty()) return;
 
-    size_t numBlocks = data.size() / BLOCK_SIZE;
+    if (data.size() > size_t(std::numeric_limits<int>::max()))
+        throw std::length_error("Classifier window exceeds supported size");
+    size_t numBlocks = data.size() / BLOCK_SIZE + (data.size() % BLOCK_SIZE != 0);
     m_blockClassifications.resize(numBlocks);
 
     std::cout << "[Classifier] Classificazione di "
@@ -117,7 +139,7 @@ void ClassifierModel::classifyFile(
 
     for (size_t i = 0; i < numBlocks; i++) {
         int low  = (int)(i * BLOCK_SIZE);
-        int high = (int)(low + BLOCK_SIZE);
+        int high = (int)std::min(data.size(), size_t(low) + BLOCK_SIZE);
         m_blockClassifications[i] = classify(data, low, high);
     }
 
@@ -128,10 +150,10 @@ void ClassifierModel::classifyFile(
 // Ritorna la classe del byte all'indice specificato
 // Mappa l'indice byte → blocco → classificazione
 int ClassifierModel::classAtIndex(size_t index) const {
-    if (m_blockClassifications.empty()) return 0;
+    if (m_blockClassifications.empty()) return -1;
     size_t blockIdx = index / BLOCK_SIZE;
     if (blockIdx >= m_blockClassifications.size())
-        return 0;  // oltre la fine del file
+        return -1;  // oltre la fine del file
     return m_blockClassifications[blockIdx];
 }
 

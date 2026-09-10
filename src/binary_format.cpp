@@ -26,20 +26,20 @@ const uint8_t BinaryParser::PALETTE[][3] = {
 // --- Helper: lettura little-endian ---
 uint16_t BinaryParser::read16(const std::vector<uint8_t>& b,
                                size_t off) const {
-    if (off + 1 >= b.size()) return 0;
+    if (off > b.size() || b.size() - off < 2) return 0;
     return (uint16_t)b[off] | ((uint16_t)b[off+1] << 8);
 }
 
 uint32_t BinaryParser::read32(const std::vector<uint8_t>& b,
                                size_t off) const {
-    if (off + 3 >= b.size()) return 0;
+    if (off > b.size() || b.size() - off < 4) return 0;
     return (uint32_t)b[off]       | ((uint32_t)b[off+1] << 8) |
            ((uint32_t)b[off+2] << 16) | ((uint32_t)b[off+3] << 24);
 }
 
 uint64_t BinaryParser::read64(const std::vector<uint8_t>& b,
                                size_t off) const {
-    if (off + 7 >= b.size()) return 0;
+    if (off > b.size() || b.size() - off < 8) return 0;
     return (uint64_t)read32(b, off) |
            ((uint64_t)read32(b, off+4) << 32);
 }
@@ -64,7 +64,6 @@ void BinaryParser::parse(const std::vector<uint8_t>& bytes) {
 
     // PE: 4D 5A ("MZ")
     if (bytes[0] == 'M' && bytes[1] == 'Z') {
-        m_format = BinaryFormat::PE;
         parsePE(bytes);
         return;
     }
@@ -75,7 +74,12 @@ void BinaryParser::parse(const std::vector<uint8_t>& bytes) {
 // --- Parser ELF ---
 // Supporta sia ELF32 che ELF64
 void BinaryParser::parseELF(const std::vector<uint8_t>& bytes) {
-    if (bytes.size() < 64) return;
+    if (bytes.size() < 16) return;
+    if ((bytes[4] != 1 && bytes[4] != 2) || bytes[5] != 1) {
+        m_format = BinaryFormat::UNKNOWN;
+        return; // Al momento supportiamo solo ELF little-endian.
+    }
+    if (bytes.size() < (bytes[4] == 2 ? 64u : 52u)) return;
 
     bool is64 = (bytes[4] == 2);  // EI_CLASS: 1=32bit, 2=64bit
 
@@ -98,7 +102,8 @@ void BinaryParser::parseELF(const std::vector<uint8_t>& bytes) {
     }
 
     if (shoff == 0 || shnum == 0 || shentsize == 0) return;
-    if (shoff + shnum * shentsize > bytes.size())    return;
+    if (shentsize < (is64 ? 64 : 40) || shstrndx >= shnum) return;
+    if (shoff > bytes.size() || shnum > (bytes.size() - shoff) / shentsize) return;
 
     // Leggi la sezione dei nomi (.shstrtab)
     // È la sezione all'indice shstrndx
@@ -134,12 +139,14 @@ void BinaryParser::parseELF(const std::vector<uint8_t>& bytes) {
             secSize   = read32(bytes, entOff + 0x14);
         }
 
+        if (read32(bytes, entOff + 4) == 8) continue; // SHT_NOBITS: nessun byte nel file
+        if (secOffset > bytes.size() || secSize > bytes.size() - secOffset) continue;
         if (secSize == 0) continue; // sezione vuota → skip
 
         // Leggi il nome dalla strtab
         std::string name = "?";
         if (strtabOff > 0 &&
-            strtabOff + nameOff < bytes.size()) {
+            strtabOff < bytes.size() && nameOff < bytes.size() - strtabOff) {
             size_t nameStart = strtabOff + nameOff;
             size_t nameEnd   = nameStart;
             while (nameEnd < bytes.size() &&
@@ -170,13 +177,15 @@ void BinaryParser::parsePE(const std::vector<uint8_t>& bytes) {
     if (bytes.size() < 0x40) return;
 
     // Offset dell'header PE (a 0x3C nel DOS header)
-    uint32_t peOff = read32(bytes, 0x3C);
-    if (peOff + 24 >= bytes.size()) return;
+    size_t peOff = read32(bytes, 0x3C);
+    if (peOff > bytes.size() || bytes.size() - peOff < 24) return;
 
     // Verifica magic "PE\0\0"
     if (bytes[peOff]   != 'P' || bytes[peOff+1] != 'E' ||
         bytes[peOff+2] != 0   || bytes[peOff+3] != 0)
         return;
+
+    m_format = BinaryFormat::PE;
 
     // COFF header (subito dopo il magic PE)
     uint16_t numSections    = read16(bytes, peOff + 6);
@@ -199,7 +208,7 @@ void BinaryParser::parsePE(const std::vector<uint8_t>& bytes) {
         uint32_t rawSize   = read32(bytes, entOff + 16); // SizeOfRawData
         uint32_t rawOffset = read32(bytes, entOff + 20); // PointerToRawData
 
-        if (rawSize == 0) continue;
+        if (rawSize == 0 || rawOffset > bytes.size() || rawSize > bytes.size() - rawOffset) continue;
 
         BinarySection sec;
         sec.name   = std::string(name);

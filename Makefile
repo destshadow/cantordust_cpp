@@ -49,3 +49,13 @@ clean:
 run: all
 	./$(OUT)
 
+TEST_OUT ?= build/core_tests
+TEST_SRC = tests/core_tests.cpp src/file_navigator.cpp src/ngram_model.cpp \
+           src/classifier_model.cpp src/binary_format.cpp src/binary_reader.cpp \
+           src/metric_map.cpp src/hilbert.cpp src/wavelength_rgb.cpp
+
+.PHONY: all clean run test
+test:
+	mkdir -p $(dir $(TEST_OUT))
+	$(CXX) $(CXXFLAGS) -I src $(TEST_SRC) -o $(TEST_OUT)
+	./$(TEST_OUT)

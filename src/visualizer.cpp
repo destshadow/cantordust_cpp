@@ -1,4 +1,5 @@
 #include "visualizer.h"
+#include <filesystem>
 
 Visualizer::Visualizer(const std::string& filepath)
     : m_initPath(filepath) {
@@ -8,6 +9,9 @@ Visualizer::Visualizer(const std::string& filepath)
 bool Visualizer::OnUserCreate() {
     m_canvas = new olc::Sprite(256, 256);
     m_decal  = new olc::Decal(m_canvas);
+    std::error_code ec;
+    if (std::filesystem::is_directory("templates", ec))
+        m_classifier.loadTemplates("templates");
     loadFile(m_initPath.empty() ? "/bin/ls" : m_initPath);
     return true;
 }
@@ -17,6 +21,10 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 
     {
         std::lock_guard<std::mutex> lk(m_dataMutex);
+        if (!m_computeError.empty()) {
+            m_status = std::move(m_computeError);
+            m_computeError.clear();
+        }
         if (m_dirty && !busy) {
             updateCanvas();
             m_dirty = false;
@@ -31,10 +39,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 m_mode     = m_input.getRequestedView();
                 m_dragging = false;
                 m_panning  = false;
-                {
-                    std::lock_guard<std::mutex> lk(m_dataMutex);
-                    updateCanvas();
-                }
+                recomputeWindow();
                 m_status = "";
                 break;
             case Action::OPEN_FILE:
@@ -55,7 +60,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
 
         // --- Cambio bpp con [ ] (solo RawPixels) ---
-        if (m_mode == ViewMode::RAWPIXELS) {
+        if (!m_computing && m_mode == ViewMode::RAWPIXELS) {
             bool changed = false;
             if (GetKey(olc::Key::OEM_4).bPressed) {
                 int m = ((int)m_bppMode - 1 + 5) % 5;
@@ -68,7 +73,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 changed = true;
             }
             if (changed) {
-                m_rawpixels.compute(m_reader.getBytes(), m_bppMode);
+                m_rawpixels.compute(m_navigator.getWindow(m_reader.getBytes()), m_bppMode);
                 {
                     std::lock_guard<std::mutex> lk(m_dataMutex);
                     updateCanvas();
@@ -79,14 +84,18 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
 
         // --- C = ColorMode, V = CurveMode (solo MetricMap) ---
-        if (m_mode == ViewMode::METRICMAP) {
+        if (!m_computing && m_mode == ViewMode::METRICMAP) {
             bool recompute = false;
             if (GetKey(olc::Key::C).bPressed) {
                 int cm = ((int)m_colorMode + 1) % 5;
+                if (cm == (int)ColorMode::CLASSIFIER && !m_classifier.isReady()) {
+                    cm = 0;
+                    m_status = "Classifier non disponibile: aggiungi template in templates/";
+                }
                 m_colorMode = (ColorMode)cm;
                 recompute = true;
-                m_status = std::string("Color: ") +
-                           MetricMap::colorModeName(m_colorMode);
+                if (cm != 0 || m_classifier.isReady())
+                    m_status = std::string("Color: ") + MetricMap::colorModeName(m_colorMode);
             }
             if (GetKey(olc::Key::V).bPressed) {
                 int cv = ((int)m_curveMode + 1) % 3;
@@ -96,28 +105,22 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                            MetricMap::curveModeName(m_curveMode);
             }
             if (recompute) {
-                m_metricmap.compute(m_reader.getBytes(),
-                                    m_colorMode,
-                                    m_curveMode, 8);
-                {
-                    std::lock_guard<std::mutex> lk(m_dataMutex);
-                    updateCanvas();
-                }
+                recomputeWindow();
             }
         }
 
         // --- Navigazione file ---
-        if (GetKey(olc::Key::RIGHT).bPressed) {
+        if (!m_computing && GetKey(olc::Key::RIGHT).bPressed) {
             m_navigator.moveForward();
             recomputeWindow();
             m_status = "";
         }
-        if (GetKey(olc::Key::LEFT).bPressed) {
+        if (!m_computing && GetKey(olc::Key::LEFT).bPressed) {
             m_navigator.moveBackward();
             recomputeWindow();
             m_status = "";
         }
-        if (GetKey(olc::Key::HOME).bPressed) {
+        if (!m_computing && GetKey(olc::Key::HOME).bPressed) {
             m_navigator.resetWindow(m_reader.getBytes());
             recomputeWindow();
             m_zoom2d  = 1.0f;
@@ -127,7 +130,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
 
         // Click scrollbar file
-        if (GetMouse(0).bHeld &&
+        if (!m_computing && GetMouse(0).bHeld &&
             GetMouseY() >= FILE_NAV_Y &&
             GetMouseY() <  FILE_NAV_Y + FILE_NAV_H) {
             float norm = (float)(GetMouseX() - 6) /
@@ -139,14 +142,14 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         // --- Overview bar: drag sul pannello B ---
         constexpr int OV_X = 6, OV_Y = 30, OV_GAP = 6;
 
-        if (GetMouse(0).bPressed &&
+        if (!m_computing && GetMouse(0).bPressed &&
             m_overviewBar.hitTestPanelB(GetMouseX(), GetMouseY(), OV_X, OV_Y, OV_GAP)) {
             m_overviewBar.startDrag();
         }
         if (GetMouse(0).bReleased) {
             m_overviewBar.stopDrag();
         }
-        if (m_overviewBar.isDragging() && GetMouse(0).bHeld) {
+        if (!m_computing && m_overviewBar.isDragging() && GetMouse(0).bHeld) {
             float norm = m_overviewBar.mouseYToNorm(GetMouseY(), OV_Y);
             m_navigator.jumpTo(norm);
             recomputeWindow();
@@ -154,6 +157,8 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 
         handleSectionClick();
     }
+
+    busy = m_computing.load();
 
     // Input modalita'
     if (m_mode == ViewMode::TRIGRAPH3D)
@@ -194,6 +199,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                     " [/]=cambia]  " + m_status;
 
     UIState state;
+    state.tabOffset      = m_input.getTabScrollOffset();
     state.currentView    = m_mode;
     state.cmdStatus      = busy ? "Calcolo in corso..." : statusStr;
     state.filepath       = m_reader.getFilepath();
@@ -228,4 +234,17 @@ void Visualizer::drawSpinner(float fElapsedTime) {
     std::string txt = "Calcolo";
     for (int i = 0; i < dots; i++) txt += ".";
     DrawString(bx + 10, by + 14, txt, COL_YELLOW());
+}
+
+Visualizer::~Visualizer() {
+    if (m_future.valid()) m_future.wait();
+}
+
+bool Visualizer::OnUserDestroy() {
+    if (m_future.valid()) m_future.wait();
+    delete m_decal;
+    m_decal = nullptr;
+    delete m_canvas;
+    m_canvas = nullptr;
+    return true;
 }

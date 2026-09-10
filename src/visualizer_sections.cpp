@@ -26,10 +26,12 @@ static int offsetToScreenY(float norm, float drawY, float scale) {
 }
 
 void Visualizer::drawSectionOverlay() {
+    m_sectionInfos.clear();
+    m_hoveredSection = -1;
     if (!m_parser.hasSections()) return;
     if (m_mode == ViewMode::TRIGRAPH3D) return;
 
-    size_t total = m_reader.getSize();
+    size_t total = m_navigator.getWindowSize();
     if (total == 0) return;
 
     m_sectionInfos.clear();
@@ -56,7 +58,7 @@ void Visualizer::drawSectionOverlay() {
     for (int i = 0; i < (int)m_parser.getSections().size(); i++) {
         const auto& sec = m_parser.getSections()[i];
 
-        float norm    = (float)sec.offset / (float)total;
+        float norm = float(double(sec.offset) - double(m_navigator.getStart())) / float(total);
 
         // Posizione sullo schermo CON zoom/scroll
         int screenX = offsetToScreenX(norm, drawX, scale);
@@ -111,9 +113,9 @@ void Visualizer::drawSectionOverlay() {
 }
 
 void Visualizer::handleSectionClick() {
-    if (!m_parser.hasSections()) return;
+    if (m_computing || !m_parser.hasSections()) return;
     if (m_mode == ViewMode::TRIGRAPH3D) return;
-    if (m_hoveredSection < 0) return;
+    if (m_hoveredSection < 0 || size_t(m_hoveredSection) >= m_parser.getSections().size()) return;
 
     // Rileva click sinistro — ma solo se NON stiamo facendo drag
     if (!GetMouse(0).bPressed) return;
@@ -124,12 +126,7 @@ void Visualizer::handleSectionClick() {
     size_t total    = m_reader.getSize();
     if (total == 0) return;
 
-    // Salta la navigazione all'offset della sezione
-    float navNorm = (float)sec.offset / (float)total;
-    m_navigator.jumpTo(navNorm);
-
-    // Imposta la finestra a 2x la dimensione della sezione
-    // così vediamo solo quella sezione nel dettaglio
+    m_navigator.selectRange(sec.offset, sec.size);
     recomputeWindow();
 
     std::ostringstream oss;

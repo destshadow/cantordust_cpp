@@ -8,6 +8,7 @@ public:
     void setData(const std::vector<uint8_t>& bytes,
                  size_t windowSize = 0);  // 0 = file intero
 
+    void selectRange(size_t start, size_t length);
     void moveForward();
     void moveBackward();
     void jumpTo(float normalized);

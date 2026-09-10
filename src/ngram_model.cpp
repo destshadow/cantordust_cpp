@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <stdexcept>
 
 NGramModel::NGramModel(const std::vector<uint8_t>& data, int n) {
     generateModel(data, 0, (int)data.size(), n);
@@ -18,6 +19,9 @@ NGramModel::NGramModel(const std::vector<uint8_t>& data,
 // Poi divide per il totale per ottenere probabilita'
 void NGramModel::generateModel(const std::vector<uint8_t>& data,
                                 int startIndex, int length, int n) {
+    if (n <= 0 || startIndex < 0 || length < 0 ||
+        size_t(startIndex) > data.size() || size_t(length) > data.size() - size_t(startIndex))
+        throw std::invalid_argument("Invalid NGram range or order");
     m_n = n;
 
     // Conta le occorrenze di ogni NGram
@@ -28,7 +32,7 @@ void NGramModel::generateModel(const std::vector<uint8_t>& data,
     int end = startIndex + length;
     for (int i = startIndex; i < end; i++) {
         // Controlla che ci siano abbastanza byte per un NGram completo
-        if (i + n >= end) break;
+        if (n > end - i) break;
 
         // Costruisce il VectorN per questa finestra
         VectorN v(n);
@@ -45,8 +49,8 @@ void NGramModel::generateModel(const std::vector<uint8_t>& data,
 
     // Calcola il totale degli NGram
     // modelEntries = lunghezza - n + 1 (numero di finestre possibili)
-    m_modelEntries = (int)data.size() - n + 1;
-    if (m_modelEntries <= 0) m_modelEntries = 1;
+    m_modelEntries = length - n + 1;
+    if (m_modelEntries < 0) m_modelEntries = 0;
 
     // Converti conteggi in probabilita'
     // p(NGram) = conteggio / modelEntries
@@ -96,7 +100,7 @@ ExponentialNotation NGramModel::evaluate(
                 ExponentialNotation(1.0)
                 .divide(ExponentialNotation((double)m_modelEntries))
                 .multiply(MIN_FACTOR);
-            score = score.multiply(penalty);
+            score = score.multiply(MathUtils::fastPow(penalty, k));
         }
     }
 
