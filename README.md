@@ -1,6 +1,6 @@
 # CantorDust++
 
-Binary visualization tool ispirato al lavoro di [Christopher Domas](https://github.com/Battelle/cantordust).
+Implementazione autonoma in C++ ispirata al lavoro originale di [Christopher Domas](https://github.com/Battelle/cantordust).
 
 Visualizza file binari come immagini per identificare pattern, sezioni e anomalie a colpo d'occhio.
 
@@ -15,7 +15,7 @@ Visualizza file binari come immagini per identificare pattern, sezioni e anomali
 | `1` | Digraph | Coppie di byte consecutive su piano 2D |
 | `2` | Dot Plot | Offset vs valore byte |
 | `3` | Entropy | Entropia di Shannon per sezione |
-| `4` | Histogram | Frequenza di ogni byte value 0-255 |
+| `4` | Histogram | Frequenza di ciascun valore byte (0–255) |
 | `5` | 3D View | Triple di byte nello spazio 3D |
 | `6` | RawPixels | Interpretazione dei byte come pixel, BPP con `[` e `]` |
 | `7` | MetricMap | Curve Hilbert, Z-order e lineare (`V`); colori con `C` |
@@ -128,33 +128,6 @@ cantordust_cpp/
 
 ---
 
-## Dipendenze
-
-### C++ (single-header, no install)
-- [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine) — rendering
-- [stb_image_write](https://github.com/nothings/stb) — export PNG
-
-### Python (neural network — WIP)
-```
-numpy
-matplotlib
-pillow
-```
-
----
-
-## Crediti
-
-- Christopher Domas — [CantorDust](https://github.com/Battelle/cantordust) (ispirazione)
-- javidx9 / One Lone Coder — [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine)
-- Sean Barrett — [stb libraries](https://github.com/nothings/stb)
-
----
-
-## License
-
-MIT
-
 ## Classificatore N-gram e verifiche
 
 La modalità Classifier della MetricMap usa campioni binari in
@@ -176,3 +149,29 @@ attiva e copia solo la finestra selezionata. Il file viene comunque caricato
 interamente in memoria; il rendering 3D di file grandi può essere oneroso.
 Il parser supporta ELF32/64 little-endian e PE; ELF big-endian viene rifiutato,
 e le sezioni ELF senza byte nel file (`SHT_NOBITS`, come `.bss`) sono escluse.
+
+---
+
+## Dipendenze
+
+### C++ (single-header, no install)
+- [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine) — rendering
+- [stb_image_write](https://github.com/nothings/stb) — export PNG
+
+### Python (area sperimentale — WIP)
+
+La cartella Python è una predisposizione e non fa parte delle funzionalità attuali.
+
+---
+
+## Crediti
+
+- Christopher Domas — [CantorDust](https://github.com/Battelle/cantordust) (ispirazione)
+- javidx9 / One Lone Coder — [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine)
+- Sean Barrett — [stb libraries](https://github.com/nothings/stb)
+
+---
+
+## Licenza
+
+MIT
