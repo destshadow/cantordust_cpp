@@ -6,6 +6,8 @@
 #include "metric_map.h"
 #include "autocorr.h"
 #include "raw_pixels.h"
+#include "byte_info.h"
+#include <string>
 #include <cmath>
 #include <algorithm>
 #include <cassert>
@@ -173,6 +175,39 @@ int main() {
         Autocorr ac;
         ac.compute(pureNoise);
         assert(ac.bestWidth(3) == 0 && ac.bestWidth(1) == 0);  // niente falsi positivi
+    }
+
+    // --- ByteInfo: classi di byte e ipotesi sul contenuto ---
+    {
+        using ByteInfo::Class;
+        assert(ByteInfo::classOf(0x00) == Class::ZERO);
+        assert(ByteInfo::classOf('A')  == Class::TEXT);
+        assert(ByteInfo::classOf('\n') == Class::TEXT);
+        assert(ByteInfo::classOf(0x07) == Class::CONTROL);
+        assert(ByteInfo::classOf(0x80) == Class::HIGH);
+        assert(ByteInfo::classOf(0xFF) == Class::FF);
+
+        auto guessOf = [](const std::vector<uint8_t>& b) {
+            return std::string(ByteInfo::guess(ByteInfo::statsOf(b, 0, b.size())));
+        };
+        std::mt19937 g(3);
+        std::vector<uint8_t> zeros(1024, 0), random(1024), text, smooth;
+        for (auto& x : random) x = uint8_t(g());
+        const char* lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
+        while (text.size() < 1024) text.insert(text.end(), lorem, lorem + 57);
+        int v = 100;                                   // "immagine": passeggiata lenta
+        for (int i = 0; i < 1024; ++i) {
+            v = std::clamp(v + int(g() % 9) - 4, 0, 255);
+            smooth.push_back(uint8_t(v));
+        }
+        for (auto& x : smooth) x = uint8_t(x + (g() % 3));   // un po' di grana
+        assert(guessOf(zeros)  == "zeri / padding");
+        assert(guessOf(random) == "alta entropia: compresso/cifrato");
+        assert(guessOf(text)   == "testo");
+        ByteInfo::Stats st = ByteInfo::statsOf(smooth, 0, smooth.size());
+        if (guessOf(smooth) != "valori lisci: immagine/audio raw?")
+            std::cerr << "smooth: entropia " << st.entropy << " liscio " << st.smooth << "\n";
+        assert(guessOf(smooth) == "valori lisci: immagine/audio raw?");
     }
 
     std::cout << "All core regression tests passed\n";

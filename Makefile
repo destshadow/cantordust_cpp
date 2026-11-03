@@ -38,7 +38,8 @@ SRC = src/main.cpp \
       src/one_tuple.cpp \
       src/overview_bar.cpp \
       src/autocorr.cpp \
-      src/visualizer_raw.cpp
+      src/visualizer_raw.cpp \
+      src/visualizer_inspector.cpp
 
 OUT = cantordust
 OBJ = $(SRC:src/%.cpp=build/%.o)

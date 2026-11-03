@@ -73,3 +73,61 @@ struct Slider {
         pge->FillRect(kx - 2, y + 1, 5, H - 2, knob);
     }
 };
+
+// Pannello con bordo e titolo; restituisce l'area interna utile.
+inline void drawPanel(olc::PixelGameEngine* pge, int x, int y, int w, int h,
+                      const std::string& title) {
+    pge->FillRect(x, y, w, h, COL_BG());
+    pge->DrawRect(x, y, w - 1, h - 1, COL_BORDER());
+    if (!title.empty()) {
+        pge->FillRect(x + 1, y + 1, w - 2, 12, COL_BG_LIGHT());
+        pge->DrawString(x + 6, y + 3, title, COL_YELLOW());
+    }
+}
+
+// Scrive righe di testo una sotto l'altra dentro un pannello
+// (font 8x8 di olcPGE). Tronca le righe troppo lunghe.
+struct PanelWriter {
+    olc::PixelGameEngine* pge;
+    int x, y, w;                 // area interna
+    int lineH = 10;
+
+    int maxChars() const { return std::max(0, w / 8); }
+
+    void text(const std::string& s, olc::Pixel col = olc::Pixel(210, 210, 210)) {
+        std::string t = (int)s.size() > maxChars() ? s.substr(0, maxChars()) : s;
+        pge->DrawString(x, y, t, col);
+        y += lineH;
+    }
+    // "ETICHETTA  valore" con l'etichetta in grigio
+    void field(const std::string& label, const std::string& value,
+               olc::Pixel col = olc::WHITE) {
+        pge->DrawString(x, y, label, olc::Pixel(130, 130, 160));
+        int vx = x + 9 * 8;
+        int room = std::max(0, (x + w - vx) / 8);
+        pge->DrawString(vx, y, value.substr(0, room), col);
+        y += lineH;
+    }
+    void gap(int px = 4) { y += px; }
+    void separator(const std::string& title = "") {
+        y += 3;
+        pge->DrawLine(x, y + 3, x + w, y + 3, COL_BORDER());
+        if (!title.empty()) {
+            int tw = (int)title.size() * 8 + 8;
+            pge->FillRect(x + 8, y - 1, tw, 9, COL_BG());
+            pge->DrawString(x + 12, y, title, COL_CYAN());
+        }
+        y += 12;
+    }
+    // Barra orizzontale di percentuale con etichetta
+    void bar(const std::string& label, float frac, olc::Pixel col) {
+        frac = std::clamp(frac, 0.0f, 1.0f);
+        pge->DrawString(x, y, label, olc::Pixel(180, 180, 180));
+        int bx = x + 12 * 8, bw = w - 12 * 8 - 5 * 8;
+        pge->FillRect(bx, y + 1, bw, 6, olc::Pixel(30, 30, 55));
+        pge->FillRect(bx, y + 1, (int)(bw * frac), 6, col);
+        std::string pct = std::to_string((int)std::lround(frac * 100)) + "%";
+        pge->DrawString(x + w - (int)pct.size() * 8, y, pct, olc::Pixel(180, 180, 180));
+        y += lineH;
+    }
+};

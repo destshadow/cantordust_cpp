@@ -145,18 +145,18 @@ void UIRenderer::drawTopBar(olc::PixelGameEngine* pge,
 
 void UIRenderer::drawScrollbarH(olc::PixelGameEngine* pge,
                                   const UIState& state) {
-    int y = SCROLLBAR_H_Y, w = CANVAS_W;
-    pge->FillRect(0, y, w, SCROLLBAR_H, COL_SCROLLBAR());
-    pge->DrawLine(0, y, w, y, COL_BORDER());
+    int x0 = CANVAS_X, y = SCROLLBAR_H_Y, w = CANVAS_W;
+    pge->FillRect(x0, y, w, SCROLLBAR_H, COL_SCROLLBAR());
+    pge->DrawLine(x0, y, x0 + w, y, COL_BORDER());
     int cw = std::max(20, (int)(w / state.zoomLevel));
-    int cx = (int)((w - cw) * state.scrollH);
+    int cx = x0 + (int)((w - cw) * state.scrollH);
     pge->FillRect(cx, y+1, cw, SCROLLBAR_H-2, COL_CURSOR());
     pge->DrawRect(cx, y+1, cw, SCROLLBAR_H-2, olc::Pixel(120,180,255));
 }
 
 void UIRenderer::drawScrollbarV(olc::PixelGameEngine* pge,
                                   const UIState& state) {
-    int x = CANVAS_W, y = CANVAS_Y, h = CANVAS_H;
+    int x = SCROLLBAR_V_X, y = CANVAS_Y, h = CANVAS_H;
     pge->FillRect(x, y, SCROLLBAR_V_W, h, COL_SCROLLBAR());
     pge->DrawLine(x, y, x, y+h, COL_BORDER());
     int ch = std::max(20, (int)(h / state.zoomLevel));
@@ -259,7 +259,8 @@ void UIRenderer::drawSectionPanel(olc::PixelGameEngine* pge,
 void UIRenderer::draw3DOverlay(olc::PixelGameEngine* pge,
                                  const UIState& state) {
     int sw = pge->ScreenWidth();
-    int bx = sw-180, by = TOPBAR_H+8;
+    (void)sw;
+    int bx = CANVAS_X + CANVAS_W - 180, by = CANVAS_Y + 8;
     pge->FillRect(bx, by, 172, 76, olc::Pixel(18,18,45,200));
     pge->DrawRect(bx, by, 172, 76, COL_BORDER());
     pge->DrawString(bx+8, by+6,  "3D Controls:",          COL_YELLOW());

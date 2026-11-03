@@ -173,13 +173,14 @@ void Visualizer::handle2DInput() {
 
     // Scrollbar H canvas
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
-        my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H)
-        m_scrollH = std::clamp((float)(mx-6)/(float)(CANVAS_W-12),
+        my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H &&
+        mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W)
+        m_scrollH = std::clamp((float)(mx-CANVAS_X)/(float)CANVAS_W,
                                 0.0f, 1.0f);
 
     // Scrollbar V canvas
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
-        mx >= CANVAS_W && mx < CANVAS_W + SCROLLBAR_V_W &&
+        mx >= SCROLLBAR_V_X && mx < SCROLLBAR_V_X + SCROLLBAR_V_W &&
         my >= ay && my < ay + ah)
         m_scrollV = std::clamp((float)(my-ay)/(float)ah, 0.0f, 1.0f);
 }

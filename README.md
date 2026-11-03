@@ -66,6 +66,15 @@ make -j
 
 ---
 
+## Interfaccia
+
+- **Sinistra**: dove si trova la finestra nel file (click = vai).
+- **Centro**: la vista, con una riga di legenda che spiega gli assi.
+- **Destra — Inspector**: cosa c'è sotto il mouse (offset, sezione, byte
+  in hex/ASCII, composizione, entropia, ipotesi sul contenuto); per le
+  viste "per valore" quante volte compare e dove la prima volta. Senza
+  mouse sulla vista: riassunto del file e della finestra.
+
 ## Controlli
 
 ### Generale
@@ -134,6 +143,8 @@ cantordust_cpp/
 │   ├── visualizer_sections.cpp    # Overlay sezioni ELF/PE
 │   ├── visualizer_raw.cpp         # Pannello raw pixel: slider + autocorrelazione
 │   ├── autocorr.{h,cpp}           # Autocorrelazione → larghezza immagini
+│   ├── visualizer_inspector.cpp   # Inspector, legenda, barra navigazione
+│   ├── byte_info.h                # Classi di byte, entropia, ipotesi contenuto
 │   └── ui_widgets.h               # Slider
 ├── python/                  # Neural network (WIP)
 ├── setup.sh                 # Setup automatico

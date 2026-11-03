@@ -20,7 +20,7 @@ struct PanelLayout {
 PanelLayout panelLayout() {
     PanelLayout L;
     L.py = CANVAS_Y + CANVAS_H - RAW_PANEL_H;
-    L.gx = PANEL_PAD;
+    L.gx = CANVAS_X + PANEL_PAD;
     L.gy = L.py + 16;
     L.gw = CANVAS_W - 2 * PANEL_PAD;
     L.sy = L.gy + GRAPH_H + 10;
@@ -37,9 +37,10 @@ static int graphMaxWidth(const Autocorr& ac, BppMode bpp) {
 void Visualizer::syncRawSliders() {
     PanelLayout L = panelLayout();
     int half = CANVAS_W / 2;
+    int x0   = CANVAS_X;
 
     m_widthSlider.label = "WIDTH";
-    m_widthSlider.x = PANEL_PAD;
+    m_widthSlider.x = x0 + PANEL_PAD;
     m_widthSlider.y = L.sy;
     m_widthSlider.w = half - 2 * PANEL_PAD;
     m_widthSlider.setRange(RawPixels::MIN_WIDTH, RawPixels::MAX_WIDTH);
@@ -49,7 +50,7 @@ void Visualizer::syncRawSliders() {
     int rowBytes = m_rawWidth * (int)RawPixels::bytesPerPixel(m_bppMode);
     m_rawOffset = std::clamp(m_rawOffset, 0, std::max(0, rowBytes - 1));
     m_offsetSlider.label = "OFFSET";
-    m_offsetSlider.x = half + PANEL_PAD;
+    m_offsetSlider.x = x0 + half + PANEL_PAD;
     m_offsetSlider.y = L.sy;
     m_offsetSlider.w = half - 2 * PANEL_PAD;
     m_offsetSlider.setRange(0, std::max(0, rowBytes - 1));
@@ -122,8 +123,8 @@ void Visualizer::handleRawInput() {
 void Visualizer::drawRawPanel() {
     syncRawSliders();   // geometria/valori aggiornati anche durante i calcoli
     PanelLayout L = panelLayout();
-    FillRect(0, L.py, CANVAS_W, RAW_PANEL_H, COL_BG());
-    DrawLine(0, L.py, CANVAS_W, L.py, COL_BORDER());
+    FillRect(CANVAS_X, L.py, CANVAS_W, RAW_PANEL_H, COL_BG());
+    DrawLine(CANVAS_X, L.py, CANVAS_X + CANVAS_W, L.py, COL_BORDER());
 
     int mx = GetMouseX(), my = GetMouseY();
     int maxW = graphMaxWidth(m_autocorr, m_bppMode);

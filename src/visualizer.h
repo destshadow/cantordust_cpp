@@ -23,6 +23,8 @@
 #include "overview_bar.h"
 #include "autocorr.h"
 #include "ui_widgets.h"
+#include "byte_info.h"
+#include <array>
 
 class Visualizer : public olc::PixelGameEngine {
 public:
@@ -49,6 +51,14 @@ private:
     void contentSize(int& w, int& h) const;
     // Posizione e scala del contenuto sullo schermo (fit + zoom + scroll)
     void canvasTransform(float& drawX, float& drawY, float& scale) const;
+    // Legenda, Inspector, barra di navigazione provvisoria
+    void drawLegend();
+    void drawInspector();
+    void drawNavPanel();
+    void handleNavPanel();
+    bool mouseToContent(int mx, int my, int& cx, int& cy) const;
+    int  sectionAt(size_t offset) const;   // -1 se nessuna
+    size_t firstOccurrence(const uint8_t* pat, size_t n);  // con cache
     // Pannello raw pixel
     void drawRawPanel();
     void handleRawInput();
@@ -79,6 +89,14 @@ private:
     olc::Decal*   m_decal     = nullptr;
     olc::Sprite*  m_rawSprite = nullptr;
     olc::Decal*   m_rawDecal  = nullptr;
+
+    // Istogramma della finestra corrente (calcolato nel thread di calcolo):
+    // base per Inspector, riassunto e viste "per valore"
+    std::array<uint32_t, 256> m_windowHist{};
+
+    // Cache della ricerca "prima volta che compare" per l'Inspector
+    std::vector<uint8_t> m_occKey;
+    size_t m_occStart = SIZE_MAX, m_occEnd = SIZE_MAX, m_occResult = SIZE_MAX;
 
     // Raw pixel: larghezza/offset, autocorrelazione, slider
     int           m_rawWidth     = 256;

@@ -38,6 +38,8 @@ void Visualizer::recomputeWindow() {
                     }
                     MetricMap mm;  if (mode == ViewMode::METRICMAP) mm.compute(window, cmode, curvemode, 8, &cd);
                     ByteCloud bc;  if (mode == ViewMode::BYTECLOUD) bc.compute(window);
+                    std::array<uint32_t, 256> hist{};
+                    for (uint8_t b : window) hist[b]++;
                     OneTuple  ot;  if (mode == ViewMode::ONETUPLE) ot.compute(window);
 
                     {
@@ -48,6 +50,7 @@ void Visualizer::recomputeWindow() {
                         m_histogram  = std::move(hi);
                         m_trigraph   = std::move(tr);
                         m_rawpixels  = std::move(rp);
+                        m_windowHist = hist;
                         if (mode == ViewMode::RAWPIXELS) {
                             m_autocorr     = std::move(ac);
                             m_suggestWidth = suggest;

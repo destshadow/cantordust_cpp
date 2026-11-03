@@ -93,11 +93,21 @@ Layout obiettivo:
 
 ## Prossimi passi (in ordine)
 
-1. [ ] **Layout 1280×800 + Inspector + legenda per vista**
-       - kit widget minimo in `ui_widgets.h` (pannello, etichetta,
-         tabella, pulsante; lo Slider c'è già)
-       - Inspector generico + specifico per tipo di vista (vedi principi)
-       - assorbe la vecchia "hex view"
+1. [x] **Layout 1280×800 + Inspector + legenda per vista**
+       - [x] layout in `constants.h` (NAV | legenda+vista | INSPECTOR)
+       - [x] kit widget: `drawPanel`, `PanelWriter` (righe, campi,
+             separatori, barre %) accanto allo Slider in `ui_widgets.h`
+       - [x] Inspector (`visualizer_inspector.cpp`): PUNTO (RAW, MetricMap),
+             TRATTO (DotPlot, Entropy), VALORE (Digraph, Histogram,
+             ByteCloud, OneTuple) con conteggio e prima occorrenza;
+             senza hover: riassunto file + finestra + sezioni in %
+       - [x] `byte_info.h`: classe di byte, composizione, entropia,
+             levigatezza e ipotesi ("testo", "zeri", "alta entropia",
+             "valori lisci: immagine/audio raw?" — sul gatto 90-100%
+             delle zone, su ls/python3/libc ~0%)
+       - [x] legenda di una riga per ogni vista
+       - [x] barra provvisoria a sinistra: finestra nel file, click = vai
+       - [ ] Inspector per il 3D: arriva con il picking (passo 4)
 2. [ ] **Barre di navigazione bar1/bar2 con le bande delle sezioni**
        - byte veri, selezione con maniglie, rotella sulla barra
        - hover/click su una sezione → evidenziazione nella vista

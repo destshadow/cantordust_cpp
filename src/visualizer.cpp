@@ -87,6 +87,9 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 }
             }
 
+            // --- Barra di navigazione a sinistra ---
+            if (!m_computing) handleNavPanel();
+
             // --- Larghezza / offset / autocorrelazione (solo RawPixels) ---
             if (!m_computing && m_mode == ViewMode::RAWPIXELS)
                 handleRawInput();
@@ -179,6 +182,9 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         if (!busy) drawSectionOverlay();
         if (m_mode == ViewMode::RAWPIXELS) drawRawPanel();
     }
+    drawLegend();
+    drawNavPanel();
+    drawInspector();
 
     if (busy) drawSpinner(fElapsedTime);
 

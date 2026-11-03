@@ -58,6 +58,13 @@ void Visualizer::drawSectionOverlay() {
     canvasTransform(drawX, drawY, scale);
     int AX, AY, AW, AH;
     viewArea(AX, AY, AW, AH);
+    {   // limita le linee all'immagine, non a tutta l'area
+        int cw, ch;
+        contentSize(cw, ch);
+        int x0 = std::max(AX, (int)drawX), x1 = std::min(AX + AW, (int)(drawX + cw * scale));
+        int y0 = std::max(AY, (int)drawY), y1 = std::min(AY + AH, (int)(drawY + ch * scale));
+        AX = x0; AW = std::max(0, x1 - x0); AY = y0; AH = std::max(0, y1 - y0);
+    }
 
     int mx = GetMouseX();
     int my = GetMouseY();
