@@ -73,6 +73,37 @@ Ancora aperto (minore):
        etichetta `start - end` in basso.
 4. [ ] Ritocchi grafici (palette digraph come l'originale, ecc.).
 
+## Fase 3 — viste e modalità nuove (in ordine)
+
+Restare leggeri: una vista nuova = un file piccolo con `compute()` /
+`toRGB()` come le altre; dove possibile meglio un'opzione su una vista
+esistente che una vista in più.
+
+1. [ ] **Autocorrelazione / stride finder** — da fare insieme alla fase
+       2.1. Per ogni distanza k (1..~4096) conta quante volte
+       `byte[i] == byte[i+k]` e la disegna come grafico: i picchi sono la
+       dimensione dei record o la larghezza di un'immagine. Click su un
+       picco → imposta lo slider larghezza dei raw pixel.
+2. [ ] **Hex view della selezione** — pannello offset | hex | ASCII dei
+       byte sotto il mouse o della zona selezionata (`DrawString`).
+       Collega i pattern visivi ai byte veri.
+3. [ ] **Colorazione per classe di byte** sulla MetricMap (nuova
+       `ColorMode`, stile binvis.io): `0x00` nero, `0xFF` bianco, ASCII
+       stampabile blu, controllo verde, alti rosso. Funziona subito,
+       senza template del classifier.
+4. [ ] **Bit-plane** come opzione dei raw pixel: mostra un solo bit
+       (0..7) di ogni byte in bianco/nero, con un tasto per scegliere il
+       bit. Utile per steganografia e struttura.
+5. [ ] **Delta** come opzione dei raw pixel: `byte[i] - byte[i-1]`.
+       Audio/immagini non compressi diventano quasi piatti, i dati
+       compressi o cifrati restano rumore.
+6. [ ] *(bassa priorità)* **Forma d'onda**: byte come campioni audio con
+       segno (8/16 bit) in un grafico a linea, per riconoscere il PCM.
+
+Scartate per ora (appesantirebbero il progetto): digraph a strati in 3D
+(la vista 3D copre quasi tutto), diff tra due file, disassembler o
+parsing dei formati.
+
 ## Da decidere più avanti
 
 - `ClassifierModel` è collegato (cartella `templates/`, un `.bin` per
