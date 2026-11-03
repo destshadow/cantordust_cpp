@@ -36,15 +36,26 @@ SRC = src/main.cpp \
       src/classifier_model.cpp \
       src/byte_cloud.cpp \
       src/one_tuple.cpp \
-      src/overview_bar.cpp \
+      src/overview_bar.cpp
 
 OUT = cantordust
+OBJ = $(SRC:src/%.cpp=build/%.o)
 
-all:
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(OUT) $(LDFLAGS)
+# Build incrementale: ricompila solo i .cpp modificati (e quelli che
+# includono un header modificato, grazie a -MMD -MP)
+all: $(OUT)
+
+$(OUT): $(OBJ)
+	$(CXX) $(OBJ) -o $@ $(LDFLAGS)
+
+build/%.o: src/%.cpp | build
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+build:
+	mkdir -p build
 
 clean:
-	rm -f $(OUT)
+	rm -rf build $(OUT)
 
 run: all
 	./$(OUT)
@@ -59,3 +70,5 @@ test:
 	mkdir -p $(dir $(TEST_OUT))
 	$(CXX) $(CXXFLAGS) -I src $(TEST_SRC) -o $(TEST_OUT)
 	./$(TEST_OUT)
+
+-include $(OBJ:.o=.d)

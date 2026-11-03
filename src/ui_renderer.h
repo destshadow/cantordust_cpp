@@ -12,6 +12,7 @@ struct SectionInfo {
     int screenX;   // posizione X della linea sullo schermo
     int screenY;   // posizione Y della linea sullo schermo
     uint8_t r, g, b;
+    int sectionIndex = -1;  // indice in BinaryParser::getSections()
 };
 
 struct UIState {

@@ -31,6 +31,8 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
     }
 
+    // Nella finestra "Apri file" i tasti servono solo per scrivere
+    bool typing = m_input.isInputMode();
     Action action = m_input.update(this, fElapsedTime);
 
     if (!busy) {
@@ -59,112 +61,100 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
             default: break;
         }
 
-        // --- Cambio bpp con [ ] (solo RawPixels) ---
-        if (!m_computing && m_mode == ViewMode::RAWPIXELS) {
-            bool changed = false;
-            if (GetKey(olc::Key::OEM_4).bPressed) {
-                int m = ((int)m_bppMode - 1 + 5) % 5;
-                m_bppMode = (BppMode)m;
-                changed = true;
-            }
-            if (GetKey(olc::Key::OEM_6).bPressed) {
-                int m = ((int)m_bppMode + 1) % 5;
-                m_bppMode = (BppMode)m;
-                changed = true;
-            }
-            if (changed) {
-                m_rawpixels.compute(m_navigator.getWindow(m_reader.getBytes()), m_bppMode);
-                {
-                    std::lock_guard<std::mutex> lk(m_dataMutex);
-                    updateCanvas();
+        if (!typing) {
+            // --- Cambio bpp con [ ] (solo RawPixels) ---
+            if (!m_computing && m_mode == ViewMode::RAWPIXELS) {
+                bool changed = false;
+                if (GetKey(olc::Key::OEM_4).bPressed) {
+                    int m = ((int)m_bppMode - 1 + 5) % 5;
+                    m_bppMode = (BppMode)m;
+                    changed = true;
                 }
-                m_status = std::string("BPP: ") +
-                           RawPixels::modeName(m_bppMode);
+                if (GetKey(olc::Key::OEM_6).bPressed) {
+                    int m = ((int)m_bppMode + 1) % 5;
+                    m_bppMode = (BppMode)m;
+                    changed = true;
+                }
+                if (changed) {
+                    m_rawpixels.compute(m_navigator.getWindow(m_reader.getBytes()), m_bppMode);
+                    {
+                        std::lock_guard<std::mutex> lk(m_dataMutex);
+                        updateCanvas();
+                    }
+                    m_status = std::string("BPP: ") +
+                               RawPixels::modeName(m_bppMode);
+                }
             }
-        }
 
-        // --- C = ColorMode, V = CurveMode (solo MetricMap) ---
-        if (!m_computing && m_mode == ViewMode::METRICMAP) {
-            bool recompute = false;
-            if (GetKey(olc::Key::C).bPressed) {
-                int cm = ((int)m_colorMode + 1) % 5;
-                if (cm == (int)ColorMode::CLASSIFIER && !m_classifier.isReady()) {
-                    cm = 0;
-                    m_status = "Classifier non disponibile: aggiungi template in templates/";
+            // --- C = ColorMode, V = CurveMode (solo MetricMap) ---
+            if (!m_computing && m_mode == ViewMode::METRICMAP) {
+                bool recompute = false;
+                if (GetKey(olc::Key::C).bPressed) {
+                    int cm = ((int)m_colorMode + 1) % 5;
+                    if (cm == (int)ColorMode::CLASSIFIER && !m_classifier.isReady()) {
+                        cm = 0;
+                        m_status = "Classifier non disponibile: aggiungi template in templates/";
+                    }
+                    m_colorMode = (ColorMode)cm;
+                    recompute = true;
+                    if (cm != 0 || m_classifier.isReady())
+                        m_status = std::string("Color: ") + MetricMap::colorModeName(m_colorMode);
                 }
-                m_colorMode = (ColorMode)cm;
-                recompute = true;
-                if (cm != 0 || m_classifier.isReady())
-                    m_status = std::string("Color: ") + MetricMap::colorModeName(m_colorMode);
+                if (GetKey(olc::Key::V).bPressed) {
+                    int cv = ((int)m_curveMode + 1) % 3;
+                    m_curveMode = (CurveMode)cv;
+                    recompute = true;
+                    m_status = std::string("Curva: ") +
+                               MetricMap::curveModeName(m_curveMode);
+                }
+                if (recompute) {
+                    recomputeWindow();
+                }
             }
-            if (GetKey(olc::Key::V).bPressed) {
-                int cv = ((int)m_curveMode + 1) % 3;
-                m_curveMode = (CurveMode)cv;
-                recompute = true;
-                m_status = std::string("Curva: ") +
-                           MetricMap::curveModeName(m_curveMode);
+
+            // --- Navigazione file ---
+            if (!m_computing && GetKey(olc::Key::RIGHT).bPressed) {
+                m_navigator.moveForward();
+                recomputeWindow();
+                m_status = "";
             }
-            if (recompute) {
+            if (!m_computing && GetKey(olc::Key::LEFT).bPressed) {
+                m_navigator.moveBackward();
+                recomputeWindow();
+                m_status = "";
+            }
+            if (!m_computing && GetKey(olc::Key::HOME).bPressed) {
+                m_navigator.resetWindow(m_reader.getBytes());
+                recomputeWindow();
+                m_zoom2d  = 1.0f;
+                m_scrollH = 0.0f;
+                m_scrollV = 0.0f;
+                m_status  = "Reset: file intero";
+            }
+
+            // Click scrollbar file
+            if (!m_computing && GetMouse(0).bHeld &&
+                GetMouseY() >= FILE_NAV_Y &&
+                GetMouseY() <  FILE_NAV_Y + FILE_NAV_H) {
+                float norm = (float)(GetMouseX() - 6) /
+                             (float)(WIN_W - 12);
+                m_navigator.jumpTo(norm);
                 recomputeWindow();
             }
-        }
 
-        // --- Navigazione file ---
-        if (!m_computing && GetKey(olc::Key::RIGHT).bPressed) {
-            m_navigator.moveForward();
-            recomputeWindow();
-            m_status = "";
+            handleSectionClick();
         }
-        if (!m_computing && GetKey(olc::Key::LEFT).bPressed) {
-            m_navigator.moveBackward();
-            recomputeWindow();
-            m_status = "";
-        }
-        if (!m_computing && GetKey(olc::Key::HOME).bPressed) {
-            m_navigator.resetWindow(m_reader.getBytes());
-            recomputeWindow();
-            m_zoom2d  = 1.0f;
-            m_scrollH = 0.0f;
-            m_scrollV = 0.0f;
-            m_status  = "Reset: file intero";
-        }
-
-        // Click scrollbar file
-        if (!m_computing && GetMouse(0).bHeld &&
-            GetMouseY() >= FILE_NAV_Y &&
-            GetMouseY() <  FILE_NAV_Y + FILE_NAV_H) {
-            float norm = (float)(GetMouseX() - 6) /
-                         (float)(WIN_W - 12);
-            m_navigator.jumpTo(norm);
-            recomputeWindow();
-        }
-
-        // --- Overview bar: drag sul pannello B ---
-        constexpr int OV_X = 6, OV_Y = 30, OV_GAP = 6;
-
-        if (!m_computing && GetMouse(0).bPressed &&
-            m_overviewBar.hitTestPanelB(GetMouseX(), GetMouseY(), OV_X, OV_Y, OV_GAP)) {
-            m_overviewBar.startDrag();
-        }
-        if (GetMouse(0).bReleased) {
-            m_overviewBar.stopDrag();
-        }
-        if (!m_computing && m_overviewBar.isDragging() && GetMouse(0).bHeld) {
-            float norm = m_overviewBar.mouseYToNorm(GetMouseY(), OV_Y);
-            m_navigator.jumpTo(norm);
-            recomputeWindow();
-        }
-
-        handleSectionClick();
     }
 
     busy = m_computing.load();
 
     // Input modalita'
-    if (m_mode == ViewMode::TRIGRAPH3D)
-        handle3DInput(fElapsedTime);
-    else if (!busy)
-        handle2DInput();
+    if (!typing) {
+        if (m_mode == ViewMode::TRIGRAPH3D)
+            handle3DInput(fElapsedTime);
+        else if (!busy)
+            handle2DInput();
+    }
 
     // Rendering
     Clear(olc::BLACK);
@@ -209,7 +199,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                            ? m_navigator.getPositionString() : "";
     state.fileNavPos     = m_navigator.getNormalized();
     state.fileNavRatio   = m_navigator.getWindowRatio();
-    state.fps            = 1.0f / fElapsedTime;
+    state.fps            = fElapsedTime > 0.0f ? 1.0f / fElapsedTime : 0.0f;
     state.zoomLevel      = m_zoom2d;
     state.scrollH        = m_scrollH;
     state.scrollV        = m_scrollV;

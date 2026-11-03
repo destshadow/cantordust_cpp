@@ -37,10 +37,11 @@ private:
     void handle3DInput(float fElapsedTime);
     void handle2DInput();
     void draw2DCanvas();
-    void drawScrollBars();
     void drawSectionOverlay();
     void handleSectionClick();
     void drawSpinner(float fElapsedTime);
+    void canvasTransform(float& drawX, float& drawY, float& scale) const;
+    bool sectionToCanvas(size_t offset, int& cx, int& cy) const;
     std::vector<uint8_t> getCurrentRGB() const;
     std::string getByteInfo(int mouseX, int mouseY) const;
 
@@ -101,5 +102,4 @@ private:
 
     // Overview bar
     OverviewBar m_overviewBar;
-    bool        m_overviewDragging = false;
 };

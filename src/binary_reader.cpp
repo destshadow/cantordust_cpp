@@ -1,8 +1,16 @@
 #include "binary_reader.h"
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
 bool BinaryReader::load(const std::string& filepath) {
+    // Su una directory ifstream si apre e tellg() da' un valore enorme:
+    // accettiamo solo file regolari.
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(filepath, ec)) {
+        std::cerr << "[BinaryReader] Errore: non e' un file regolare: " << filepath << "\n";
+        return false;
+    }
 
     std::ifstream file(filepath, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {

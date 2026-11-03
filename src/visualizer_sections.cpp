@@ -16,66 +16,93 @@ static std::string toSizeStr(size_t sz) {
     return std::to_string(sz) + " B";
 }
 
-// Calcola la posizione schermo di un offset normalizzato
-// tenendo conto di zoom e scroll — stessa logica di draw2DCanvas
-static int offsetToScreenX(float norm, float drawX, float scale) {
-    return (int)(drawX + norm * 256.0f * scale);
-}
-static int offsetToScreenY(float norm, float drawY, float scale) {
-    return (int)(drawY + norm * 256.0f * scale);
+// Converte l'offset (assoluto nel file) dell'inizio di una sezione in
+// coordinate del canvas 256x256 della vista corrente.
+// cx >= 0 → linea verticale in colonna cx; cy >= 0 → linea orizzontale.
+// Ritorna false se la vista non ha un asse "offset" (digraph, istogramma,
+// ...) oppure se la sezione non inizia dentro la finestra corrente.
+bool Visualizer::sectionToCanvas(size_t offset, int& cx, int& cy) const {
+    cx = cy = -1;
+    size_t start = m_navigator.getStart();
+    size_t len   = m_navigator.getEnd() - start;
+    if (len == 0 || offset < start || offset >= start + len) return false;
+    size_t rel = offset - start;
+
+    switch (m_mode) {
+        case ViewMode::DOTPLOT:   // X = posizione nella finestra
+        case ViewMode::ENTROPY:   // X = blocchi della finestra
+            cx = (int)((rel * 255) / len);
+            return true;
+        case ViewMode::RAWPIXELS: {  // riga = pixel / 256
+            static const size_t BPP_BYTES[] = {1, 2, 3, 4, 8};
+            size_t row = rel / BPP_BYTES[(int)m_bppMode] / 256;
+            if (row > 255) return false;  // oltre il canvas visibile
+            cy = (int)row;
+            return true;
+        }
+        default:
+            return false;
+    }
 }
 
 void Visualizer::drawSectionOverlay() {
     m_sectionInfos.clear();
     m_hoveredSection = -1;
+
     if (!m_parser.hasSections()) return;
     if (m_mode == ViewMode::TRIGRAPH3D) return;
 
-    size_t total = m_navigator.getWindowSize();
-    if (total == 0) return;
-
-    m_sectionInfos.clear();
-    m_hoveredSection = -1;
-
-    // Calcola la trasformazione corrente del canvas
-    // (identica a draw2DCanvas — deve essere coerente)
-    float scaledSize = 256.0f * m_zoom2d;
-    float maxOffX    = std::max(0.0f, scaledSize - (float)CANVAS_W);
-    float maxOffY    = std::max(0.0f, scaledSize - (float)CANVAS_H);
-    float drawX      = (scaledSize <= (float)CANVAS_W)
-                       ? CANVAS_X + ((float)CANVAS_W - scaledSize) * 0.5f
-                       : (float)CANVAS_X - m_scrollH * maxOffX;
-    float drawY      = (scaledSize <= (float)CANVAS_H)
-                       ? CANVAS_Y + ((float)CANVAS_H - scaledSize) * 0.5f
-                       : (float)CANVAS_Y - m_scrollV * maxOffY;
-    float scale      = m_zoom2d;
+    float drawX, drawY, scale;
+    canvasTransform(drawX, drawY, scale);
 
     int mx = GetMouseX();
     int my = GetMouseY();
+    bool mouseInCanvas = (mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W &&
+                          my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H);
+    const int HOVER_R = 4;
 
-    const int HOVER_R = 6;
+    const auto& sections = m_parser.getSections();
+    for (int i = 0; i < (int)sections.size(); i++) {
+        const auto& sec = sections[i];
 
-    for (int i = 0; i < (int)m_parser.getSections().size(); i++) {
-        const auto& sec = m_parser.getSections()[i];
+        int cx, cy;
+        if (!sectionToCanvas(sec.offset, cx, cy)) continue;
 
-        float norm = float(double(sec.offset) - double(m_navigator.getStart())) / float(total);
+        // Centro della cella del canvas sullo schermo
+        int screenX = (cx >= 0) ? (int)(drawX + (cx + 0.5f) * scale) : -1;
+        int screenY = (cy >= 0) ? (int)(drawY + (cy + 0.5f) * scale) : -1;
 
-        // Posizione sullo schermo CON zoom/scroll
-        int screenX = offsetToScreenX(norm, drawX, scale);
-        int screenY = offsetToScreenY(norm, drawY, scale);
+        bool visX = screenX >= CANVAS_X && screenX < CANVAS_X + CANVAS_W;
+        bool visY = screenY >= CANVAS_Y && screenY < CANVAS_Y + CANVAS_H;
+        if (!visX && !visY) continue;
 
         olc::Pixel col(sec.r, sec.g, sec.b);
+        bool hovered = mouseInCanvas && m_hoveredSection < 0 &&
+                       ((visX && std::abs(mx - screenX) <= HOVER_R) ||
+                        (visY && std::abs(my - screenY) <= HOVER_R));
+        if (hovered) {
+            m_hoveredSection = (int)m_sectionInfos.size();
+            col = olc::Pixel(std::min(255, sec.r + 80),
+                             std::min(255, sec.g + 80),
+                             std::min(255, sec.b + 80));
+        }
 
-        // Disegna solo la parte visibile nell'area canvas
-        if (screenX >= CANVAS_X && screenX < CANVAS_X + CANVAS_W)
-            DrawLine(screenX, CANVAS_Y,
-                     screenX, CANVAS_Y + CANVAS_H - 1, col);
+        if (visX) {
+            DrawLine(screenX, CANVAS_Y, screenX, CANVAS_Y + CANVAS_H - 1, col);
+            if (hovered) {
+                DrawLine(screenX-1, CANVAS_Y, screenX-1, CANVAS_Y + CANVAS_H - 1, col);
+                DrawLine(screenX+1, CANVAS_Y, screenX+1, CANVAS_Y + CANVAS_H - 1, col);
+            }
+        }
+        if (visY) {
+            DrawLine(CANVAS_X, screenY, CANVAS_X + CANVAS_W - 1, screenY, col);
+            if (hovered) {
+                DrawLine(CANVAS_X, screenY-1, CANVAS_X + CANVAS_W - 1, screenY-1, col);
+                DrawLine(CANVAS_X, screenY+1, CANVAS_X + CANVAS_W - 1, screenY+1, col);
+            }
+        }
 
-        if (screenY >= CANVAS_Y && screenY < CANVAS_Y + CANVAS_H)
-            DrawLine(CANVAS_X, screenY,
-                     CANVAS_X + CANVAS_W - 1, screenY, col);
-
-        // Salva info per tooltip e click
+        // Info per tooltip e click (indice → sezione nel parser)
         SectionInfo info;
         info.name      = sec.name;
         info.offsetHex = toHex(sec.offset);
@@ -85,48 +112,29 @@ void Visualizer::drawSectionOverlay() {
         info.r         = sec.r;
         info.g         = sec.g;
         info.b         = sec.b;
+        info.sectionIndex = i;
         m_sectionInfos.push_back(info);
-
-        // Hover: mouse vicino alla linea verticale o orizzontale
-        bool nearV = (std::abs(mx - screenX) <= HOVER_R &&
-                      my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H);
-        bool nearH = (std::abs(my - screenY) <= HOVER_R &&
-                      mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W);
-
-        if (nearV || nearH) {
-            m_hoveredSection = i;
-
-            // Evidenzia con linee aggiuntive
-            if (nearV && screenX >= CANVAS_X &&
-                screenX < CANVAS_X + CANVAS_W) {
-                olc::Pixel bright(
-                    std::min(255, (int)sec.r + 80),
-                    std::min(255, (int)sec.g + 80),
-                    std::min(255, (int)sec.b + 80));
-                DrawLine(screenX-1, CANVAS_Y,
-                         screenX-1, CANVAS_Y + CANVAS_H - 1, bright);
-                DrawLine(screenX+1, CANVAS_Y,
-                         screenX+1, CANVAS_Y + CANVAS_H - 1, bright);
-            }
-        }
     }
 }
 
 void Visualizer::handleSectionClick() {
-    if (m_computing || !m_parser.hasSections()) return;
-    if (m_mode == ViewMode::TRIGRAPH3D) return;
-    if (m_hoveredSection < 0 || size_t(m_hoveredSection) >= m_parser.getSections().size()) return;
+    if (m_computing) return;
+    if (m_hoveredSection < 0 ||
+        m_hoveredSection >= (int)m_sectionInfos.size()) return;
 
-    // Rileva click sinistro — ma solo se NON stiamo facendo drag
+    // Click sinistro, ma non durante un drag o un click su una tab
     if (!GetMouse(0).bPressed) return;
     if (m_dragging) return;
     if (m_input.lastClickWasTab()) return;
 
-    const auto& sec = m_parser.getSections()[m_hoveredSection];
-    size_t total    = m_reader.getSize();
-    if (total == 0) return;
+    int idx = m_sectionInfos[m_hoveredSection].sectionIndex;
+    const auto& sec = m_parser.getSections()[idx];
 
+    // La finestra diventa esattamente la sezione
     m_navigator.selectRange(sec.offset, sec.size);
+    m_zoom2d  = 1.0f;
+    m_scrollH = 0.0f;
+    m_scrollV = 0.0f;
     recomputeWindow();
 
     std::ostringstream oss;

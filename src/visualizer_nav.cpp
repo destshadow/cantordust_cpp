@@ -1,18 +1,6 @@
 #include "visualizer.h"
 #include <filesystem>
 
-void Visualizer::drawScrollBars() {
-    // Posiziona le due barre a sinistra del canvas
-    // Adatta OV_X / OV_Y alle tue costanti di layout
-    constexpr int OV_X   = 6;
-    constexpr int OV_Y   = 30;
-    constexpr int OV_GAP = 6;
-
-    m_overviewBar.draw(this, OV_X, OV_Y, OV_GAP,
-                       m_navigator.getNormalized(),
-                       m_navigator.getWindowRatio());
-}
-
 void Visualizer::recomputeWindow() {
     if (m_computing.load()) return;
     try {

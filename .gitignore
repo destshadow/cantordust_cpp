@@ -1,5 +1,8 @@
 # Build
-cantordust
+/cantordust
+/test_digraph
+/test_reader
+/test_screenshot
 build/
 *.o
 *.out
@@ -26,5 +29,6 @@ digraph_export.png
 *~
 
 # OS
+*:Zone.Identifier
 .DS_Store
 Thumbs.db

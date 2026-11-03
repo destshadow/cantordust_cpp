@@ -115,6 +115,9 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
     };
 
     for (int i = 0; i < totalPixels; i++) {
+        // File piu' piccolo del canvas: i pixel restanti restano neri
+        if (bytes.size() < (size_t)totalPixels && (size_t)i >= bytes.size())
+            break;
         size_t fileIdx = std::min((size_t)(i * step),
                                    bytes.size() - 1);
         auto [px, py] = getPoint(i);

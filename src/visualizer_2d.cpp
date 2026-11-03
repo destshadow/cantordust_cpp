@@ -32,28 +32,27 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
     return {};
 }
 
-static void getCanvasTransform(float zoom2d,
-                                float scrollH, float scrollV,
-                                float& drawX,  float& drawY,
-                                float& scale) {
-    float scaledSize = 256.0f * zoom2d;
-    scale = zoom2d;
+// Posizione e scala del canvas 256x256 sullo schermo (zoom + scroll).
+// Unica fonte di verita': usata da disegno, overlay sezioni e info byte.
+void Visualizer::canvasTransform(float& drawX, float& drawY,
+                                 float& scale) const {
+    float scaledSize = 256.0f * m_zoom2d;
+    scale = m_zoom2d;
     float maxOffX = std::max(0.0f, scaledSize - (float)CANVAS_W);
     float maxOffY = std::max(0.0f, scaledSize - (float)CANVAS_H);
     drawX = (scaledSize <= (float)CANVAS_W)
             ? CANVAS_X + ((float)CANVAS_W - scaledSize) * 0.5f
-            : (float)CANVAS_X - scrollH * maxOffX;
+            : (float)CANVAS_X - m_scrollH * maxOffX;
     drawY = (scaledSize <= (float)CANVAS_H)
             ? CANVAS_Y + ((float)CANVAS_H - scaledSize) * 0.5f
-            : (float)CANVAS_Y - scrollV * maxOffY;
+            : (float)CANVAS_Y - m_scrollV * maxOffY;
 }
 
 void Visualizer::draw2DCanvas() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
 
     float drawX, drawY, scale;
-    getCanvasTransform(m_zoom2d, m_scrollH, m_scrollV,
-                       drawX, drawY, scale);
+    canvasTransform(drawX, drawY, scale);
 
     float scaledSize  = 256.0f * scale;
     float clipLeft    = std::max(drawX,             (float)CANVAS_X);
@@ -146,8 +145,7 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
     if (mouseY < CANVAS_Y || mouseY >= CANVAS_Y + CANVAS_H) return "";
 
     float drawX, drawY, scale;
-    getCanvasTransform(m_zoom2d, m_scrollH, m_scrollV,
-                       drawX, drawY, scale);
+    canvasTransform(drawX, drawY, scale);
 
     int cx = (int)(((float)mouseX - drawX) / scale);
     int cy = (int)(((float)mouseY - drawY) / scale);
@@ -159,7 +157,9 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
             << std::setw(2) << std::setfill('0') << cx
             << " -> 0x" << std::setw(2) << std::setfill('0') << cy;
     } else if (m_mode == ViewMode::METRICMAP) {
-        size_t fidx = m_navigator.getStart() + m_metricmap.fileIndexAt(cx, cy);
+        // fileIndexAt e' relativo alla finestra: aggiungiamo l'inizio
+        size_t fidx = m_navigator.getStart() +
+                      m_metricmap.fileIndexAt(cx, cy);
         oss << "FILE IDX: 0x" << std::uppercase << std::hex
             << std::setw(8) << std::setfill('0') << fidx;
     } else {

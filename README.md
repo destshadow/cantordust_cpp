@@ -6,6 +6,8 @@ Visualizza file binari come immagini per identificare pattern, sezioni e anomali
 
 ![CantorDust++](test_digraph.png)
 
+Obiettivo e stato dei lavori: vedi [TODO.md](TODO.md).
+
 ---
 
 ## Visualizzazioni
@@ -55,8 +57,8 @@ wget https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h
 wget https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
 cd ..
 
-# Compila
-make
+# Compila (incrementale, oggetti in build/)
+make -j
 
 # Avvia
 ./cantordust /path/to/binary

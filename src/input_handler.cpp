@@ -139,6 +139,7 @@ char InputHandler::keyToChar(olc::PixelGameEngine* pge,
     if (k >= k0 && k <= k9) return '0'+(k-k0);
     switch (key) {
         case olc::Key::PERIOD: return '.';
+        case olc::Key::OEM_2:  return '/';   // tasto '/' (layout US)
         case olc::Key::MINUS:  return shift?'_':'-';
         case olc::Key::SPACE:  return ' ';
         default:               return 0;
