@@ -140,16 +140,6 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 m_status  = "Reset: file intero";
             }
 
-            // Click scrollbar file
-            if (!m_computing && GetMouse(0).bHeld &&
-                GetMouseY() >= FILE_NAV_Y &&
-                GetMouseY() <  FILE_NAV_Y + FILE_NAV_H) {
-                float norm = (float)(GetMouseX() - 6) /
-                             (float)(WIN_W - 12);
-                size_t before = m_navigator.getStart();
-                m_navigator.jumpTo(norm);
-                if (m_navigator.getStart() != before) recomputeWindow();
-            }
 
             handleSectionClick();
         }
@@ -246,6 +236,8 @@ Visualizer::~Visualizer() {
 
 bool Visualizer::OnUserDestroy() {
     if (m_future.valid()) m_future.wait();
+    delete m_navSprite;
+    m_navSprite = nullptr;
     delete m_rawDecal;
     m_rawDecal = nullptr;
     delete m_rawSprite;

@@ -23,6 +23,10 @@ public:
 
     std::vector<uint8_t> toRGB() const;
 
+    // Righe effettivamente usate (256, o meno se la finestra e' piu'
+    // corta di 256 byte). Riga r = byte [r*len/rows, (r+1)*len/rows).
+    int getRows() const { return m_rows; }
+
     // Cambia il colore di base (R, G o B)
     void setColor(uint8_t r, uint8_t g, uint8_t b) {
         m_r = r; m_g = g; m_b = b;
@@ -31,5 +35,6 @@ public:
 private:
     // Canvas 256x256 — ogni pixel ha un valore di intensita'
     std::array<uint8_t, 256*256> m_canvas{};
+    int m_rows = 0;
     uint8_t m_r = 0, m_g = 255, m_b = 0;  // verde di default
 };

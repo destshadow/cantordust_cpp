@@ -37,7 +37,6 @@ void UIRenderer::draw(olc::PixelGameEngine* pge,
         drawScrollbarV(pge, state);
     }
     drawFileStatus(pge, state);
-    drawFileNav(pge, state);
     drawCmdStatus(pge, state);
     if (state.currentView == ViewMode::TRIGRAPH3D)
         draw3DOverlay(pge, state);

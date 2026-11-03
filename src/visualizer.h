@@ -90,6 +90,11 @@ private:
     olc::Sprite*  m_rawSprite = nullptr;
     olc::Decal*   m_rawDecal  = nullptr;
 
+    // Miniatura del file per la barra laterale (ricostruita al cambio file)
+    olc::Sprite*   m_navSprite = nullptr;
+    const uint8_t* m_navData   = nullptr;
+    size_t         m_navSize   = SIZE_MAX;
+
     // Istogramma della finestra corrente (calcolato nel thread di calcolo):
     // base per Inspector, riassunto e viste "per valore"
     std::array<uint32_t, 256> m_windowHist{};

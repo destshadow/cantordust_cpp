@@ -11,22 +11,25 @@ AREE DELLA FINESTRA (1280x800)
   +--------------------------- TAB DELLE VISTE ----------------------------+
   | FILE  | legenda: cosa mostrano gli assi                  | INSPECTOR   |
   |       +--------------------------------------------------+             |
-  | barra |                                                  | dettagli di |
-  | dove  |                 VISTA                            | cio' che e' |
-  | sei   |                                                  | sotto il    |
-  | nel   |                                                  | mouse       |
-  | file  |  (solo RAW: pannello AUTOCORR + slider in fondo) |             |
+  | byte  |                                                  | dettagli di |
+  | del   |                 VISTA                            | cio' che e' |
+  | file  |                                                  | sotto il    |
+  | [sel] |                                                  | mouse       |
+  | inizio|  (solo RAW: pannello AUTOCORR + slider in fondo) |             |
+  | fine  |                                                  |             |
   +-------+--------------------------------------------------+-------------+
   | FILE: percorso [dimensione]                      info byte sotto mouse |
-  | ======== barra di navigazione: finestra corrente nel file ============ |
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
   TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9.
 
-  FILE (sinistra) Il rettangolo azzurro e' la parte di file che stai
-                  guardando. Click/trascina = sposta la finestra li'.
-                  (provvisoria: sara' sostituita dalle due barre con le
+  FILE (sinistra) Tutti i byte del file in ordine, dall'alto in basso
+                  (verde = valore del byte, nero = zeri). La cornice gialla
+                  e' la parte che stai guardando, il resto e' attenuato.
+                  Sotto: inizio, fine e quanta parte del file e'.
+                  Click/trascina = sposta la finestra li'.
+                  (versione semplice: arriveranno le due barre con le
                   sezioni, vedi TODO.md passo 2)
 
   LEGENDA         Una riga sopra la vista: cosa indicano X, Y e il colore.
@@ -42,8 +45,6 @@ AREE DELLA FINESTRA (1280x800)
                   Mouse fuori dalla vista -> riassunto del file, della
                   finestra corrente e delle sezioni piu' grandi.
 
-  BARRA IN BASSO  Posizione della finestra nel file. Click/trascina = vai.
-
 
 VISTE
 -----
@@ -56,7 +57,8 @@ VISTE
   6  Raw Pixels   i byte come pixel, riga per riga (larghezza regolabile)
   7  Metric Map   il file disegnato lungo una curva (Hilbert, ...)
   8  Byte Cloud   griglia 16x16 dei valori, grandezza = frequenza
-  9  One Tuple    X = valore del byte, Y = blocco del file
+  9  One Tuple    X = valore del byte, Y = tratto del file (la finestra
+                  divisa in 256 righe): quali valori usa ogni tratto
 
 
 TASTI GENERALI
@@ -126,7 +128,8 @@ VISTA 5 — 3D
 
   Trascina (sx)   ruota
   Trascina (dx)   sposta (pan)
-  W A S D         muovi la camera avanti / sinistra / indietro / destra
+  W A S D         muovi la camera: W avanti, A sinistra, S indietro,
+                  D destra (rispetto a dove stai guardando)
   Q  E            su / giu'
   Rotella         zoom
   R               reset della camera

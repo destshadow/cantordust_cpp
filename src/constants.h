@@ -18,7 +18,7 @@ static constexpr int TOPBAR_H      = 40;   // tab cliccabili
 static constexpr int LEGEND_H      = 16;   // "cosa mostra questa vista"
 static constexpr int SCROLLBAR_H   = 12;   // scrollbar canvas orizzontale
 static constexpr int FILE_STATUS_H = 20;   // file + byte sotto cursore
-static constexpr int FILE_NAV_H    = 12;   // scrollbar navigazione file
+static constexpr int FILE_NAV_H    = 0;    // (tolta: ora c'e' la barra laterale)
 static constexpr int CMD_STATUS_H  = 18;   // barra comandi in basso
 static constexpr int PADDING       = 8;    // padding generico
 

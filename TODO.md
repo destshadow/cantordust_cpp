@@ -106,7 +106,10 @@ Layout obiettivo:
              "valori lisci: immagine/audio raw?" — sul gatto 90-100%
              delle zone, su ls/python3/libc ~0%)
        - [x] legenda di una riga per ogni vista
-       - [x] barra provvisoria a sinistra: finestra nel file, click = vai
+       - [x] barra a sinistra: byte del file + finestra (cornice), inizio/
+             fine/%, click = vai; tolta la barra di navigazione in basso
+       - [x] fix: WASD del 3D (W andava indietro), vista 9 OneTuple che
+             riempiva solo poche righe (ora 256 righe = tutta la finestra)
        - [ ] Inspector per il 3D: arriva con il picking (passo 4)
 2. [ ] **Barre di navigazione bar1/bar2 con le bande delle sezioni**
        - byte veri, selezione con maniglie, rotella sulla barra

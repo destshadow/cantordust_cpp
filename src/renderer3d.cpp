@@ -106,26 +106,22 @@ void Renderer3D::pan(float dx, float dy) {
 // forward = avanti/indietro lungo Z
 // right   = destra/sinistra lungo X
 // up      = su/giu lungo Y
+// Muove la camera come in un gioco FPS: avanti = verso dove guardi.
+// La camera vive nello spazio GIA' RUOTATO (render() ruota i punti e poi
+// sottrae la camera), quindi il movimento va applicato cosi' com'e':
+// ruotarlo di nuovo con la matrice lo mandava nella direzione sbagliata.
+//   forward > 0 → avanti (W),  right > 0 → destra (D),  up > 0 → su (Q)
 void Renderer3D::moveCamera(float forward, float right, float up) {
     const float speed = 0.02f;
+    m_camX += right   * speed;   // punti scorrono a sinistra
+    m_camY += up      * speed;   // punti scorrono in basso
+    m_camZ += forward * speed;   // punti si avvicinano (z positivo = lontano)
 
-    // La direzione "avanti" dipende dalla rotazione corrente
-    // Usiamo la matrice di rotazione per trasformare
-    // il vettore di movimento nel sistema del mondo
-    Mat3 mat = buildRotationMatrix();
-
-    // Vettore forward locale → mondo
-    float wx, wy, wz;
-    applyRotation(mat, right, -up, -forward, wx, wy, wz);
-
-    m_camX += wx * speed;
-    m_camY += wy * speed;
-    m_camZ += wz * speed;
-
-    // Clamp: non uscire troppo dal cubo [-2, +2]
+    // Limiti: non allontanarsi troppo, e non oltrepassare il piano di
+    // proiezione (dist = 3 in project())
     m_camX = std::clamp(m_camX, -2.0f, 2.0f);
     m_camY = std::clamp(m_camY, -2.0f, 2.0f);
-    m_camZ = std::clamp(m_camZ, -2.0f, 2.0f);
+    m_camZ = std::clamp(m_camZ, -4.0f, 2.9f);
 }
 
 void Renderer3D::resetRotation() {

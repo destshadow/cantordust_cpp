@@ -1,58 +1,48 @@
 #include "one_tuple.h"
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 void OneTuple::clear() {
     m_canvas.fill(0);
+    m_rows = 0;
 }
 
 // --- compute ---
-// Algoritmo dal codice Java originale:
+// La finestra viene divisa in 256 righe di uguale lunghezza (sempre
+// tutta la finestra, qualunque sia la sua dimensione). Per ogni riga:
+//   X = valore del byte (0..255)
+//   intensita' = quante volte quel valore compare nella riga
+//                (scala logaritmica rispetto al valore piu' frequente
+//                 della riga, cosi' ogni riga ha il suo contrasto)
+// Si legge come "quali valori usa ogni tratto del file": testo, codice,
+// zeri e dati casuali hanno firme diverse e si vedono cambiare scendendo.
 //
-// Per ogni "riga" i (da 0 a 255):
-//   Per ogni j in [0, 256*groupLines):
-//     dataIndex = start + i * 256 * groupLines + j
-//     p = i * 256 + data[dataIndex]  // posizione nel canvas
-//     canvas[p] += 256/groupLines    // accumula intensita'
-//
-// Il risultato e' un canvas dove:
-//   - La colonna X rappresenta il valore del byte
-//   - La riga Y rappresenta il "gruppo" di dati
-//   - L'intensita' rappresenta la frequenza
+// (La versione precedente, presa dal codice Java, usava righe da 4 KB
+// fisse: un file da 138 KB riempiva solo 34 righe su 256.)
 void OneTuple::compute(const std::vector<uint8_t>& bytes,
                         size_t start, size_t end,
-                        int groupLines) {
+                        int /*groupLines: non piu' usato*/) {
     clear();
-    if (bytes.empty()) return;
     if (end == 0 || end > bytes.size()) end = bytes.size();
-    if (groupLines < 1) groupLines = 1;
-    if (groupLines > 128) groupLines = 128;
+    if (start >= end) return;
 
-    int increment = 256 / groupLines;
-    if (increment == 0) increment = 1;
+    const size_t len = end - start;
+    m_rows = (int)std::min<size_t>(256, len);
 
-    for (int i = 0; i < 256; i++) {
-        for (int j = 0; j < 256 * groupLines; j++) {
-            size_t dataIdx = start + (size_t)i * 256 * groupLines + j;
-            if (dataIdx >= end) break;
-
-            // Posizione nel canvas 256x256
-            int p = i * 256 + (bytes[dataIdx] & 0xFF);
-            if (p < 0 || p >= 256*256) continue;
-
-            // Accumula intensita' — clamped a 255
-            // Se raggiunge il massimo del ciclo successivo
-            // viene portato a 255 (saturazione)
-            uint8_t current = m_canvas[p];
-            int threshold   = (j / 256 + 1) * increment;
-
-            if (current == threshold || current == 255)
-                continue;
-
-            int newVal = current + increment;
-            m_canvas[p] = (newVal == 0)
-                          ? 255
-                          : (uint8_t)std::min(newVal, 255);
+    for (int r = 0; r < m_rows; r++) {
+        size_t a = start + (size_t)r * len / m_rows;
+        size_t b = start + (size_t)(r + 1) * len / m_rows;
+        std::array<uint32_t, 256> count{};
+        uint32_t maxC = 0;
+        for (size_t i = a; i < b; i++) maxC = std::max(maxC, ++count[bytes[i]]);
+        if (maxC == 0) continue;
+        float norm = std::log1p((float)maxC);
+        for (int v = 0; v < 256; v++) {
+            if (!count[v]) continue;
+            // minimo 40: anche un valore visto una volta resta visibile
+            float t = std::log1p((float)count[v]) / norm;
+            m_canvas[r * 256 + v] = (uint8_t)(40 + t * 215);
         }
     }
 }

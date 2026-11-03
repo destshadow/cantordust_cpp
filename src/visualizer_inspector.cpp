@@ -80,7 +80,7 @@ const char* legendFor(ViewMode m) {
         case ViewMode::BYTECLOUD:
             return "BYTE CLOUD  griglia 16x16 = valori 0x00-0xFF   grandezza = frequenza";
         case ViewMode::ONETUPLE:
-            return "ONE TUPLE  X = valore del byte   Y = blocco del file   luminosita' = frequenza";
+            return "ONE TUPLE  X = valore del byte   Y = tratto del file (256 righe)   luminosita' = frequenza nella riga";
     }
     return "";
 }
@@ -263,11 +263,16 @@ void Visualizer::drawInspector() {
             else                               pat[0] = (uint8_t)cx;   // X = valore
             count = m_windowHist[pat[0]];
             pw.field("VALORE", byteDesc(pat[0]), classPixel(ByteInfo::classOf(pat[0])));
-            if (m_mode == ViewMode::ONETUPLE) {
-                // Riga y = blocco di 256*16 byte (OneTuple, groupLines = 16)
-                size_t blk = (size_t)256 * 16, a = wStart + (size_t)cy * blk;
-                if (a < wEnd)
-                    pw.field("RIGA", "blocco 0x" + hex(a, 8) + " (" + sizeStr(blk) + ")");
+            if (m_mode == ViewMode::ONETUPLE && cy < m_onetuple.getRows()) {
+                // Riga y = 1/256 della finestra (vedi OneTuple::compute)
+                int rows = m_onetuple.getRows();
+                size_t a = wStart + (size_t)cy * wLen / rows;
+                size_t b = wStart + (size_t)(cy + 1) * wLen / rows;
+                size_t inRow = 0;
+                for (size_t i = a; i < b; i++) inRow += (bytes[i] == pat[0]);
+                pw.field("RIGA", "0x" + hex(a, 8) + "-0x" + hex(b, 8));
+                pw.field("IN RIGA", std::to_string(inRow) + " volte su " + sizeStr(b - a));
+                writeSection(a);
             }
         }
         pw.field("VOLTE", std::to_string(count) +
@@ -328,34 +333,68 @@ void Visualizer::drawInspector() {
 }
 
 // ---------------------------------------------------------------------
-// Barra di navigazione provvisoria (le due barre vere: passo 2)
+// Barra di navigazione a sinistra (versione semplice; le due barre con le
+// sezioni arrivano al passo 2). Mostra i byte del file in sequenza, riga
+// per riga, in verde come i raw pixel a 8bpp: zeri scuri, dati chiari.
+// La parte fuori dalla finestra corrente e' attenuata.
 
 namespace {
 struct NavBar { int x, y, w, h; };
-NavBar navBar() { return {16, SIDE_Y + 20, NAV_W - 32, SIDE_H - 40}; }
+NavBar navBar() { return {14, SIDE_Y + 18, NAV_W - 28, SIDE_H - 18 - 46}; }
 }
 
 void Visualizer::drawNavPanel() {
     drawPanel(this, 0, SIDE_Y, NAV_W, SIDE_H, "FILE");
     NavBar b = navBar();
-    FillRect(b.x, b.y, b.w, b.h, olc::Pixel(8, 8, 24));
-    size_t total = m_reader.getSize();
+    const auto& bytes = m_reader.getBytes();
+    const size_t total = bytes.size();
+
+    // Miniatura: un pixel = un byte campionato, in ordine di file
+    if (!m_navSprite || m_navData != bytes.data() || m_navSize != total) {
+        delete m_navSprite;
+        m_navSprite = new olc::Sprite(b.w, b.h);
+        m_navData = bytes.data();
+        m_navSize = total;
+        const size_t px = (size_t)b.w * b.h;
+        for (int y = 0; y < b.h; y++)
+            for (int x = 0; x < b.w; x++) {
+                uint8_t v = 0;
+                if (total > 0) v = bytes[((size_t)y * b.w + x) * total / px];
+                m_navSprite->SetPixel(x, y, olc::Pixel(0, v, 0));
+            }
+    }
+    DrawSprite(b.x, b.y, m_navSprite);
+
     if (total > 0) {
         int y0 = b.y + (int)((double)m_navigator.getStart() / total * b.h);
         int y1 = b.y + (int)((double)m_navigator.getEnd()   / total * b.h);
         y1 = std::max(y1, y0 + 2);
-        FillRect(b.x, y0, b.w, y1 - y0, COL_CURSOR());
-        DrawRect(b.x, y0, b.w - 1, y1 - y0 - 1, olc::Pixel(120, 180, 255));
+        // Attenua fuori dalla finestra
+        SetPixelMode(olc::Pixel::ALPHA);
+        if (y0 > b.y)       FillRect(b.x, b.y, b.w, y0 - b.y, olc::Pixel(0, 0, 0, 170));
+        if (y1 < b.y + b.h) FillRect(b.x, y1, b.w, b.y + b.h - y1, olc::Pixel(0, 0, 0, 170));
+        SetPixelMode(olc::Pixel::NORMAL);
+        // Cornice della finestra (sporge un po' per vederla anche sottile)
+        DrawRect(b.x - 3, y0 - 1, b.w + 5, y1 - y0 + 1, COL_YELLOW());
     }
-    DrawRect(b.x, b.y, b.w - 1, b.h - 1, COL_BORDER());
-    DrawString(6, SIDE_Y + SIDE_H - 14, "click=vai", olc::Pixel(120, 120, 150));
+    DrawRect(b.x - 1, b.y - 1, b.w + 1, b.h + 1, COL_BORDER());
+
+    // Posizione: inizio, fine, quanta parte del file
+    int ty = b.y + b.h + 6;
+    DrawString(6, ty,      "0x" + hex(m_navigator.getStart(), 8), olc::Pixel(200, 200, 100));
+    DrawString(6, ty + 10, "0x" + hex(m_navigator.getEnd(),   8), olc::Pixel(200, 200, 100));
+    std::string share = (total == 0 || m_navigator.getWindowSize() >= total)
+                        ? "file intero"
+                        : pct((double)m_navigator.getWindowSize() / total) + " del file";
+    DrawString(6, ty + 20, share, olc::Pixel(160, 160, 160));
+    DrawString(6, ty + 32, "click = vai", olc::Pixel(110, 110, 150));
 }
 
 void Visualizer::handleNavPanel() {
     NavBar b = navBar();
     int mx = GetMouseX(), my = GetMouseY();
     if (!GetMouse(0).bHeld) return;
-    if (mx < b.x || mx >= b.x + b.w || my < b.y || my >= b.y + b.h) return;
+    if (mx < b.x - 3 || mx >= b.x + b.w + 3 || my < b.y || my >= b.y + b.h) return;
     // Centra la finestra sul punto cliccato
     size_t total = m_navigator.getTotalSize(), win = m_navigator.getWindowSize();
     if (total == 0 || win >= total) return;
