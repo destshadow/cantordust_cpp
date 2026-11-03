@@ -3,10 +3,31 @@
 #include <sstream>
 #include <iomanip>
 
+// Copia l'RGB della vista corrente nello sprite giusto.
+// Le viste classiche usano il canvas 256x256; i raw pixel hanno uno
+// sprite proprio, ricreato quando cambia la dimensione.
 void Visualizer::updateCanvas() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
+
+    if (m_mode == ViewMode::RAWPIXELS) {
+        int w = m_rawpixels.getWidth(), h = m_rawpixels.getHeight();
+        if (w <= 0 || h <= 0) return;
+        if (!m_rawSprite || m_rawSprite->width != w || m_rawSprite->height != h) {
+            delete m_rawDecal;  m_rawDecal  = nullptr;
+            delete m_rawSprite;
+            m_rawSprite = new olc::Sprite(w, h);
+            m_rawDecal  = new olc::Decal(m_rawSprite);
+        }
+        const auto& rgb = m_rawpixels.getRGB();
+        olc::Pixel* dst = m_rawSprite->GetData();
+        for (size_t i = 0, n = (size_t)w * h; i < n; i++)
+            dst[i] = olc::Pixel(rgb[i*3], rgb[i*3 + 1], rgb[i*3 + 2]);
+        m_rawDecal->Update();
+        return;
+    }
+
     auto rgb = getCurrentRGB();
-    if (rgb.empty()) return;
+    if (rgb.size() < 256 * 256 * 3) return;
     for (int y = 0; y < 256; y++)
         for (int x = 0; x < 256; x++) {
             int idx = (y * 256 + x) * 3;
@@ -32,47 +53,69 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
     return {};
 }
 
-// Posizione e scala del canvas 256x256 sullo schermo (zoom + scroll).
+void Visualizer::viewArea(int& x, int& y, int& w, int& h) const {
+    x = CANVAS_X;  y = CANVAS_Y;  w = CANVAS_W;  h = CANVAS_H;
+    if (m_mode == ViewMode::RAWPIXELS) h -= RAW_PANEL_H;
+}
+
+void Visualizer::contentSize(int& w, int& h) const {
+    w = h = 256;
+    if (m_mode == ViewMode::RAWPIXELS &&
+        m_rawpixels.getWidth() > 0 && m_rawpixels.getHeight() > 0) {
+        w = m_rawpixels.getWidth();
+        h = m_rawpixels.getHeight();
+    }
+}
+
+// Posizione e scala del contenuto sullo schermo.
+// A zoom 1 il contenuto riempie l'area mantenendo le proporzioni;
+// lo zoom moltiplica, lo scroll sposta quando il contenuto e' piu' grande.
 // Unica fonte di verita': usata da disegno, overlay sezioni e info byte.
 void Visualizer::canvasTransform(float& drawX, float& drawY,
                                  float& scale) const {
-    float scaledSize = 256.0f * m_zoom2d;
-    scale = m_zoom2d;
-    float maxOffX = std::max(0.0f, scaledSize - (float)CANVAS_W);
-    float maxOffY = std::max(0.0f, scaledSize - (float)CANVAS_H);
-    drawX = (scaledSize <= (float)CANVAS_W)
-            ? CANVAS_X + ((float)CANVAS_W - scaledSize) * 0.5f
-            : (float)CANVAS_X - m_scrollH * maxOffX;
-    drawY = (scaledSize <= (float)CANVAS_H)
-            ? CANVAS_Y + ((float)CANVAS_H - scaledSize) * 0.5f
-            : (float)CANVAS_Y - m_scrollV * maxOffY;
+    int ax, ay, aw, ah, cw, ch;
+    viewArea(ax, ay, aw, ah);
+    contentSize(cw, ch);
+
+    float fit = std::min((float)aw / cw, (float)ah / ch);
+    scale = fit * m_zoom2d;
+    float sw = cw * scale, sh = ch * scale;
+    float maxOffX = std::max(0.0f, sw - (float)aw);
+    float maxOffY = std::max(0.0f, sh - (float)ah);
+    drawX = (sw <= (float)aw) ? ax + ((float)aw - sw) * 0.5f
+                              : (float)ax - m_scrollH * maxOffX;
+    drawY = (sh <= (float)ah) ? ay + ((float)ah - sh) * 0.5f
+                              : (float)ay - m_scrollV * maxOffY;
 }
 
 void Visualizer::draw2DCanvas() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
 
+    olc::Decal* decal = m_decal;
+    if (m_mode == ViewMode::RAWPIXELS) {
+        if (!m_rawDecal || m_rawpixels.getWidth() <= 0) return;
+        decal = m_rawDecal;
+    }
+
+    int ax, ay, aw, ah, cw, ch;
+    viewArea(ax, ay, aw, ah);
+    contentSize(cw, ch);
     float drawX, drawY, scale;
     canvasTransform(drawX, drawY, scale);
 
-    float scaledSize  = 256.0f * scale;
-    float clipLeft    = std::max(drawX,             (float)CANVAS_X);
-    float clipTop     = std::max(drawY,             (float)CANVAS_Y);
-    float clipRight   = std::min(drawX + scaledSize,(float)(CANVAS_X + CANVAS_W));
-    float clipBottom  = std::min(drawY + scaledSize,(float)(CANVAS_Y + CANVAS_H));
+    float clipLeft   = std::max(drawX,              (float)ax);
+    float clipTop    = std::max(drawY,              (float)ay);
+    float clipRight  = std::min(drawX + cw * scale, (float)(ax + aw));
+    float clipBottom = std::min(drawY + ch * scale, (float)(ay + ah));
 
     if (clipRight <= clipLeft || clipBottom <= clipTop) return;
 
-    float srcX = (clipLeft   - drawX) / scale;
-    float srcY = (clipTop    - drawY) / scale;
-    float srcW = (clipRight  - clipLeft)  / scale;
-    float srcH = (clipBottom - clipTop)   / scale;
-
     DrawPartialDecal(
-        {clipLeft,  clipTop},
+        {clipLeft, clipTop},
         {clipRight - clipLeft, clipBottom - clipTop},
-        m_decal,
-        {srcX, srcY},
-        {srcW, srcH}
+        decal,
+        {(clipLeft - drawX) / scale, (clipTop - drawY) / scale},
+        {(clipRight - clipLeft) / scale, (clipBottom - clipTop) / scale}
     );
 }
 
@@ -83,11 +126,13 @@ void Visualizer::handle2DInput() {
     int my = GetMouseY();
     if (my < TOPBAR_H) return;
 
-    bool inCanvas  = (mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W &&
-                      my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H);
+    int ax, ay, aw, ah, cw, ch;
+    viewArea(ax, ay, aw, ah);
+    contentSize(cw, ch);
+    bool inArea = (mx >= ax && mx < ax + aw && my >= ay && my < ay + ah);
 
     // Zoom con rotella
-    if (inCanvas) {
+    if (inArea) {
         if (GetMouseWheel() > 0)
             m_zoom2d = std::min(16.0f, m_zoom2d * 1.25f);
         if (GetMouseWheel() < 0) {
@@ -99,10 +144,15 @@ void Visualizer::handle2DInput() {
         }
     }
 
+    float drawX, drawY, scale;
+    canvasTransform(drawX, drawY, scale);
+    float maxOffX = std::max(1.0f, cw * scale - (float)aw);
+    float maxOffY = std::max(1.0f, ch * scale - (float)ah);
+
     // Pan con drag sinistro
     // NON iniziare drag se siamo in hover su una sezione
     bool onSection = (m_hoveredSection >= 0);
-    if (m_zoom2d > 1.0f && inCanvas &&
+    if (m_zoom2d > 1.0f && inArea &&
         !m_input.lastClickWasTab() && !onSection) {
         if (GetMouse(0).bPressed) {
             m_dragging   = true;
@@ -113,11 +163,8 @@ void Visualizer::handle2DInput() {
     if (GetMouse(0).bReleased) m_dragging = false;
 
     if (m_dragging && m_zoom2d > 1.0f) {
-        float dx      = (float)(mx - m_lastMouseX);
-        float dy      = (float)(my - m_lastMouseY);
-        float scaled  = 256.0f * m_zoom2d;
-        float maxOffX = std::max(1.0f, scaled - (float)CANVAS_W);
-        float maxOffY = std::max(1.0f, scaled - (float)CANVAS_H);
+        float dx = (float)(mx - m_lastMouseX);
+        float dy = (float)(my - m_lastMouseY);
         m_scrollH = std::clamp(m_scrollH - dx/maxOffX, 0.0f, 1.0f);
         m_scrollV = std::clamp(m_scrollV - dy/maxOffY, 0.0f, 1.0f);
         m_lastMouseX = mx;
@@ -133,23 +180,28 @@ void Visualizer::handle2DInput() {
     // Scrollbar V canvas
     if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
         mx >= CANVAS_W && mx < CANVAS_W + SCROLLBAR_V_W &&
-        my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H)
-        m_scrollV = std::clamp((float)(my-CANVAS_Y)/(float)CANVAS_H,
-                                0.0f, 1.0f);
+        my >= ay && my < ay + ah)
+        m_scrollV = std::clamp((float)(my-ay)/(float)ah, 0.0f, 1.0f);
 }
 
 std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
     if (!m_reader.isLoaded()) return "";
     if (m_mode == ViewMode::TRIGRAPH3D) return "";
-    if (mouseX < CANVAS_X || mouseX >= CANVAS_X + CANVAS_W) return "";
-    if (mouseY < CANVAS_Y || mouseY >= CANVAS_Y + CANVAS_H) return "";
+
+    int ax, ay, aw, ah, cw, ch;
+    viewArea(ax, ay, aw, ah);
+    contentSize(cw, ch);
+    if (mouseX < ax || mouseX >= ax + aw) return "";
+    if (mouseY < ay || mouseY >= ay + ah) return "";
 
     float drawX, drawY, scale;
     canvasTransform(drawX, drawY, scale);
 
-    int cx = (int)(((float)mouseX - drawX) / scale);
-    int cy = (int)(((float)mouseY - drawY) / scale);
-    if (cx < 0 || cx > 255 || cy < 0 || cy > 255) return "";
+    float fx = ((float)mouseX - drawX) / scale;
+    float fy = ((float)mouseY - drawY) / scale;
+    if (fx < 0 || fy < 0) return "";
+    int cx = (int)fx, cy = (int)fy;
+    if (cx >= cw || cy >= ch) return "";
 
     std::ostringstream oss;
     if (m_mode == ViewMode::DIGRAPH) {
@@ -162,6 +214,13 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
                       m_metricmap.fileIndexAt(cx, cy);
         oss << "FILE IDX: 0x" << std::uppercase << std::hex
             << std::setw(8) << std::setfill('0') << fidx;
+    } else if (m_mode == ViewMode::RAWPIXELS) {
+        size_t rel = m_rawpixels.byteOffsetAt(cx, cy);
+        if (rel == SIZE_MAX) return "";
+        oss << "OFF: 0x" << std::uppercase << std::hex
+            << std::setw(8) << std::setfill('0')
+            << (m_navigator.getStart() + rel)
+            << std::dec << "  (" << cx << "," << cy << ")";
     } else {
         oss << "POS: (" << std::dec << cx << "," << cy << ")";
     }

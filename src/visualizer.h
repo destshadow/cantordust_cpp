@@ -21,6 +21,8 @@
 #include <mutex>
 #include <atomic>
 #include "overview_bar.h"
+#include "autocorr.h"
+#include "ui_widgets.h"
 
 class Visualizer : public olc::PixelGameEngine {
 public:
@@ -40,7 +42,18 @@ private:
     void drawSectionOverlay();
     void handleSectionClick();
     void drawSpinner(float fElapsedTime);
+    // Area dello schermo riservata alla vista (in RawPixels piu' bassa:
+    // sotto c'e' il pannello autocorrelazione + slider)
+    void viewArea(int& x, int& y, int& w, int& h) const;
+    // Dimensione in pixel del contenuto: 256x256, o WxH per i raw pixel
+    void contentSize(int& w, int& h) const;
+    // Posizione e scala del contenuto sullo schermo (fit + zoom + scroll)
     void canvasTransform(float& drawX, float& drawY, float& scale) const;
+    // Pannello raw pixel
+    void drawRawPanel();
+    void handleRawInput();
+    void recomputeRawPixels();
+    void syncRawSliders();
     bool sectionToCanvas(size_t offset, int& cx, int& cy) const;
     std::vector<uint8_t> getCurrentRGB() const;
     std::string getByteInfo(int mouseX, int mouseY) const;
@@ -61,9 +74,19 @@ private:
     OneTuple         m_onetuple;
     ClassifierModel  m_classifier;
 
-    // Canvas
-    olc::Sprite*  m_canvas = nullptr;
-    olc::Decal*   m_decal  = nullptr;
+    // Canvas (256x256) e canvas raw pixel (dimensione variabile)
+    olc::Sprite*  m_canvas    = nullptr;
+    olc::Decal*   m_decal     = nullptr;
+    olc::Sprite*  m_rawSprite = nullptr;
+    olc::Decal*   m_rawDecal  = nullptr;
+
+    // Raw pixel: larghezza/offset, autocorrelazione, slider
+    int           m_rawWidth     = 256;
+    int           m_rawOffset    = 0;
+    Autocorr      m_autocorr;
+    int           m_suggestWidth = 0;   // 0 = nessuna larghezza trovata
+    Slider        m_widthSlider;
+    Slider        m_offsetSlider;
 
     // Componenti
     InputHandler  m_input;

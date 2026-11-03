@@ -36,7 +36,9 @@ SRC = src/main.cpp \
       src/classifier_model.cpp \
       src/byte_cloud.cpp \
       src/one_tuple.cpp \
-      src/overview_bar.cpp
+      src/overview_bar.cpp \
+      src/autocorr.cpp \
+      src/visualizer_raw.cpp
 
 OUT = cantordust
 OBJ = $(SRC:src/%.cpp=build/%.o)
@@ -63,7 +65,8 @@ run: all
 TEST_OUT ?= build/core_tests
 TEST_SRC = tests/core_tests.cpp src/file_navigator.cpp src/ngram_model.cpp \
            src/classifier_model.cpp src/binary_format.cpp src/binary_reader.cpp \
-           src/metric_map.cpp src/hilbert.cpp src/wavelength_rgb.cpp
+           src/metric_map.cpp src/hilbert.cpp src/wavelength_rgb.cpp \
+           src/autocorr.cpp src/raw_pixels.cpp
 
 .PHONY: all clean run test
 test:

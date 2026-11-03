@@ -54,18 +54,19 @@ Parte nei commit di settembre (306371c), parte nella revisione di novembre.
 - [x] Repo: binari e `:Zone.Identifier` non più tracciati; Makefile
       incrementale (`build/*.o`); `make test` con test di regressione
 
-Ancora aperto (minore):
-- [ ] Tenendo premuto sulla barra di navigazione si ricalcola a ogni
-      frame anche se la finestra non cambia
-- [ ] `m_classifier` viene modificato dal thread di calcolo mentre il
-      thread UI legge `isReady()` (race innocua ma da sistemare)
+- [x] Tenendo premuto sulla barra di navigazione non si ricalcola più a
+      ogni frame se la finestra non cambia
+- [x] (verificato: non era una race — il thread UI legge solo `m_ready`,
+      che `classifyFile` non tocca)
 
 ## Fase 2 — cosa manca (in ordine)
 
-1. [ ] **Raw pixel con larghezza e offset variabili**: sprite di
-       dimensione variabile, scalato nella vista centrale; slider
-       larghezza/offset con pulsanti `<` `>`. Test: file con rumore +
-       `gatto.jpeg` convertito in RGB grezzo in mezzo.
+1. [x] **Raw pixel con larghezza e offset variabili**: sprite di
+       dimensione variabile (fino a 2048×2048, righe campionate oltre),
+       adattato all'area; slider WIDTH/OFFSET con `<` `>` (Shift = ±10),
+       tasti `,` `.` (Ctrl = offset). Le viste 256×256 ora riempiono
+       l'area. Verificato: `gatto.jpeg` in RGB grezzo nascosto nel rumore
+       compare con W=317 e l'offset giusto.
 2. [ ] **Le due barre a sinistra** (bar1 → bar2 → vista), con i byte veri
        e selezione trascinabile a due livelli. `OverviewBar` attuale è da
        rifare (oggi disegna un istogramma per riga e non è collegata).
@@ -79,8 +80,10 @@ Restare leggeri: una vista nuova = un file piccolo con `compute()` /
 `toRGB()` come le altre; dove possibile meglio un'opzione su una vista
 esistente che una vista in più.
 
-1. [ ] **Autocorrelazione / stride finder** — da fare insieme alla fase
-       2.1. Per ogni distanza k (1..~4096) conta quante volte
+1. [x] **Autocorrelazione / stride finder** — fatto con la fase 2.1
+       (`autocorr.cpp`, pannello sotto i raw pixel, `A` = applica,
+       click sul grafico = usa quella larghezza; test in `make test`).
+       Precisione: esatta o ±1 pixel; sul rumore puro non suggerisce nulla. Per ogni distanza k (1..~4096) conta quante volte
        `byte[i] == byte[i+k]` e la disegna come grafico: i picchi sono la
        dimensione dei record o la larghezza di un'immagine. Click su un
        picco → imposta lo slider larghezza dei raw pixel.

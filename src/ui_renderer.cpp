@@ -18,6 +18,14 @@ static const struct TabDef {
     {"9", "OneTuple",  ViewMode::ONETUPLE  },
 };
 static constexpr int TOTAL_TABS  = 9;
+
+// Accorcia un testo a maxChars tenendo la parte finale ("...fine"):
+// per i percorsi la parte utile e' il nome del file.
+static std::string fitTail(const std::string& s, int maxChars) {
+    if (maxChars <= 3) return "";
+    if ((int)s.size() <= maxChars) return s;
+    return "..." + s.substr(s.size() - (maxChars - 3));
+}
 static constexpr int TAB_AREA_H  = TOPBAR_H - 6;  // altezza tab
 static constexpr int TAB_SCROLL_H = 12;             // altezza scrollbar
 
@@ -171,12 +179,15 @@ void UIRenderer::drawFileStatus(olc::PixelGameEngine* pge,
             sizeStr = std::to_string(state.filesize/1024) + "KB";
         else
             sizeStr = std::to_string(state.filesize) + "B";
+        // Spazio fino all'info byte (a destra, larga 260 px)
+        std::string tail = "  [" + sizeStr + "]";
+        int maxChars = (sw - 260 - 12) / 8 - 6 - (int)tail.size();
         pge->DrawString(6, y+6,
-                        "FILE: " + state.filepath +
-                        "  [" + sizeStr + "]", COL_CYAN());
+                        "FILE: " + fitTail(state.filepath, maxChars) + tail,
+                        COL_CYAN());
     }
     if (!state.byteInfo.empty())
-        pge->DrawString(sw-260, y+6, state.byteInfo, COL_YELLOW());
+        pge->DrawString(sw-260, y+6, fitTail(state.byteInfo, 32), COL_YELLOW());
 }
 
 void UIRenderer::drawFileNav(olc::PixelGameEngine* pge,
@@ -202,13 +213,14 @@ void UIRenderer::drawCmdStatus(olc::PixelGameEngine* pge,
     int y  = CMD_STATUS_Y;
     pge->FillRect(0, y, sw, CMD_STATUS_H, COL_BG());
     pge->DrawLine(0, y, sw, y, COL_BORDER());
-    if (!state.cmdStatus.empty())
-        pge->DrawString(6, y+5, state.cmdStatus, olc::WHITE);
     std::string cmds =
-        "O=Apri  S=Salva  Frecce=Naviga  Home=Reset  Rotella=Zoom";
-    int cmdsX = sw - (int)(cmds.size()*6) - 6;
-    if (cmdsX > 200)
-        pge->DrawString(cmdsX, y+5, cmds, olc::Pixel(140,140,140));
+        "O=Apri  S=Salva  Frecce=Naviga  Home=Reset";
+    int cmdsX = sw - (int)(cmds.size()*8) - 6;
+    // Lo stato a sinistra non deve finire sotto l'elenco comandi
+    if (!state.cmdStatus.empty())
+        pge->DrawString(6, y+5, fitTail(state.cmdStatus, (cmdsX - 18) / 8),
+                        olc::WHITE);
+    pge->DrawString(cmdsX, y+5, cmds, olc::Pixel(140,140,140));
 }
 
 void UIRenderer::drawSectionPanel(olc::PixelGameEngine* pge,

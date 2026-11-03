@@ -33,10 +33,12 @@ bool Visualizer::sectionToCanvas(size_t offset, int& cx, int& cy) const {
         case ViewMode::ENTROPY:   // X = blocchi della finestra
             cx = (int)((rel * 255) / len);
             return true;
-        case ViewMode::RAWPIXELS: {  // riga = pixel / 256
-            static const size_t BPP_BYTES[] = {1, 2, 3, 4, 8};
-            size_t row = rel / BPP_BYTES[(int)m_bppMode] / 256;
-            if (row > 255) return false;  // oltre il canvas visibile
+        case ViewMode::RAWPIXELS: {  // riga dell'immagine (larghezza variabile)
+            int w = m_rawpixels.getWidth();
+            if (w <= 0 || rel < (size_t)m_rawOffset) return false;
+            size_t px  = (rel - m_rawOffset) / RawPixels::bytesPerPixel(m_bppMode);
+            size_t row = px / w / m_rawpixels.getRowStep();
+            if (row >= (size_t)m_rawpixels.getHeight()) return false;
             cy = (int)row;
             return true;
         }
@@ -54,11 +56,13 @@ void Visualizer::drawSectionOverlay() {
 
     float drawX, drawY, scale;
     canvasTransform(drawX, drawY, scale);
+    int AX, AY, AW, AH;
+    viewArea(AX, AY, AW, AH);
 
     int mx = GetMouseX();
     int my = GetMouseY();
-    bool mouseInCanvas = (mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W &&
-                          my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H);
+    bool mouseInCanvas = (mx >= AX && mx < AX + AW &&
+                          my >= AY && my < AY + AH);
     const int HOVER_R = 4;
 
     const auto& sections = m_parser.getSections();
@@ -72,8 +76,8 @@ void Visualizer::drawSectionOverlay() {
         int screenX = (cx >= 0) ? (int)(drawX + (cx + 0.5f) * scale) : -1;
         int screenY = (cy >= 0) ? (int)(drawY + (cy + 0.5f) * scale) : -1;
 
-        bool visX = screenX >= CANVAS_X && screenX < CANVAS_X + CANVAS_W;
-        bool visY = screenY >= CANVAS_Y && screenY < CANVAS_Y + CANVAS_H;
+        bool visX = screenX >= AX && screenX < AX + AW;
+        bool visY = screenY >= AY && screenY < AY + AH;
         if (!visX && !visY) continue;
 
         olc::Pixel col(sec.r, sec.g, sec.b);
@@ -88,17 +92,17 @@ void Visualizer::drawSectionOverlay() {
         }
 
         if (visX) {
-            DrawLine(screenX, CANVAS_Y, screenX, CANVAS_Y + CANVAS_H - 1, col);
+            DrawLine(screenX, AY, screenX, AY + AH - 1, col);
             if (hovered) {
-                DrawLine(screenX-1, CANVAS_Y, screenX-1, CANVAS_Y + CANVAS_H - 1, col);
-                DrawLine(screenX+1, CANVAS_Y, screenX+1, CANVAS_Y + CANVAS_H - 1, col);
+                DrawLine(screenX-1, AY, screenX-1, AY + AH - 1, col);
+                DrawLine(screenX+1, AY, screenX+1, AY + AH - 1, col);
             }
         }
         if (visY) {
-            DrawLine(CANVAS_X, screenY, CANVAS_X + CANVAS_W - 1, screenY, col);
+            DrawLine(AX, screenY, AX + AW - 1, screenY, col);
             if (hovered) {
-                DrawLine(CANVAS_X, screenY-1, CANVAS_X + CANVAS_W - 1, screenY-1, col);
-                DrawLine(CANVAS_X, screenY+1, CANVAS_X + CANVAS_W - 1, screenY+1, col);
+                DrawLine(AX, screenY-1, AX + AW - 1, screenY-1, col);
+                DrawLine(AX, screenY+1, AX + AW - 1, screenY+1, col);
             }
         }
 

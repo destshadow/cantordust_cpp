@@ -24,6 +24,10 @@ static constexpr int CANVAS_H      = WIN_H - TOPBAR_H
                                            - CMD_STATUS_H
                                            - PADDING;
 
+// Pannello in fondo all'area canvas per i raw pixel:
+// grafico autocorrelazione + slider larghezza/offset
+static constexpr int RAW_PANEL_H   = 92;
+
 // --- Posizioni Y delle barre dal basso ---
 static constexpr int SCROLLBAR_H_Y  = CANVAS_Y + CANVAS_H;
 static constexpr int FILE_STATUS_Y  = SCROLLBAR_H_Y + SCROLLBAR_H;

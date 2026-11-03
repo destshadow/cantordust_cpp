@@ -10,17 +10,27 @@ void Visualizer::recomputeWindow() {
         CurveMode curvemode = m_curveMode;
 
         ViewMode mode = m_mode;
+        int    rawWidth  = m_rawWidth;
+        size_t rawOffset = (size_t)m_rawOffset;
         m_computing = true;
         m_dirty = false;
         m_future = std::async(std::launch::async,
-            [this, window = std::move(window), bpp, cmode, curvemode, mode]() {
+            [this, window = std::move(window), bpp, cmode, curvemode, mode,
+             rawWidth, rawOffset]() {
                 try {
                     DiGraph   dg;  if (mode == ViewMode::DIGRAPH) dg.compute(window);
                     DotPlot   dp;  if (mode == ViewMode::DOTPLOT) dp.compute(window);
                     Entropy   en;  if (mode == ViewMode::ENTROPY) en.compute(window);
                     Histogram hi;  if (mode == ViewMode::HISTOGRAM) hi.compute(window);
                     TriGraph  tr;  if (mode == ViewMode::TRIGRAPH3D) tr.compute(window);
-                    RawPixels rp;  if (mode == ViewMode::RAWPIXELS) rp.compute(window, bpp);
+                    RawPixels rp;
+                    Autocorr  ac;
+                    int       suggest = 0;
+                    if (mode == ViewMode::RAWPIXELS) {
+                        rp.compute(window, bpp, rawWidth, rawOffset);
+                        ac.compute(window);
+                        suggest = ac.bestWidth(RawPixels::bytesPerPixel(bpp));
+                    }
                     ClassifierData cd;
                     if (mode == ViewMode::METRICMAP && cmode == ColorMode::CLASSIFIER && m_classifier.isReady()) {
                         m_classifier.classifyFile(window);
@@ -38,6 +48,10 @@ void Visualizer::recomputeWindow() {
                         m_histogram  = std::move(hi);
                         m_trigraph   = std::move(tr);
                         m_rawpixels  = std::move(rp);
+                        if (mode == ViewMode::RAWPIXELS) {
+                            m_autocorr     = std::move(ac);
+                            m_suggestWidth = suggest;
+                        }
                         m_metricmap  = std::move(mm);
                         m_bytecloud  = std::move(bc);
                         m_onetuple   = std::move(ot);

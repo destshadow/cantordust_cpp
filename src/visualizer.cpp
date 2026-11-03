@@ -51,7 +51,9 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 if (m_mode != ViewMode::TRIGRAPH3D) {
                     std::string fname = "export_" +
                                         std::to_string((int)m_mode) + ".png";
-                    Screenshot::save(fname, getCurrentRGB());
+                    int sw = 256, sh = 256;
+                    contentSize(sw, sh);  // i raw pixel hanno dimensione propria
+                    Screenshot::save(fname, getCurrentRGB(), sw, sh);
                     m_status = "Salvato: " + fname;
                 }
                 break;
@@ -76,15 +78,18 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                     changed = true;
                 }
                 if (changed) {
-                    m_rawpixels.compute(m_navigator.getWindow(m_reader.getBytes()), m_bppMode);
-                    {
-                        std::lock_guard<std::mutex> lk(m_dataMutex);
-                        updateCanvas();
-                    }
+                    syncRawSliders();      // l'offset dipende dai byte per pixel
+                    recomputeRawPixels();  // sulla finestra corrente
+                    m_suggestWidth = m_autocorr.bestWidth(
+                        RawPixels::bytesPerPixel(m_bppMode));
                     m_status = std::string("BPP: ") +
                                RawPixels::modeName(m_bppMode);
                 }
             }
+
+            // --- Larghezza / offset / autocorrelazione (solo RawPixels) ---
+            if (!m_computing && m_mode == ViewMode::RAWPIXELS)
+                handleRawInput();
 
             // --- C = ColorMode, V = CurveMode (solo MetricMap) ---
             if (!m_computing && m_mode == ViewMode::METRICMAP) {
@@ -138,8 +143,9 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 GetMouseY() <  FILE_NAV_Y + FILE_NAV_H) {
                 float norm = (float)(GetMouseX() - 6) /
                              (float)(WIN_W - 12);
+                size_t before = m_navigator.getStart();
                 m_navigator.jumpTo(norm);
-                recomputeWindow();
+                if (m_navigator.getStart() != before) recomputeWindow();
             }
 
             handleSectionClick();
@@ -171,6 +177,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     } else {
         draw2DCanvas();
         if (!busy) drawSectionOverlay();
+        if (m_mode == ViewMode::RAWPIXELS) drawRawPanel();
     }
 
     if (busy) drawSpinner(fElapsedTime);
@@ -184,9 +191,10 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                     std::string(MetricMap::curveModeName(m_curveMode)) +
                     "]  " + m_status;
     if (m_mode == ViewMode::RAWPIXELS && !busy)
-        statusStr = "[BPP:" +
-                    std::string(RawPixels::modeName(m_bppMode)) +
-                    " [/]=cambia]  " + m_status;
+        statusStr = "[" + std::string(RawPixels::modeName(m_bppMode)) +
+                    " W=" + std::to_string(m_rawWidth) +
+                    " OFF=" + std::to_string(m_rawOffset) +
+                    "  [ ]=bpp  , .=W  Ctrl=OFF  A=auto]  " + m_status;
 
     UIState state;
     state.tabOffset      = m_input.getTabScrollOffset();
@@ -232,6 +240,10 @@ Visualizer::~Visualizer() {
 
 bool Visualizer::OnUserDestroy() {
     if (m_future.valid()) m_future.wait();
+    delete m_rawDecal;
+    m_rawDecal = nullptr;
+    delete m_rawSprite;
+    m_rawSprite = nullptr;
     delete m_decal;
     m_decal = nullptr;
     delete m_canvas;

@@ -83,6 +83,16 @@ make -j
 | Rotella mouse | Zoom in/out |
 | Drag sinistro | Pan (con zoom > 1x) |
 
+### Raw Pixels (6)
+| Azione | Effetto |
+|--------|---------|
+| `[` `]` | Cambia bpp (8/16/24/32/64) |
+| `,` `.` | Larghezza −1 / +1 (Shift = ±10) |
+| `Ctrl` + `,` `.` | Offset −1 / +1 |
+| `A` | Applica la larghezza suggerita dall'autocorrelazione |
+| Slider WIDTH / OFFSET | Click, trascina, pulsanti `<` `>` |
+| Click sul grafico AUTOCORR | Usa quella larghezza |
+
 ### Vista 3D (5)
 | Azione | Effetto |
 |--------|---------|
@@ -121,7 +131,10 @@ cantordust_cpp/
 │   ├── visualizer_2d.cpp          # Canvas 2D + zoom
 │   ├── visualizer_3d.cpp          # Input 3D
 │   ├── visualizer_nav.cpp         # Navigazione + threading
-│   └── visualizer_sections.cpp    # Overlay sezioni ELF/PE
+│   ├── visualizer_sections.cpp    # Overlay sezioni ELF/PE
+│   ├── visualizer_raw.cpp         # Pannello raw pixel: slider + autocorrelazione
+│   ├── autocorr.{h,cpp}           # Autocorrelazione → larghezza immagini
+│   └── ui_widgets.h               # Slider
 ├── python/                  # Neural network (WIP)
 ├── setup.sh                 # Setup automatico
 ├── Makefile

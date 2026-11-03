@@ -4,6 +4,10 @@
 #include "binary_format.h"
 #include "binary_reader.h"
 #include "metric_map.h"
+#include "autocorr.h"
+#include "raw_pixels.h"
+#include <cmath>
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <limits>
@@ -120,5 +124,56 @@ int main() {
     auto original = reader.getBytes();
     assert(!reader.load("/this/path/does/not/exist"));
     assert(reader.isLoaded() && reader.getBytes() == original);
+    // --- RawPixels: dimensioni, offset, campionamento righe ---
+    {
+        std::vector<uint8_t> px(3 * 100 * 10 + 2, 7);
+        RawPixels rp;
+        rp.compute(px, 0, px.size(), BppMode::BPP_24, 100, 2);
+        assert(rp.getWidth() == 100 && rp.getHeight() == 10);
+        assert(rp.byteOffsetAt(0, 0) == 2 && rp.byteOffsetAt(1, 1) == 2 + 3 * 101);
+        assert(rp.byteOffsetAt(100, 0) == SIZE_MAX);
+        rp.compute(px, 0, px.size(), BppMode::BPP_8, 1);  // 3002 righe > MAX_ROWS
+        assert(rp.getHeight() <= RawPixels::MAX_ROWS && rp.getRowStep() == 2);
+        rp.compute(px, 10, 10, BppMode::BPP_8, 64);       // finestra vuota
+        assert(rp.getWidth() == 0 && rp.getRGB().empty());
+    }
+
+    // --- Autocorr: trova la larghezza di un'immagine nascosta nel rumore ---
+    {
+        std::mt19937 noise(7);
+        auto hidden = [&](int width, int bpp, int rows) {
+            std::vector<uint8_t> b(200000);
+            for (auto& x : b) x = uint8_t(noise());
+            // "Foto" sintetica non periodica: la prima riga e' una passeggiata
+            // casuale, ogni riga successiva e' la precedente piu' poco rumore
+            // (come in un'immagine vera, righe vicine si somigliano).
+            std::vector<int> row(width * bpp);
+            int v = 128;
+            for (auto& r : row) { v = std::clamp(v + int(noise() % 17) - 8, 0, 255); r = v; }
+            for (int y = 0; y < rows; ++y)
+                for (auto& r : row) {
+                    r = std::clamp(r + int(noise() % 7) - 3, 0, 255);
+                    b.push_back(uint8_t(r));
+                }
+            for (int i = 0; i < 100000; ++i) b.push_back(uint8_t(noise()));
+            return b;
+        };
+        struct Case { int width, bpp; } cases[] = {{317, 3}, {450, 1}, {200, 4}, {733, 3}};
+        for (auto [width, bpp] : cases) {
+            Autocorr ac;
+            ac.compute(hidden(width, bpp, 180));
+            int found = ac.bestWidth(bpp);
+            if (std::abs(found - width) > 1)
+                std::cerr << "Autocorr: width " << width << " bpp " << bpp
+                          << " -> trovata " << found << "\n";
+            assert(std::abs(found - width) <= 1);
+        }
+        std::vector<uint8_t> pureNoise(300000);
+        for (auto& x : pureNoise) x = uint8_t(noise());
+        Autocorr ac;
+        ac.compute(pureNoise);
+        assert(ac.bestWidth(3) == 0 && ac.bestWidth(1) == 0);  // niente falsi positivi
+    }
+
     std::cout << "All core regression tests passed\n";
 }

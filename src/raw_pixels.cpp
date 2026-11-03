@@ -1,153 +1,103 @@
 #include "raw_pixels.h"
 #include <algorithm>
-#include <cstring>
 
 void RawPixels::clear() {
-    m_rgb.assign(256 * 256 * 3, 0);
+    m_rgb.clear();
+    m_width = m_height = 0;
+    m_rowStep = 1;
+    m_offset  = 0;
 }
 
-// --- Decodifica 8bpp ---
-// 1 byte = 1 pixel
-// Interpretiamo come valore di luminosita' verde
-// (come CantorDust originale e come il DotPlot)
-// Byte 0x00 = nero, 0xFF = verde brillante
-void RawPixels::decodePixel8(const std::vector<uint8_t>& b,
-                              size_t idx,
-                              uint8_t& r, uint8_t& g, uint8_t& bu) {
-    if (idx >= b.size()) { r = g = bu = 0; return; }
-    uint8_t v = b[idx];
-    r  = 0;
-    g  = v;   // canale verde — come CantorDust originale
-    bu = 0;
+size_t RawPixels::bytesPerPixel(BppMode m) {
+    switch (m) {
+        case BppMode::BPP_8:  return 1;
+        case BppMode::BPP_16: return 2;
+        case BppMode::BPP_24: return 3;
+        case BppMode::BPP_32: return 4;
+        case BppMode::BPP_64: return 8;
+    }
+    return 1;
 }
 
-// --- Decodifica 16bpp RGB565 ---
-// 2 bytes = 1 pixel
-// Formato: RRRRRGGGGGGBBBBB (5 bit R, 6 bit G, 5 bit B)
-// Molto usato in firmware embedded, display LCD, texture compresse
-void RawPixels::decodePixel16(const std::vector<uint8_t>& b,
-                               size_t idx,
-                               uint8_t& r, uint8_t& g, uint8_t& bu) {
-    if (idx + 1 >= b.size()) { r = g = bu = 0; return; }
-
-    // Little-endian: byte basso prima
-    uint16_t pixel = (uint16_t)b[idx] | ((uint16_t)b[idx+1] << 8);
-
-    // Estrai i 3 canali e scala a 8 bit
-    // R: bit 11-15 (5 bit) → scala moltiplicando per 8
-    // G: bit 5-10  (6 bit) → scala moltiplicando per 4
-    // B: bit 0-4   (5 bit) → scala moltiplicando per 8
-    r  = ((pixel >> 11) & 0x1F) << 3;  // 5 bit → 8 bit
-    g  = ((pixel >>  5) & 0x3F) << 2;  // 6 bit → 8 bit
-    bu =  (pixel        & 0x1F) << 3;  // 5 bit → 8 bit
-}
-
-// --- Decodifica 24bpp RGB ---
-// 3 bytes = 1 pixel (R, G, B)
-// Formato standard per immagini non compresse
-// Molto usato in BMP, raw capture, texture non compresse
-void RawPixels::decodePixel24(const std::vector<uint8_t>& b,
-                               size_t idx,
-                               uint8_t& r, uint8_t& g, uint8_t& bu) {
-    if (idx + 2 >= b.size()) { r = g = bu = 0; return; }
-    r  = b[idx];
-    g  = b[idx+1];
-    bu = b[idx+2];
-}
-
-// --- Decodifica 32bpp RGBA ---
-// 4 bytes = 1 pixel (R, G, B, A)
-// Formato con canale alpha — usiamo solo RGB e ignoriamo A
-// Molto usato in PNG, texture DX/GL, icone
-void RawPixels::decodePixel32(const std::vector<uint8_t>& b,
-                               size_t idx,
-                               uint8_t& r, uint8_t& g, uint8_t& bu) {
-    if (idx + 3 >= b.size()) { r = g = bu = 0; return; }
-    r  = b[idx];
-    g  = b[idx+1];
-    bu = b[idx+2];
-    // b[idx+3] = alpha → ignorato per ora
-}
-
-// --- Decodifica 64bpp ---
-// 8 bytes = 1 pixel — come Color64bpp di binvis/CantorDust
-// Prende 8 byte, li assembla in un uint64_t little-endian
-// poi usa i 32 bit bassi come colore ARGB (come java.awt.Color)
-// Utile per file con strutture dati a 64 bit (double, int64, ptr)
-void RawPixels::decodePixel64(const std::vector<uint8_t>& b,
-                               size_t idx,
-                               uint8_t& r, uint8_t& g, uint8_t& bu) {
-    if (idx + 7 >= b.size()) { r = g = bu = 0; return; }
-
-    // Assembla 8 byte in uint64_t little-endian
-    uint64_t pixel64 = 0;
-    for (int i = 0; i < 8; i++)
-        pixel64 |= ((uint64_t)b[idx+i] << (i*8));
-
-    // Prendi i 32 bit bassi come ARGB (come Java Color)
-    // & 0xFFFFFFFF per sicurezza
-    uint32_t pixel32 = (uint32_t)(pixel64 & 0xFFFFFFFF);
-
-    // Estrai R, G, B dai bit 16-23, 8-15, 0-7
-    r  = (pixel32 >> 16) & 0xFF;
-    g  = (pixel32 >>  8) & 0xFF;
-    bu =  pixel32        & 0xFF;
-}
-
-// --- Compute principale ---
-// Scorre i byte del file con stride = bytesPerPixel
-// e riempie il canvas 256x256
-void RawPixels::compute(const std::vector<uint8_t>& bytes,
-                         BppMode mode, int width) {
-    m_mode  = mode;
-    m_width = std::clamp(width, 64, 1024);
-    m_rgb.assign(256 * 256 * 3, 0);
-
-    if (bytes.empty()) return;
-
-    // Bytes per pixel in base alla modalita'
-    size_t bpp;
+// Decodifica un pixel; p punta ad almeno bytesPerPixel(mode) byte validi.
+void RawPixels::decodePixel(BppMode mode, const uint8_t* p,
+                            uint8_t& r, uint8_t& g, uint8_t& b) {
     switch (mode) {
-        case BppMode::BPP_8:  bpp = 1; break;
-        case BppMode::BPP_16: bpp = 2; break;
-        case BppMode::BPP_24: bpp = 3; break;
-        case BppMode::BPP_32: bpp = 4; break;
-        case BppMode::BPP_64: bpp = 8; break;
-        default:              bpp = 1; break;
-    }
-
-    // Quanti pixel entrano nel canvas 256x256?
-    size_t totalPixels = 256 * 256;
-
-    for (size_t px = 0; px < totalPixels; px++) {
-        size_t byteIdx = px * bpp;
-        if (byteIdx >= bytes.size()) break;
-
-        uint8_t r = 0, g = 0, b = 0;
-        switch (mode) {
-            case BppMode::BPP_8:
-                decodePixel8 (bytes, byteIdx, r, g, b); break;
-            case BppMode::BPP_16:
-                decodePixel16(bytes, byteIdx, r, g, b); break;
-            case BppMode::BPP_24:
-                decodePixel24(bytes, byteIdx, r, g, b); break;
-            case BppMode::BPP_32:
-                decodePixel32(bytes, byteIdx, r, g, b); break;
-            case BppMode::BPP_64:
-                decodePixel64(bytes, byteIdx, r, g, b); break;
+        case BppMode::BPP_8:
+            // 1 byte = luminosita' verde, come il CantorDust originale
+            r = 0; g = p[0]; b = 0;
+            break;
+        case BppMode::BPP_16: {
+            // RGB565 little-endian: RRRRRGGGGGGBBBBB
+            // (firmware embedded, display LCD, texture compresse)
+            uint16_t px = (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+            r = ((px >> 11) & 0x1F) << 3;
+            g = ((px >>  5) & 0x3F) << 2;
+            b =  (px        & 0x1F) << 3;
+            break;
         }
-
-        // Scrivi nel canvas — layout row-major
-        int canvasX = (int)(px % 256);
-        int canvasY = (int)(px / 256);
-        int idx     = (canvasY * 256 + canvasX) * 3;
-
-        if (idx + 2 < (int)m_rgb.size()) {
-            m_rgb[idx]     = r;
-            m_rgb[idx + 1] = g;
-            m_rgb[idx + 2] = b;
+        case BppMode::BPP_24:
+            // RGB standard (BMP, raw capture, texture non compresse)
+            r = p[0]; g = p[1]; b = p[2];
+            break;
+        case BppMode::BPP_32:
+            // RGBA: l'alpha (p[3]) viene ignorato
+            r = p[0]; g = p[1]; b = p[2];
+            break;
+        case BppMode::BPP_64: {
+            // Come Color64bpp di binvis: 32 bit bassi come ARGB
+            // (utile per strutture a 64 bit: double, int64, puntatori)
+            uint32_t px = (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+                          ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+            r = (px >> 16) & 0xFF;
+            g = (px >>  8) & 0xFF;
+            b =  px        & 0xFF;
+            break;
         }
     }
+}
+
+// Riempie un'immagine width x height con i pixel di bytes[start+offset, end).
+// Se le righe sono piu' di MAX_ROWS ne prende una ogni rowStep, cosi'
+// l'intera finestra resta visibile (a risoluzione ridotta in verticale).
+void RawPixels::compute(const std::vector<uint8_t>& bytes,
+                        size_t start, size_t end,
+                        BppMode mode, int width, size_t offset) {
+    clear();
+    m_mode  = mode;
+    m_width = std::clamp(width, MIN_WIDTH, MAX_WIDTH);
+
+    end = std::min(end, bytes.size());
+    if (start >= end || offset >= end - start) { m_width = 0; return; }
+
+    m_offset = offset;
+    const size_t   bpp       = bytesPerPixel(mode);
+    const uint8_t* data      = bytes.data() + start + offset;
+    const size_t   len       = end - start - offset;
+    const size_t   rowBytes  = (size_t)m_width * bpp;
+    const size_t   totalRows = (len + rowBytes - 1) / rowBytes;
+
+    m_rowStep = (totalRows + MAX_ROWS - 1) / MAX_ROWS;  // >= 1
+    m_height  = (int)((totalRows + m_rowStep - 1) / m_rowStep);
+    m_rgb.assign((size_t)m_width * m_height * 3, 0);
+
+    for (int y = 0; y < m_height; y++) {
+        size_t rowStart = (size_t)y * m_rowStep * rowBytes;
+        for (int x = 0; x < m_width; x++) {
+            size_t i = rowStart + (size_t)x * bpp;
+            if (i + bpp > len) break;  // ultimo pixel incompleto: resta nero
+            uint8_t r, g, b;
+            decodePixel(mode, data + i, r, g, b);
+            size_t o = ((size_t)y * m_width + x) * 3;
+            m_rgb[o] = r; m_rgb[o + 1] = g; m_rgb[o + 2] = b;
+        }
+    }
+}
+
+size_t RawPixels::byteOffsetAt(int x, int y) const {
+    if (x < 0 || x >= m_width || y < 0 || y >= m_height) return SIZE_MAX;
+    size_t bpp = bytesPerPixel(m_mode);
+    return m_offset + ((size_t)y * m_rowStep * m_width + x) * bpp;
 }
 
 const char* RawPixels::modeName(BppMode m) {
