@@ -2,116 +2,141 @@
 
 ## Obiettivo
 
-Replicare il comportamento del CantorDust originale mostrato in
-`supermario-resized-gif.gif` (e `cantordustlaunch-png.png`), con tutto
-interattivo. Il progetto deve restare **semplice**: olcPixelGameEngine +
-stb, nessuna dipendenza nuova, codice leggibile.
+Uno strumento per **esplorare** file binari e trovare strutture dati
+nascoste o inattese (immagini, tabelle, record, testo, codice) — che
+funzioni su qualunque file, non solo su formati noti. Riferimento di
+partenza: il CantorDust originale in `supermario-resized-gif.gif`.
 
-Layout di riferimento (dalla GIF):
+Il progetto resta **semplice e "batterie incluse"**: solo
+olcPixelGameEngine + stb (single header), nessuna dipendenza nuova.
+Quello che manca ce lo scriviamo noi (kit di widget in `ui_widgets.h`).
+
+## Principi di design (decisi il 2026-11-03)
+
+1. **Ogni vista dice cosa mostra**: una riga di legenda in alto
+   (es. "X = byte i, Y = byte i+1, luminosità = frequenza").
+2. **Hover = Inspector**: un pannello fisso a destra spiega cosa c'è
+   sotto il mouse. Parte generica per qualunque file (offset, hex+ASCII,
+   tipo di byte, entropia locale); la sezione ELF/PE solo se nota.
+   Cosa mostra dipende dalla vista:
+   - RAW, MetricMap: un pixel = un punto del file → offset, byte, sezione
+   - DotPlot, Entropy: un pixel = un tratto del file → range, sezione
+   - Digraph, 3D, Histogram, ByteCloud: un pixel = un valore →
+     quante volte compare e **dove** compare nel file
+3. **Evidenziazione collegata** (brushing & linking):
+   - *selezione → vista*: selezionando un range (sezione o tratto sulle
+     barre) ogni vista mostra il contributo di quel range e attenua il
+     resto (nel 3D/digraph: punti del range colorati, gli altri grigi)
+   - *vista → file*: hover su un valore (coppia, tripla) → sulla barra
+     del file compaiono i segni dove quel valore compare
+4. **Sezioni = annotazioni sulle barre**, come bande colorate con il nome;
+   niente più linee che tagliano la vista (al massimo attivabili con un
+   tasto).
+5. **Una sola finestra, 1280×800**, con pannello informazioni a destra
+   (olcPGE gestisce una finestra per processo; due finestre
+   vorrebbe dire un'altra libreria).
+6. **Niente port su HTML** per ora: i problemi erano di design, non del
+   motore.
+
+Layout obiettivo:
 
 ```
-┌──────┬──────┬──────────────────────────────┬─────┐
-│ bar1 │ bar2 │                              │ [1] │
-│ file │ zoom │        vista principale      │ [2] │
-│intero│ di   │        (grande, quadrata)    │ [3] │
-│      │ bar1 │                              │ [4] │
-│ ▲▼   │ ▲▼   │                              │ [5] │
-└──────┴──────┴──────────────────────────────┴─────┘
-  start - end (hex)     [<][>]───●─── [<][>]─●────
-                          larghezza     offset
+┌─bar1─┬─bar2─┬────────── vista ──────────┬── INSPECTOR ──────┐
+│▓.text│      │ X=byte i  Y=byte i+1      │ OFF  0x0004D373   │
+│▓     │ ▲    │ luminosità=frequenza      │ SEZ  .text        │
+│░.roda│ sel  │                           │ 48 89 E5 41 57 41 │
+│░     │ ▼    │                           │ H..AWA            │
+│▒.data│      │                           │ tipo: codice      │
+│      │      │                           │ entropia: 6.1/8   │
+│      │      │                           │──── sezioni ──────│
+│      │      │                           │ ■ .text   45%     │
+├──────┴──────┴───────────────────────────┤ ■ .rodata 20%     │
+│ controlli della vista (slider, bpp...)  │──── viste ────────│
+│ 0x121A5C - 0x16E238                     │ [1][2][3][4][5].. │
+└─────────────────────────────────────────┴───────────────────┘
 ```
 
-- **bar1**: tutti i byte del file, in sequenza riga per riga (verde =
-  valore del byte), con una selezione trascinabile (maniglie ▲/▼).
-- **bar2**: mostra solo il range selezionato in bar1; ha a sua volta una
-  selezione, che decide cosa va nella vista centrale.
-- **miniature a destra**: cliccabili, cambiano vista.
-- **slider in basso**: larghezza (stride) e offset fine per i raw pixel.
-  Il "momento Mario": a 24bpp con la larghezza giusta compare l'immagine.
+- **bar1**: tutti i byte del file in sequenza (verde = valore), con le
+  bande delle sezioni e una selezione trascinabile (maniglie ▲/▼).
+- **bar2**: solo il range selezionato in bar1, con una sua selezione che
+  decide cosa va nella vista. Sostituisce la navigazione con le frecce.
 
-## Fase 1 — bug (fatto)
+## Fatto
 
-Parte nei commit di settembre (306371c), parte nella revisione di novembre.
+**Bug (fase 1)** — parte nei commit di settembre (306371c), parte a novembre:
 
 - [x] Parser PE/ELF: overflow sugli offset letti dal file (lettura fuori
       buffer con `peOff` ostile), big-endian, sezioni NOBITS o fuori file
 - [x] `BinaryReader`: file illeggibile/directory non distrugge più lo
-      stato precedente (anche il reader ora accetta solo file regolari)
+      stato precedente; accetta solo file regolari
 - [x] Navigator: finestra più grande del file con file < 256 byte;
       `selectRange()` per selezionare una sezione
 - [x] `[ ]` e `C`/`V` ricalcolano sulla finestra, non sul file intero
 - [x] Calcolo async solo per la vista attiva, niente copia del file intero
-- [x] Overlay sezioni solo sulle viste con un asse offset (DotPlot,
-      Entropy, RawPixels), relativo alla finestra; niente più linee
-      senza senso sul digraph
-- [x] Zona di drag della overview bar attiva ma invisibile sopra il
-      canvas: rimossa (torna con le barre laterali, fase 2.2)
-- [x] In "Apri file" i tasti (frecce, C, V, WASD...) non agiscono più
-      sulla vista; aggiunto il tasto `/`
-- [x] Scroll delle tab passato alla UI; sprite/decal liberati all'uscita
-- [x] MetricMap: file piccoli non ripetono l'ultimo byte; info byte
-      assoluta; entropia locale normalizzata correttamente
-- [x] Repo: binari e `:Zone.Identifier` non più tracciati; Makefile
-      incrementale (`build/*.o`); `make test` con test di regressione
+- [x] Overlay sezioni non più sul digraph; zona di drag invisibile della
+      overview bar rimossa
+- [x] In "Apri file" i tasti non agiscono più sulla vista; tasto `/`
+- [x] Scroll delle tab, sprite/decal liberati, MetricMap con file piccoli,
+      barra di stato con percorsi lunghi, nessun ricalcolo a vuoto
+      tenendo premuto sulla barra di navigazione
+- [x] Repo: binari non tracciati; Makefile incrementale; `make test`
 
-- [x] Tenendo premuto sulla barra di navigazione non si ricalcola più a
-      ogni frame se la finestra non cambia
-- [x] (verificato: non era una race — il thread UI legge solo `m_ready`,
-      che `classifyFile` non tocca)
+**Raw pixel + autocorrelazione (fase 2.1)**:
 
-## Fase 2 — cosa manca (in ordine)
+- [x] Larghezza 1..2048 e offset variabili, altezza dalla finestra
+      (righe campionate oltre 2048), viste 2D adattate all'area
+- [x] Slider WIDTH/OFFSET con `<` `>`, tasti `,` `.` (Ctrl = offset,
+      Shift = ×10), `A` = larghezza suggerita
+- [x] Autocorrelazione (`autocorr.cpp`): grafico cliccabile, larghezza
+      esatta o ±1 px sulle immagini di prova, nessun falso positivo sul
+      rumore. Verificato: `gatto.jpeg` grezzo nascosto nel rumore compare.
 
-1. [x] **Raw pixel con larghezza e offset variabili**: sprite di
-       dimensione variabile (fino a 2048×2048, righe campionate oltre),
-       adattato all'area; slider WIDTH/OFFSET con `<` `>` (Shift = ±10),
-       tasti `,` `.` (Ctrl = offset). Le viste 256×256 ora riempiono
-       l'area. Verificato: `gatto.jpeg` in RGB grezzo nascosto nel rumore
-       compare con W=317 e l'offset giusto.
-2. [ ] **Le due barre a sinistra** (bar1 → bar2 → vista), con i byte veri
-       e selezione trascinabile a due livelli. `OverviewBar` attuale è da
-       rifare (oggi disegna un istogramma per riga e non è collegata).
-3. [ ] **Nuovo layout**: miniature cliccabili a destra al posto delle tab,
-       etichetta `start - end` in basso.
-4. [ ] Ritocchi grafici (palette digraph come l'originale, ecc.).
+## Prossimi passi (in ordine)
 
-## Fase 3 — viste e modalità nuove (in ordine)
+1. [ ] **Layout 1280×800 + Inspector + legenda per vista**
+       - kit widget minimo in `ui_widgets.h` (pannello, etichetta,
+         tabella, pulsante; lo Slider c'è già)
+       - Inspector generico + specifico per tipo di vista (vedi principi)
+       - assorbe la vecchia "hex view"
+2. [ ] **Barre di navigazione bar1/bar2 con le bande delle sezioni**
+       - byte veri, selezione con maniglie, rotella sulla barra
+       - hover/click su una sezione → evidenziazione nella vista
+       - sostituisce frecce e linee delle sezioni
+       - `OverviewBar` attuale da rifare
+3. [ ] **Evidenziazione collegata**
+       - selezione → vista: range attivo acceso, resto attenuato
+       - vista → file: hover su coppia/tripla → segni sulla barra
+4. [ ] **Esplorazione 3D**
+       - cubo e assi etichettati (byte 1/2/3, angoli 0x00/0xFF)
+       - picking del punto sotto il mouse → tripla, conteggio, dove
+         compare, sezione; click → vai nel file
+       - colore per sezione o per selezione (con legenda) al posto
+         del colore attuale, che non comunica nulla
+5. [ ] **Miniature delle viste** a destra al posto delle tab,
+       **riassunto del file** (formato, architettura, entry point,
+       sezioni in %, entropia media), ritocchi grafici
 
-Restare leggeri: una vista nuova = un file piccolo con `compute()` /
-`toRGB()` come le altre; dove possibile meglio un'opzione su una vista
-esistente che una vista in più.
+## Viste e modalità nuove (dopo)
 
-1. [x] **Autocorrelazione / stride finder** — fatto con la fase 2.1
-       (`autocorr.cpp`, pannello sotto i raw pixel, `A` = applica,
-       click sul grafico = usa quella larghezza; test in `make test`).
-       Precisione: esatta o ±1 pixel; sul rumore puro non suggerisce nulla. Per ogni distanza k (1..~4096) conta quante volte
-       `byte[i] == byte[i+k]` e la disegna come grafico: i picchi sono la
-       dimensione dei record o la larghezza di un'immagine. Click su un
-       picco → imposta lo slider larghezza dei raw pixel.
-2. [ ] **Hex view della selezione** — pannello offset | hex | ASCII dei
-       byte sotto il mouse o della zona selezionata (`DrawString`).
-       Collega i pattern visivi ai byte veri.
-3. [ ] **Colorazione per classe di byte** sulla MetricMap (nuova
+1. [ ] **Colorazione per classe di byte** sulla MetricMap (nuova
        `ColorMode`, stile binvis.io): `0x00` nero, `0xFF` bianco, ASCII
-       stampabile blu, controllo verde, alti rosso. Funziona subito,
-       senza template del classifier.
-4. [ ] **Bit-plane** come opzione dei raw pixel: mostra un solo bit
-       (0..7) di ogni byte in bianco/nero, con un tasto per scegliere il
-       bit. Utile per steganografia e struttura.
-5. [ ] **Delta** come opzione dei raw pixel: `byte[i] - byte[i-1]`.
-       Audio/immagini non compressi diventano quasi piatti, i dati
-       compressi o cifrati restano rumore.
-6. [ ] *(bassa priorità)* **Forma d'onda**: byte come campioni audio con
-       segno (8/16 bit) in un grafico a linea, per riconoscere il PCM.
+       stampabile blu, controllo verde, alti rosso. Utile anche
+       all'Inspector ("tipo di byte").
+2. [ ] **Bit-plane** come opzione dei raw pixel: un solo bit (0..7) per
+       byte in bianco/nero. Utile per steganografia e struttura.
+3. [ ] **Delta** come opzione dei raw pixel: `byte[i] - byte[i-1]`.
+       Audio/immagini non compressi diventano quasi piatti.
+4. [ ] *(bassa priorità)* **Forma d'onda**: byte come campioni audio con
+       segno (8/16 bit), per riconoscere il PCM.
 
-Scartate per ora (appesantirebbero il progetto): digraph a strati in 3D
-(la vista 3D copre quasi tutto), diff tra due file, disassembler o
-parsing dei formati.
+Scartate per ora (appesantirebbero il progetto): digraph a strati in 3D,
+diff tra due file, disassembler o parsing dei formati, port su HTML,
+seconda finestra.
 
 ## Da decidere più avanti
 
 - `ClassifierModel` è collegato (cartella `templates/`, un `.bin` per
   classe) ma i template non esistono ancora: senza, la modalità
-  Classifier viene saltata.
+  Classifier viene saltata. Se ci fossero, l'Inspector potrebbe dire
+  "probabile codice x86 / ARM / testo / compresso".
 - Cartelle `python/` e `dataset/` vuote (rete neurale WIP).
-- Le viste sono tutte 256×256: va bene per digraph/istogramma, i raw
-  pixel invece avranno dimensione variabile (fase 2.1).
