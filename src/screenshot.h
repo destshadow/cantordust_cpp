@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <iostream>
-#include "../libs/stb_image_write.h"
+#include <stb_image_write.h>
 
 class Screenshot {
 public:

@@ -1,5 +1,6 @@
 CXX      = g++
-CXXFLAGS = -std=c++17 -O2 -Wall -I libs/
+# -isystem: libs/ sono librerie esterne, i loro warning non ci riguardano
+CXXFLAGS = -std=c++17 -O2 -Wall -isystem libs/
 UNAME    := $(shell uname)
 
 ifeq ($(UNAME), Linux)
@@ -60,8 +61,10 @@ build:
 clean:
 	rm -rf build $(OUT)
 
+# make run              -> apre /bin/ls
+# make run FILE=percorso -> apre quel file
 run: all
-	./$(OUT)
+	./$(OUT) $(FILE)
 
 TEST_OUT ?= build/core_tests
 TEST_SRC = tests/core_tests.cpp src/file_navigator.cpp src/ngram_model.cpp \

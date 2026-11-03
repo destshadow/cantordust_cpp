@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 #include "trigraph.h"
-#include "../libs/olcPixelGameEngine.h"
+#include <olcPixelGameEngine.h>
 
 using Mat3 = std::array<std::array<float, 3>, 3>;
 

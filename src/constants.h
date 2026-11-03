@@ -58,7 +58,7 @@ static constexpr int INSPECTOR_X    = WIN_W - INSPECTOR_W;
 // --- Colori ricorrenti ---
 // Li definiamo come funzioni inline per non avere problemi con
 // l'inizializzazione statica di olc::Pixel
-#include "../libs/olcPixelGameEngine.h"
+#include <olcPixelGameEngine.h>
 inline olc::Pixel COL_BG()        { return olc::Pixel(18,  18,  45);  }
 inline olc::Pixel COL_BG_LIGHT()  { return olc::Pixel(30,  30,  70);  }
 inline olc::Pixel COL_BORDER()    { return olc::Pixel(60,  60, 120);  }

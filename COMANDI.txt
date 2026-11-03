@@ -136,5 +136,7 @@ Per sviluppatori
 ----------------
 
   make -j         compila (incrementale, oggetti in build/)
+  make run        compila e apre /bin/ls
+  make run FILE=percorso   compila e apre quel file
   make test       test di regressione (senza interfaccia grafica)
   make clean      pulisce
