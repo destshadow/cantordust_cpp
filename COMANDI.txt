@@ -1,0 +1,140 @@
+CantorDust++ — comandi e aree della finestra
+=============================================
+
+Avvio:   ./cantordust /percorso/del/file
+         (senza argomento apre /bin/ls)
+
+
+AREE DELLA FINESTRA (1280x800)
+------------------------------
+
+  +--------------------------- TAB DELLE VISTE ----------------------------+
+  | FILE  | legenda: cosa mostrano gli assi                  | INSPECTOR   |
+  |       +--------------------------------------------------+             |
+  | barra |                                                  | dettagli di |
+  | dove  |                 VISTA                            | cio' che e' |
+  | sei   |                                                  | sotto il    |
+  | nel   |                                                  | mouse       |
+  | file  |  (solo RAW: pannello AUTOCORR + slider in fondo) |             |
+  +-------+--------------------------------------------------+-------------+
+  | FILE: percorso [dimensione]                      info byte sotto mouse |
+  | ======== barra di navigazione: finestra corrente nel file ============ |
+  | stato / ultimo comando                                elenco comandi   |
+  +------------------------------------------------------------------------+
+
+  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9.
+
+  FILE (sinistra) Il rettangolo azzurro e' la parte di file che stai
+                  guardando. Click/trascina = sposta la finestra li'.
+                  (provvisoria: sara' sostituita dalle due barre con le
+                  sezioni, vedi TODO.md passo 2)
+
+  LEGENDA         Una riga sopra la vista: cosa indicano X, Y e il colore.
+
+  INSPECTOR       Mouse sulla vista -> spiega il punto sotto il mouse:
+  (destra)          RAW, Metric Map:   offset, sezione, byte, hex+ASCII
+                                       intorno, composizione, entropia,
+                                       ipotesi sul contenuto
+                    Dot Plot, Entropy: il tratto di file della colonna
+                    Digraph, Istogramma, Byte Cloud, One Tuple:
+                                       il valore, quante volte compare,
+                                       la prima volta che compare
+                  Mouse fuori dalla vista -> riassunto del file, della
+                  finestra corrente e delle sezioni piu' grandi.
+
+  BARRA IN BASSO  Posizione della finestra nel file. Click/trascina = vai.
+
+
+VISTE
+-----
+
+  1  Digraph      X = byte i, Y = byte i+1, luminosita' = quante volte
+  2  Dot Plot     X = posizione nella finestra, Y = valore del byte
+  3  Entropy      entropia (0-8 bit) lungo la finestra, rosso = alta
+  4  Histogram    quante volte compare ogni valore 0x00-0xFF
+  5  3D           triple di byte consecutivi (i, i+1, i+2) nello spazio
+  6  Raw Pixels   i byte come pixel, riga per riga (larghezza regolabile)
+  7  Metric Map   il file disegnato lungo una curva (Hilbert, ...)
+  8  Byte Cloud   griglia 16x16 dei valori, grandezza = frequenza
+  9  One Tuple    X = valore del byte, Y = blocco del file
+
+
+TASTI GENERALI
+--------------
+
+  1 ... 9         cambia vista
+  O               apri un file (scrivi il percorso)
+  S               salva la vista corrente come export_<n>.png
+                  (non nella vista 3D)
+  Freccia destra  finestra avanti (la prima volta: zoom al 25% del file)
+  Freccia sinistra finestra indietro
+  Home            torna al file intero, azzera lo zoom
+
+  Nella finestra "Apri file":
+  Invio           apri
+  Esc             annulla
+  Backspace       cancella un carattere
+  /  oppure  NP / (tastierino) inserisce '/'
+
+
+MOUSE NELLE VISTE 2D (1-4, 6-9)
+-------------------------------
+
+  Rotella         zoom avanti / indietro
+  Trascina (sx)   sposta la vista (solo con zoom > 1x)
+  Scrollbar       orizzontale e verticale quando c'e' zoom
+  Click su una linea colorata (sezione ELF/PE; Dot Plot, Entropy, RAW)
+                  la finestra diventa quella sezione
+
+
+VISTA 6 — RAW PIXELS
+--------------------
+
+  [  ]            cambia bpp: 8 / 16 (RGB565) / 24 (RGB) / 32 (RGBA) / 64
+  ,  .            larghezza -1 / +1
+  Shift + , .     larghezza -10 / +10
+  Ctrl + , .      offset -1 / +1     (Ctrl+Shift = -10 / +10)
+  A               usa la larghezza suggerita dall'autocorrelazione
+
+  Pannello in fondo:
+  AUTOCORR        grafico: picchi = larghezze probabili di un'immagine
+                  o di record ripetuti. Giallo = larghezza attuale,
+                  magenta = suggerita. Click = usa quella larghezza.
+  WIDTH           slider larghezza (pixel per riga)
+  OFFSET          slider: byte saltati all'inizio, per allineare righe
+                  e canali di colore
+                  Click su [<] [>] = -1/+1 (Shift = 10),
+                  click/trascina sulla traccia = salta al valore
+
+  Come trovare un'immagine nascosta:
+    1. vista 6, scegli il bpp con [ ] (24 per RGB, 8 per scala di grigi)
+    2. premi A (o clicca un picco del grafico)
+    3. se l'immagine e' "spezzata" in orizzontale, sistema OFFSET
+    4. ritocca la larghezza con , . se e' leggermente inclinata
+
+
+VISTA 7 — METRIC MAP
+--------------------
+
+  C               cambia colore: Wavelength / Entropy / Gradient /
+                  Spectrum / Classifier (serve la cartella templates/)
+  V               cambia curva: Hilbert / Z-Order / Linear
+
+
+VISTA 5 — 3D
+------------
+
+  Trascina (sx)   ruota
+  Trascina (dx)   sposta (pan)
+  W A S D         muovi la camera avanti / sinistra / indietro / destra
+  Q  E            su / giu'
+  Rotella         zoom
+  R               reset della camera
+
+
+Per sviluppatori
+----------------
+
+  make -j         compila (incrementale, oggetti in build/)
+  make test       test di regressione (senza interfaccia grafica)
+  make clean      pulisce

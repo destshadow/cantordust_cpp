@@ -7,6 +7,7 @@ Visualizza file binari come immagini per identificare pattern, sezioni e anomali
 ![CantorDust++](test_digraph.png)
 
 Obiettivo e stato dei lavori: vedi [TODO.md](TODO.md).
+Tutti i tasti e le aree della finestra: vedi [COMANDI.txt](COMANDI.txt).
 
 ---
 
