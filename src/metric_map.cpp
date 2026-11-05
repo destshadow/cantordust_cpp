@@ -11,23 +11,27 @@ void MetricMap::clear() {
     m_indexMap.clear();
 }
 
+// Entropia della finestra di 32 byte centrata su idx, normalizzata in [0,1].
+// Con 32 campioni il massimo possibile e' log2(32) = 5 bit (non 8), quindi
+// la normalizzazione usa il numero di campioni. La finestra resta piena
+// anche ai bordi; solo un file piu' corto di 32 byte la riduce.
 float MetricMap::localEntropy(const std::vector<uint8_t>& bytes,
                                size_t idx) const {
-    const size_t WIN = 16;
-    std::array<uint32_t, 256> freq{};
-    freq.fill(0);
+    const size_t WIN = std::min<size_t>(32, bytes.size());
+    if (WIN < 2) return 0.0f;
     size_t start = (idx >= WIN/2) ? idx - WIN/2 : 0;
-    size_t end   = std::min(start + WIN, bytes.size());
-    size_t count = end - start;
-    for (size_t i = start; i < end; i++)
+    start = std::min(start, bytes.size() - WIN);
+
+    std::array<uint32_t, 256> freq{};
+    for (size_t i = start; i < start + WIN; i++)
         freq[bytes[i]]++;
     float entropy = 0.0f;
     for (int b = 0; b < 256; b++) {
         if (freq[b] == 0) continue;
-        float p = (float)freq[b] / (float)count;
+        float p = (float)freq[b] / (float)WIN;
         entropy -= p * std::log2(p);
     }
-    return entropy / 4.0f; // Una finestra di 16 campioni ha massimo 4 bit.
+    return entropy / std::log2((float)WIN);
 }
 
 WavelengthRGB::RGB MetricMap::colorForByte(

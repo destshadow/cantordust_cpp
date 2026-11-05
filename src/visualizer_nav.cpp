@@ -93,7 +93,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_zoom2d = 1.0f;
     m_scrollH = m_scrollV = 0.0f;
     m_bppMode = BppMode::BPP_8;
-    m_colorMode = ColorMode::WAVELENGTH;
+    m_colorMode = ColorMode::ENTROPY;
     m_curveMode = CurveMode::HILBERT;
     m_sectionInfos.clear();
     m_hoveredSection = -1;

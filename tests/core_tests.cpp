@@ -7,6 +7,7 @@
 #include "autocorr.h"
 #include "raw_pixels.h"
 #include "byte_info.h"
+#include "density.h"
 #include <string>
 #include <cmath>
 #include <algorithm>
@@ -208,6 +209,33 @@ int main() {
         if (guessOf(smooth) != "valori lisci: immagine/audio raw?")
             std::cerr << "smooth: entropia " << st.entropy << " liscio " << st.smooth << "\n";
         assert(guessOf(smooth) == "valori lisci: immagine/audio raw?");
+    }
+
+    // --- Density: un valore dominante non deve spegnere gli altri ---
+    {
+        std::vector<uint32_t> cells(1000, 3);
+        cells[0] = 100000000;                       // es. la coppia 00 00
+        cells[1] = 0;
+        float ref = Density::reference(cells.data(), cells.size());
+        assert(ref == 3.0f);
+        assert(Density::intensity(3, ref) == 255);  // la massa resta luminosa
+        assert(Density::intensity(0, ref) == 0);    // il vuoto resta nero
+        assert(Density::intensity(cells[0], ref) == 255);
+        assert(Density::intensity(1, ref) > 60);    // visto una volta: visibile
+        std::vector<uint32_t> empty(16, 0);
+        assert(Density::reference(empty.data(), empty.size()) == 2.0f);
+    }
+
+    // --- MetricMap: entropia locale su 32 byte, 0 sui dati uniformi ---
+    {
+        std::vector<uint8_t> uniform(1024, 0x41), random(1024);
+        std::mt19937 g(11);
+        for (auto& x : random) x = uint8_t(g());
+        MetricMap m;
+        m.compute(uniform, ColorMode::ENTROPY, CurveMode::LINEAR);
+        assert(m.getRGB()[0] == 0 && m.getRGB()[2] == 0);   // uniforme: nero
+        m.compute(random, ColorMode::ENTROPY, CurveMode::LINEAR);
+        assert(m.getRGB()[0] > 200 && m.getRGB()[2] > 200); // casuale: viola/magenta
     }
 
     std::cout << "All core regression tests passed\n";

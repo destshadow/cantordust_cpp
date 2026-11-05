@@ -118,7 +118,7 @@ private:
     // Stato
     ViewMode      m_mode      = ViewMode::DIGRAPH;
     BppMode       m_bppMode   = BppMode::BPP_8;
-    ColorMode     m_colorMode = ColorMode::WAVELENGTH;
+    ColorMode     m_colorMode = ColorMode::ENTROPY;  // come l'originale
     CurveMode     m_curveMode = CurveMode::HILBERT;
     bool          m_dirty     = false;
     std::string   m_status;

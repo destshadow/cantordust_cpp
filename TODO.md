@@ -129,6 +129,30 @@ Layout obiettivo:
        **riassunto del file** (formato, architettura, entry point,
        sezioni in %, entropia media), ritocchi grafici
 
+## Spunti dal CantorDust originale
+
+Sorgente letto il 2026-11-05: <https://github.com/Battelle/cantordust>
+(Java, Apache 2.0). Sono idee da reimplementare; se copiamo dati o codice
+serve l'attribuzione richiesta dalla licenza.
+
+- **Passo 2, barre**: `macro` sceglie la finestra, `micro` la selezione
+  dentro di essa; solo `micro` decide cosa si disegna. Maniglie per i due
+  estremi, trascinando l'interno si sposta tutto. Spostando `macro` la
+  selezione resta sugli stessi byte, solo limitata alla nuova finestra
+  (rimetterla in proporzione la farebbe saltare altrove: bug corretto
+  nell'originale).
+- **Passo 2, barre**: seconda modalità della striscia: entropia per tratto
+  invece del valore dei byte; trova le zone interessanti a colpo d'occhio.
+- [x] **Luminosità**: `density.h`, percentile p90 + curva logaritmica al
+  posto del massimo, per digraph e dot plot; digraph verde come la GIF.
+- **Passo 3, click**: click su un pixel → salta all'offset, o cerca il
+  valore; ripetendo il click si passa all'occorrenza dopo ("3 di 120").
+- **Passo 4, 3D**: un buffer grande come la vista memorizza per ogni pixel
+  il punto più luminoso: il picking diventa immediato. Punti con somma
+  additiva invece che sovrascritti, così si vede la densità. Assi b0/b1/b2.
+- [x] **Metric Map**: colore Entropy come default (è il viola/magenta
+  della GIF) ed entropia locale su 32 byte come l'originale.
+
 ## Viste e modalità nuove (dopo)
 
 1. [ ] **Colorazione per classe di byte** sulla MetricMap (nuova
@@ -149,7 +173,8 @@ seconda finestra.
 ## Da decidere più avanti
 
 - `ClassifierModel` è collegato (cartella `templates/`, un `.bin` per
-  classe) ma i template non esistono ancora: senza, la modalità
-  Classifier viene saltata. Se ci fossero, l'Inspector potrebbe dire
-  "probabile codice x86 / ARM / testo / compresso".
+  classe) ma i template non ci sono: senza, la modalità Classifier viene
+  saltata. L'originale ne ha 22 (87 MB, Apache 2.0): rimandato, da non
+  mettere nel repo; eventualmente uno script che li scarica. Con quelli
+  l'Inspector potrebbe dire "probabile codice x86 / ARM / testo".
 - Cartelle `python/` e `dataset/` vuote (rete neurale WIP).

@@ -118,7 +118,8 @@ VISTA 6 — RAW PIXELS
 VISTA 7 — METRIC MAP
 --------------------
 
-  C               cambia colore: Wavelength / Entropy / Gradient /
+  C               cambia colore (si parte da Entropy):
+                  Wavelength / Entropy / Gradient /
                   Spectrum / Classifier (serve la cartella templates/)
   V               cambia curva: Hilbert / Z-Order / Linear
 

@@ -1,4 +1,5 @@
 #include "dotplot.h"
+#include "density.h"
 #include <cmath>
 #include <array>
 
@@ -32,21 +33,11 @@ std::vector<uint8_t> DotPlot::toRGB() const {
     std::vector<uint8_t> rgb(256 * 256 * 3, 0);
     if (m_max == 0) return rgb;
 
+    const float ref = Density::reference(&m_canvas[0][0], 256 * 256);
     for (int y = 0; y < 256; y++) {
         for (int x = 0; x < 256; x++) {
-            // Scala logaritmica: esalta anche i pattern rari
-            float norm = 0.0f;
-            if (m_canvas[y][x] > 0)
-                norm = std::log1p((float)m_canvas[y][x]) /
-                       std::log1p((float)m_max);
-
-            uint8_t intensity = static_cast<uint8_t>(norm * 255.0f);
-
             int idx = (y * 256 + x) * 3;
-            // Dot plot in verde per distinguerlo dal digraph
-            rgb[idx]     = 0;
-            rgb[idx + 1] = intensity;
-            rgb[idx + 2] = 0;
+            rgb[idx + 1] = Density::intensity(m_canvas[y][x], ref);
         }
     }
     return rgb;
