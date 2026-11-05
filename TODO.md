@@ -37,6 +37,9 @@ Quello che manca ce lo scriviamo noi (kit di widget in `ui_widgets.h`).
    vorrebbe dire un'altra libreria).
 6. **Niente port su HTML** per ora: i problemi erano di design, non del
    motore.
+7. **File piccoli, divide et impera**: un file, una responsabilità. Quando
+   un file cresce si divide; la logica sta separata dalla grafica, così si
+   può testare da sola (es. `range_sel.h` e `nav_bars.cpp`).
 
 Layout obiettivo:
 
@@ -93,7 +96,10 @@ Layout obiettivo:
 
 ## Prossimi passi (in ordine)
 
+
 1. [x] **Layout 1280×800 + Inspector + legenda per vista**
+       - [x] Inspector diviso: `visualizer_inspector.cpp` sceglie il pannello,
+             i pannelli stanno in `_file`, `_value` e `_summary`
        - [x] layout in `constants.h` (NAV | legenda+vista | INSPECTOR)
        - [x] kit widget: `drawPanel`, `PanelWriter` (righe, campi,
              separatori, barre %) accanto allo Slider in `ui_widgets.h`

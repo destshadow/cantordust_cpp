@@ -144,7 +144,9 @@ cantordust_cpp/
 │   ├── visualizer_nav.cpp         # Navigazione + threading
 │   ├── visualizer_raw.cpp         # Pannello raw pixel: slider + autocorrelazione
 │   ├── autocorr.{h,cpp}           # Autocorrelazione → larghezza immagini
-│   ├── visualizer_inspector.cpp   # Inspector, legenda, barra navigazione
+│   ├── visualizer_inspector*.cpp  # Inspector: scelta del pannello e pannelli
+│   ├── inspector_format.h         # Formattazione dei pannelli
+│   ├── visualizer_legend.cpp      # Legenda delle viste
 │   ├── byte_info.h                # Classi di byte, entropia, ipotesi contenuto
 │   ├── nav_bars.{h,cpp}           # Barre di navigazione e sezioni
 │   ├── range_sel.h                # Logica della selezione

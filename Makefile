@@ -39,7 +39,11 @@ SRC = src/main.cpp \
       src/nav_bars.cpp \
       src/autocorr.cpp \
       src/visualizer_raw.cpp \
-      src/visualizer_inspector.cpp
+      src/visualizer_inspector.cpp \
+      src/visualizer_inspector_file.cpp \
+      src/visualizer_inspector_value.cpp \
+      src/visualizer_inspector_summary.cpp \
+      src/visualizer_legend.cpp
 
 OUT = cantordust
 OBJ = $(SRC:src/%.cpp=build/%.o)

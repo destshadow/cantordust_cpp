@@ -52,6 +52,18 @@ private:
     // Legenda, Inspector, barra di navigazione provvisoria
     void drawLegend();
     void drawInspector();
+    // Finestra limitata alla dimensione del file
+    struct InspectWindow { size_t start = 0, end = 0, len = 0; };
+    InspectWindow inspectWindow() const;
+    size_t pointUnderMouse(bool over, int cx, int cy) const;  // SIZE_MAX = nessuno
+    void inspectSection(PanelWriter& pw, int index);
+    void inspectPoint(PanelWriter& pw, size_t point);
+    void inspectRange(PanelWriter& pw, int cx, int cy);
+    void inspectValue(PanelWriter& pw, int cx, int cy);
+    void inspectSummary(PanelWriter& pw);
+    void writeSectionField(PanelWriter& pw, size_t off);
+    void writeHexDump(PanelWriter& pw, size_t center, size_t mark, int rows);
+    ByteInfo::Stats zoneStats(size_t a, size_t b) const;
     void syncNavigator();                  // barre -> finestra
     void applyHighlight(olc::Sprite* spr); // attenua fuori dalla sezione
     bool mouseToContent(int mx, int my, int& cx, int& cy) const;
