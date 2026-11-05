@@ -3,6 +3,8 @@
 
 void Visualizer::recomputeWindow() {
     if (m_computing.load()) return;
+    m_computedStart = m_navigator.getStart();
+    m_computedEnd   = m_navigator.getEnd();
     try {
         auto window = m_navigator.getWindow(m_reader.getBytes());
         BppMode bpp = m_bppMode;
@@ -88,15 +90,14 @@ void Visualizer::loadFile(const std::string& filepath) {
     const auto& bytes = m_reader.getBytes();
     m_navigator.setData(bytes, 0);
     m_parser.parse(bytes);
-    m_overviewBar.compute(bytes);
+    m_bars.setFile(&bytes, &m_parser.getSections());
 
     m_zoom2d = 1.0f;
     m_scrollH = m_scrollV = 0.0f;
     m_bppMode = BppMode::BPP_8;
     m_colorMode = ColorMode::ENTROPY;
     m_curveMode = CurveMode::HILBERT;
-    m_sectionInfos.clear();
-    m_hoveredSection = -1;
+    m_hlStart = m_hlEnd = 0;
     recomputeWindow();
 
     std::string fmt  = m_parser.getFormatName();

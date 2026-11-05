@@ -111,13 +111,23 @@ Layout obiettivo:
        - [x] fix: WASD del 3D (W andava indietro), vista 9 OneTuple che
              riempiva solo poche righe (ora 256 righe = tutta la finestra)
        - [ ] Inspector per il 3D: arriva con il picking (passo 4)
-2. [ ] **Barre di navigazione bar1/bar2 con le bande delle sezioni**
-       - byte veri, selezione con maniglie, rotella sulla barra
-       - hover/click su una sezione → evidenziazione nella vista
-       - sostituisce frecce e linee delle sezioni
-       - `OverviewBar` attuale da rifare
+2. [x] **Barre di navigazione con le bande delle sezioni**
+       - [x] `nav_bars.cpp`: sezioni | file | zona; byte veri o entropia
+             (`B` / tasto destro); maniglie, trascinamento, rotella
+       - [x] logica in `range_sel.h`, testata in `make test`
+       - [x] hover su una sezione: la vista attenua il resto (RAW, Metric
+             Map, Dot Plot, Entropy), l'Inspector la descrive; click = la
+             mostra. Mouse su una barra: Inspector su quel byte
+       - [x] linee delle sezioni e `OverviewBar` rimosse (restano nella
+             cronologia di git)
+       - [x] frecce disattivate: codice commentato in `visualizer.cpp`,
+             `moveForward`/`moveBackward` ancora in `FileNavigator`
+       - [x] fix: i decal coprono i pixel normali, quindi la finestra
+             "Apri file" e lo spinner restavano sotto la vista
 3. [ ] **Evidenziazione collegata**
-       - selezione → vista: range attivo acceso, resto attenuato
+       - selezione → vista: fatto per RAW, Metric Map, Dot Plot, Entropy
+         (hover su sezione); mancano digraph e 3D, dove i punti della zona
+         vanno ricalcolati
        - vista → file: hover su coppia/tripla → segni sulla barra
 4. [ ] **Esplorazione 3D**
        - cubo e assi etichettati (byte 1/2/3, angoli 0x00/0xFF)
@@ -135,14 +145,8 @@ Sorgente letto il 2026-11-05: <https://github.com/Battelle/cantordust>
 (Java, Apache 2.0). Sono idee da reimplementare; se copiamo dati o codice
 serve l'attribuzione richiesta dalla licenza.
 
-- **Passo 2, barre**: `macro` sceglie la finestra, `micro` la selezione
-  dentro di essa; solo `micro` decide cosa si disegna. Maniglie per i due
-  estremi, trascinando l'interno si sposta tutto. Spostando `macro` la
-  selezione resta sugli stessi byte, solo limitata alla nuova finestra
-  (rimetterla in proporzione la farebbe saltare altrove: bug corretto
-  nell'originale).
-- **Passo 2, barre**: seconda modalità della striscia: entropia per tratto
-  invece del valore dei byte; trova le zone interessanti a colpo d'occhio.
+- [x] **Barre**: `macro`/`micro`, maniglie, entropia nella striscia, e
+  selezione che resta sugli stessi byte quando cambia la zona.
 - [x] **Luminosità**: `density.h`, percentile p90 + curva logaritmica al
   posto del massimo, per digraph e dot plot; digraph verde come la GIF.
 - **Passo 3, click**: click su un pixel → salta all'offset, o cerca il

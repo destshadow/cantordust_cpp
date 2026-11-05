@@ -18,12 +18,11 @@ static constexpr int TOPBAR_H      = 40;   // tab cliccabili
 static constexpr int LEGEND_H      = 16;   // "cosa mostra questa vista"
 static constexpr int SCROLLBAR_H   = 12;   // scrollbar canvas orizzontale
 static constexpr int FILE_STATUS_H = 20;   // file + byte sotto cursore
-static constexpr int FILE_NAV_H    = 0;    // (tolta: ora c'e' la barra laterale)
 static constexpr int CMD_STATUS_H  = 18;   // barra comandi in basso
 static constexpr int PADDING       = 8;    // padding generico
 
 // --- Colonne ---
-static constexpr int NAV_W         = 136;  // barre di navigazione (passo 2)
+static constexpr int NAV_W         = 214;  // sezioni + barre FILE e ZONA
 static constexpr int INSPECTOR_W   = 328;  // pannello informazioni (39 char utili)
 static constexpr int SCROLLBAR_V_W = 12;   // scrollbar verticale canvas
 
@@ -35,7 +34,6 @@ static constexpr int CANVAS_W      = WIN_W - NAV_W - INSPECTOR_W - SCROLLBAR_V_W
 static constexpr int CANVAS_H      = WIN_H - CANVAS_Y
                                            - SCROLLBAR_H
                                            - FILE_STATUS_H
-                                           - FILE_NAV_H
                                            - CMD_STATUS_H
                                            - PADDING;
 static constexpr int SCROLLBAR_V_X = CANVAS_X + CANVAS_W;
@@ -47,8 +45,7 @@ static constexpr int RAW_PANEL_H   = 92;
 // --- Posizioni Y delle barre dal basso ---
 static constexpr int SCROLLBAR_H_Y  = CANVAS_Y + CANVAS_H;
 static constexpr int FILE_STATUS_Y  = SCROLLBAR_H_Y + SCROLLBAR_H;
-static constexpr int FILE_NAV_Y     = FILE_STATUS_Y  + FILE_STATUS_H;
-static constexpr int CMD_STATUS_Y   = FILE_NAV_Y     + FILE_NAV_H;
+static constexpr int CMD_STATUS_Y   = FILE_STATUS_Y  + FILE_STATUS_H;
 
 // --- Pannelli laterali (dalla topbar alla barra di stato) ---
 static constexpr int SIDE_Y         = TOPBAR_H;

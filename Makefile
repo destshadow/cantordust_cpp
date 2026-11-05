@@ -27,7 +27,6 @@ SRC = src/main.cpp \
       src/visualizer_2d.cpp \
       src/visualizer_3d.cpp \
       src/visualizer_nav.cpp \
-      src/visualizer_sections.cpp \
       src/binary_format.cpp \
       src/raw_pixels.cpp \
       src/wavelength_rgb.cpp \
@@ -37,7 +36,7 @@ SRC = src/main.cpp \
       src/classifier_model.cpp \
       src/byte_cloud.cpp \
       src/one_tuple.cpp \
-      src/overview_bar.cpp \
+      src/nav_bars.cpp \
       src/autocorr.cpp \
       src/visualizer_raw.cpp \
       src/visualizer_inspector.cpp

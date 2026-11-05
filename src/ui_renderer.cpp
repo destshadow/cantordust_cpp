@@ -40,7 +40,6 @@ void UIRenderer::draw(olc::PixelGameEngine* pge,
     drawCmdStatus(pge, state);
     if (state.currentView == ViewMode::TRIGRAPH3D)
         draw3DOverlay(pge, state);
-    drawSectionPanel(pge, state);
     if (state.inputMode)
         drawInputOverlay(pge, state);
 }
@@ -189,23 +188,6 @@ void UIRenderer::drawFileStatus(olc::PixelGameEngine* pge,
         pge->DrawString(sw-260, y+6, fitTail(state.byteInfo, 32), COL_YELLOW());
 }
 
-void UIRenderer::drawFileNav(olc::PixelGameEngine* pge,
-                               const UIState& state) {
-    int sw = pge->ScreenWidth();
-    int y  = FILE_NAV_Y;
-    pge->FillRect(0, y, sw, FILE_NAV_H, COL_SCROLLBAR());
-    pge->DrawLine(0, y, sw, y, COL_BORDER());
-    int cw = std::max(12, (int)(sw * state.fileNavRatio));
-    int cx = (int)((sw - cw) * state.fileNavPos);
-    pge->FillRect(cx, y+1, cw, FILE_NAV_H-2, COL_CURSOR());
-    pge->DrawRect(cx, y+1, cw, FILE_NAV_H-2, olc::Pixel(120,180,255));
-    if (!state.position.empty()) {
-        int tx = sw/2 - (int)(state.position.size()*3);
-        pge->DrawString(tx, y+2, state.position,
-                        olc::Pixel(200,200,100));
-    }
-}
-
 void UIRenderer::drawCmdStatus(olc::PixelGameEngine* pge,
                                  const UIState& state) {
     int sw = pge->ScreenWidth();
@@ -213,46 +195,13 @@ void UIRenderer::drawCmdStatus(olc::PixelGameEngine* pge,
     pge->FillRect(0, y, sw, CMD_STATUS_H, COL_BG());
     pge->DrawLine(0, y, sw, y, COL_BORDER());
     std::string cmds =
-        "O=Apri  S=Salva  Frecce=Naviga  Home=Reset";
+        "O=Apri  S=Salva  B=Barre  Home=Reset";
     int cmdsX = sw - (int)(cmds.size()*8) - 6;
     // Lo stato a sinistra non deve finire sotto l'elenco comandi
     if (!state.cmdStatus.empty())
         pge->DrawString(6, y+5, fitTail(state.cmdStatus, (cmdsX - 18) / 8),
                         olc::WHITE);
     pge->DrawString(cmdsX, y+5, cmds, olc::Pixel(140,140,140));
-}
-
-void UIRenderer::drawSectionPanel(olc::PixelGameEngine* pge,
-                                    const UIState& state) {
-    if (state.hoveredSection < 0) return;
-    if (state.hoveredSection >= (int)state.sections.size()) return;
-    const auto& sec = state.sections[state.hoveredSection];
-    int sw = pge->ScreenWidth();
-    int sh = pge->ScreenHeight();
-    int tx = state.mouseX + 12;
-    int ty = state.mouseY - 10;
-    std::string line1 = sec.name;
-    std::string line2 = "OFF: 0x" + sec.offsetHex;
-    std::string line3 = "SZ:  "   + sec.sizeStr;
-    std::string line4 = "Click = vai alla sezione";
-    int maxLen = std::max({(int)line1.size(), (int)line2.size(),
-                           (int)line3.size(), (int)line4.size()});
-    int boxW = maxLen * 6 + 12;
-    int boxH = 52;
-    if (tx + boxW > sw) tx = state.mouseX - boxW - 6;
-    if (tx < 0)         tx = 2;
-    if (ty + boxH > sh) ty = state.mouseY - boxH - 6;
-    if (ty < TOPBAR_H)  ty = TOPBAR_H + 4;
-    pge->FillRect(tx, ty, boxW, boxH, olc::Pixel(15,15,40,240));
-    pge->DrawRect(tx, ty, boxW, boxH,
-                  olc::Pixel(sec.r, sec.g, sec.b));
-    pge->DrawLine(tx+1, ty+13, tx+boxW-1, ty+13,
-                  olc::Pixel(sec.r/2, sec.g/2, sec.b/2));
-    pge->DrawString(tx+4, ty+3,  line1,
-                    olc::Pixel(sec.r, sec.g, sec.b));
-    pge->DrawString(tx+4, ty+16, line2, olc::WHITE);
-    pge->DrawString(tx+4, ty+26, line3, olc::Pixel(180,180,180));
-    pge->DrawString(tx+4, ty+38, line4, olc::Pixel(100,200,100));
 }
 
 void UIRenderer::draw3DOverlay(olc::PixelGameEngine* pge,

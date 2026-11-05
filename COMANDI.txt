@@ -8,29 +8,51 @@ Avvio:   ./cantordust /percorso/del/file
 AREE DELLA FINESTRA (1280x800)
 ------------------------------
 
-  +--------------------------- TAB DELLE VISTE ----------------------------+
-  | FILE  | legenda: cosa mostrano gli assi                  | INSPECTOR   |
-  |       +--------------------------------------------------+             |
-  | byte  |                                                  | dettagli di |
-  | del   |                 VISTA                            | cio' che e' |
-  | file  |                                                  | sotto il    |
-  | [sel] |                                                  | mouse       |
-  | inizio|  (solo RAW: pannello AUTOCORR + slider in fondo) |             |
-  | fine  |                                                  |             |
-  +-------+--------------------------------------------------+-------------+
+  +--------------------------- TAB DELLE VISTE ---------------------------+
+  | NAVIGAZIONE      | legenda: cosa mostrano gli assi       | INSPECTOR   |
+  | sezioni file zona+---------------------------------------+             |
+  | .text   [##] [##]|                                       | dettagli di |
+  |         [##] [##]|                VISTA                  | cio' che e' |
+  | .rodata [##] [  ]|                                       | sotto il    |
+  |         [  ] [  ]|                                       | mouse       |
+  | .data   [  ] [  ]| (solo RAW: AUTOCORR + slider in fondo)|             |
+  | inizio, fine, %  |                                       |             |
+  +------------------+---------------------------------------+-------------+
   | FILE: percorso [dimensione]                      info byte sotto mouse |
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
   TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9.
 
-  FILE (sinistra) Tutti i byte del file in ordine, dall'alto in basso
-                  (verde = valore del byte, nero = zeri). La cornice gialla
-                  e' la parte che stai guardando, il resto e' attenuato.
-                  Sotto: inizio, fine e quanta parte del file e'.
-                  Click/trascina = sposta la finestra li'.
-                  (versione semplice: arriveranno le due barre con le
-                  sezioni, vedi TODO.md passo 2)
+  NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
+
+    sezioni       Le sezioni ELF/PE come bande colorate, alla stessa
+                  altezza della barra "file". Le piu' piccole sono solo
+                  sottili strisce senza nome.
+                  Mouse sopra = la vista attenua tutto cio' che e' fuori
+                  dalla sezione (RAW, Metric Map, Dot Plot, Entropy) e
+                  l'Inspector la descrive.
+                  Click = la vista mostra esattamente quella sezione.
+
+    file          Tutto il file. La selezione sceglie quale parte
+                  compare ingrandita nella colonna "zona".
+
+    zona          La parte scelta in "file". La sua selezione decide
+                  cosa viene disegnato nella vista.
+
+  Sulle barre "file" e "zona":
+    Maniglie grigie (trascina)   sposta inizio o fine della selezione
+    Trascina dentro              sposta la selezione, stessa dimensione
+    Click fuori dalla selezione  porta li' la selezione
+    Rotella                      stringe / allarga intorno al mouse
+    Tasto destro  oppure  B      striscia: valore dei byte / entropia
+    Mouse sopra                  l'Inspector mostra quel byte
+
+  Colori della striscia:
+    valore        verde = valore del byte, nero = zeri
+    entropia      nero/rosso = bassa, giallo = media, bianco = alta
+
+  Sotto le barre: inizio e fine di cio' che vedi, e quanta parte del file.
 
   LEGENDA         Una riga sopra la vista: cosa indicano X, Y e il colore.
 
@@ -42,8 +64,10 @@ AREE DELLA FINESTRA (1280x800)
                     Digraph, Istogramma, Byte Cloud, One Tuple:
                                        il valore, quante volte compare,
                                        la prima volta che compare
-                  Mouse fuori dalla vista -> riassunto del file, della
-                  finestra corrente e delle sezioni piu' grandi.
+                  Mouse su una barra -> il byte in quel punto
+                  Mouse su una sezione -> dimensioni e composizione
+                  Altrove -> riassunto del file, della finestra corrente
+                  e delle sezioni piu' grandi.
 
 
 VISTE
@@ -68,8 +92,7 @@ TASTI GENERALI
   O               apri un file (scrivi il percorso)
   S               salva la vista corrente come export_<n>.png
                   (non nella vista 3D)
-  Freccia destra  finestra avanti (la prima volta: zoom al 25% del file)
-  Freccia sinistra finestra indietro
+  B               barre: valore dei byte / entropia
   Home            torna al file intero, azzera lo zoom
 
   Nella finestra "Apri file":
@@ -85,8 +108,6 @@ MOUSE NELLE VISTE 2D (1-4, 6-9)
   Rotella         zoom avanti / indietro
   Trascina (sx)   sposta la vista (solo con zoom > 1x)
   Scrollbar       orizzontale e verticale quando c'e' zoom
-  Click su una linea colorata (sezione ELF/PE; Dot Plot, Entropy, RAW)
-                  la finestra diventa quella sezione
 
 
 VISTA 6 — RAW PIXELS

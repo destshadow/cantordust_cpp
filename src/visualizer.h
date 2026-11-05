@@ -20,7 +20,7 @@
 #include <future>
 #include <mutex>
 #include <atomic>
-#include "overview_bar.h"
+#include "nav_bars.h"
 #include "autocorr.h"
 #include "ui_widgets.h"
 #include "byte_info.h"
@@ -41,8 +41,6 @@ private:
     void handle3DInput(float fElapsedTime);
     void handle2DInput();
     void draw2DCanvas();
-    void drawSectionOverlay();
-    void handleSectionClick();
     void drawSpinner(float fElapsedTime);
     // Area dello schermo riservata alla vista (in RawPixels piu' bassa:
     // sotto c'e' il pannello autocorrelazione + slider)
@@ -54,8 +52,8 @@ private:
     // Legenda, Inspector, barra di navigazione provvisoria
     void drawLegend();
     void drawInspector();
-    void drawNavPanel();
-    void handleNavPanel();
+    void syncNavigator();                  // barre -> finestra
+    void applyHighlight(olc::Sprite* spr); // attenua fuori dalla sezione
     bool mouseToContent(int mx, int my, int& cx, int& cy) const;
     int  sectionAt(size_t offset) const;   // -1 se nessuna
     size_t firstOccurrence(const uint8_t* pat, size_t n);  // con cache
@@ -64,7 +62,6 @@ private:
     void handleRawInput();
     void recomputeRawPixels();
     void syncRawSliders();
-    bool sectionToCanvas(size_t offset, int& cx, int& cy) const;
     std::vector<uint8_t> getCurrentRGB() const;
     std::string getByteInfo(int mouseX, int mouseY) const;
 
@@ -89,11 +86,6 @@ private:
     olc::Decal*   m_decal     = nullptr;
     olc::Sprite*  m_rawSprite = nullptr;
     olc::Decal*   m_rawDecal  = nullptr;
-
-    // Miniatura del file per la barra laterale (ricostruita al cambio file)
-    olc::Sprite*   m_navSprite = nullptr;
-    const uint8_t* m_navData   = nullptr;
-    size_t         m_navSize   = SIZE_MAX;
 
     // Istogramma della finestra corrente (calcolato nel thread di calcolo):
     // base per Inspector, riassunto e viste "per valore"
@@ -142,10 +134,12 @@ private:
     float m_scrollH = 0.0f;
     float m_scrollV = 0.0f;
 
-    // Sezioni interattive
-    std::vector<SectionInfo> m_sectionInfos;
-    int m_hoveredSection = -1;
+    // Barre di navigazione
+    NavBars m_bars;
 
-    // Overview bar
-    OverviewBar m_overviewBar;
+    // Zona evidenziata nella vista (hover su una sezione); start == end = nessuna
+    size_t m_hlStart = 0, m_hlEnd = 0;
+
+    // Finestra su cui sono state calcolate le viste correnti
+    size_t m_computedStart = SIZE_MAX, m_computedEnd = SIZE_MAX;
 };

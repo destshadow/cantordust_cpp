@@ -22,6 +22,7 @@ void Visualizer::updateCanvas() {
         olc::Pixel* dst = m_rawSprite->GetData();
         for (size_t i = 0, n = (size_t)w * h; i < n; i++)
             dst[i] = olc::Pixel(rgb[i*3], rgb[i*3 + 1], rgb[i*3 + 2]);
+        applyHighlight(m_rawSprite);
         m_rawDecal->Update();
         return;
     }
@@ -35,7 +36,41 @@ void Visualizer::updateCanvas() {
                 rgb[idx], rgb[idx+1], rgb[idx+2]
             ));
         }
+    applyHighlight(m_canvas);
     m_decal->Update();
+}
+
+// Passando su una sezione la vista la mostra: tutto cio' che sta fuori si
+// attenua. Vale per le viste dove un pixel ha una posizione nel file; per
+// digraph e 3D serve ricalcolare i punti della zona (TODO, passo 3).
+void Visualizer::applyHighlight(olc::Sprite* spr) {
+    if (m_hlEnd <= m_hlStart) return;
+    if (m_mode != ViewMode::RAWPIXELS && m_mode != ViewMode::METRICMAP &&
+        m_mode != ViewMode::DOTPLOT   && m_mode != ViewMode::ENTROPY) return;
+
+    const size_t ws  = m_navigator.getStart();
+    const size_t len = m_navigator.getEnd() - ws;
+    const int w = spr->width, h = spr->height;
+    olc::Pixel* px = spr->GetData();
+
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++) {
+            size_t a, b;
+            if (m_mode == ViewMode::RAWPIXELS) {
+                size_t rel = m_rawpixels.byteOffsetAt(x, y);
+                if (rel == SIZE_MAX) continue;
+                a = b = ws + rel;
+            } else if (m_mode == ViewMode::METRICMAP) {
+                a = b = ws + m_metricmap.fileIndexAt(x, y);
+            } else {       // colonna = tratto della finestra
+                a = ws + (size_t)((double)x * len / 255.0);
+                b = ws + (size_t)((double)(x + 1) * len / 255.0);
+            }
+            if (b < m_hlStart || a >= m_hlEnd) {
+                olc::Pixel& p = px[(size_t)y * w + x];
+                p = olc::Pixel(p.r / 5, p.g / 5, p.b / 5);
+            }
+        }
 }
 
 std::vector<uint8_t> Visualizer::getCurrentRGB() const {
@@ -150,10 +185,7 @@ void Visualizer::handle2DInput() {
     float maxOffY = std::max(1.0f, ch * scale - (float)ah);
 
     // Pan con drag sinistro
-    // NON iniziare drag se siamo in hover su una sezione
-    bool onSection = (m_hoveredSection >= 0);
-    if (m_zoom2d > 1.0f && inArea &&
-        !m_input.lastClickWasTab() && !onSection) {
+    if (m_zoom2d > 1.0f && inArea && !m_input.lastClickWasTab()) {
         if (GetMouse(0).bPressed) {
             m_dragging   = true;
             m_lastMouseX = mx;

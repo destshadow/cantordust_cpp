@@ -87,9 +87,6 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 }
             }
 
-            // --- Barra di navigazione a sinistra ---
-            if (!m_computing) handleNavPanel();
-
             // --- Larghezza / offset / autocorrelazione (solo RawPixels) ---
             if (!m_computing && m_mode == ViewMode::RAWPIXELS)
                 handleRawInput();
@@ -120,30 +117,58 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 }
             }
 
-            // --- Navigazione file ---
-            if (!m_computing && GetKey(olc::Key::RIGHT).bPressed) {
-                m_navigator.moveForward();
-                recomputeWindow();
-                m_status = "";
-            }
-            if (!m_computing && GetKey(olc::Key::LEFT).bPressed) {
-                m_navigator.moveBackward();
-                recomputeWindow();
-                m_status = "";
-            }
+            // --- Frecce: disattivate, ora si naviga con le barre a sinistra.
+            // Lasciate commentate nel caso servissero di nuovo (la prima
+            // pressione di RIGHT stringe la finestra al 25% del file;
+            // moveForward/moveBackward sono ancora in FileNavigator).
+            // if (!m_computing && GetKey(olc::Key::RIGHT).bPressed) {
+            //     m_navigator.moveForward();
+            //     recomputeWindow();
+            //     m_status = "";
+            // }
+            // if (!m_computing && GetKey(olc::Key::LEFT).bPressed) {
+            //     m_navigator.moveBackward();
+            //     recomputeWindow();
+            //     m_status = "";
+            // }
+
+            if (GetKey(olc::Key::B).bPressed) m_bars.toggleStrip();
+
             if (!m_computing && GetKey(olc::Key::HOME).bPressed) {
-                m_navigator.resetWindow(m_reader.getBytes());
-                recomputeWindow();
+                m_bars.reset();
+                syncNavigator();
                 m_zoom2d  = 1.0f;
                 m_scrollH = 0.0f;
                 m_scrollV = 0.0f;
                 m_status  = "Reset: file intero";
             }
 
-
-            handleSectionClick();
         }
     }
+
+    // Barre di navigazione: anche durante un calcolo, cosi' il trascinamento
+    // resta fluido; le viste si aggiornano appena il calcolo finisce
+    if (!typing) {
+        if (m_bars.update(this)) syncNavigator();
+
+        int hs = m_bars.hoveredSection();
+        size_t hlA = 0, hlB = 0;
+        if (hs >= 0) {
+            hlA = m_parser.getSections()[hs].offset;
+            hlB = hlA + m_parser.getSections()[hs].size;
+        }
+        if ((hlA != m_hlStart || hlB != m_hlEnd) && !m_computing) {
+            m_hlStart = hlA;
+            m_hlEnd   = hlB;
+            std::lock_guard<std::mutex> lk(m_dataMutex);
+            updateCanvas();
+        }
+    }
+
+    // Finestra cambiata e nessun calcolo in corso: aggiorna le viste
+    if (!m_computing && (m_navigator.getStart() != m_computedStart ||
+                         m_navigator.getEnd()   != m_computedEnd))
+        recomputeWindow();
 
     busy = m_computing.load();
 
@@ -168,12 +193,13 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                             CANVAS_X, CANVAS_Y,
                             CANVAS_W, CANVAS_H);
     } else {
-        draw2DCanvas();
-        if (!busy) drawSectionOverlay();
+        // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
+        // "Apri file", quindi mentre si scrive non si disegna
+        if (!m_input.isInputMode()) draw2DCanvas();
         if (m_mode == ViewMode::RAWPIXELS) drawRawPanel();
     }
     drawLegend();
-    drawNavPanel();
+    m_bars.draw(this);
     drawInspector();
 
     if (busy) drawSpinner(fElapsedTime);
@@ -199,16 +225,10 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     state.filepath       = m_reader.getFilepath();
     state.filesize       = m_reader.getSize();
     state.byteInfo       = busy ? "" : getByteInfo(GetMouseX(), GetMouseY());
-    state.position       = m_navigator.isValid()
-                           ? m_navigator.getPositionString() : "";
-    state.fileNavPos     = m_navigator.getNormalized();
-    state.fileNavRatio   = m_navigator.getWindowRatio();
     state.fps            = fElapsedTime > 0.0f ? 1.0f / fElapsedTime : 0.0f;
     state.zoomLevel      = m_zoom2d;
     state.scrollH        = m_scrollH;
     state.scrollV        = m_scrollV;
-    state.sections       = m_sectionInfos;
-    state.hoveredSection = m_hoveredSection;
     state.mouseX         = GetMouseX();
     state.mouseY         = GetMouseY();
     state.inputMode      = m_input.isInputMode();
@@ -219,15 +239,20 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     return true;
 }
 
+// Con i decal: i pixel normali finirebbero sotto la vista
 void Visualizer::drawSpinner(float fElapsedTime) {
     m_spinnerAngle += fElapsedTime * 3.0f;
-    int bx = WIN_W/2 - 80, by = WIN_H/2 - 20;
-    FillRect(bx, by, 160, 40, olc::Pixel(10, 10, 30, 200));
-    DrawRect(bx, by, 160, 40, COL_BORDER());
+    float bx = CANVAS_X + CANVAS_W / 2.0f - 80, by = WIN_H / 2.0f - 20;
+    FillRectDecal({bx, by}, {160, 40}, olc::Pixel(10, 10, 30, 230));
     int dots = (int)(m_spinnerAngle * 2) % 4;
     std::string txt = "Calcolo";
     for (int i = 0; i < dots; i++) txt += ".";
-    DrawString(bx + 10, by + 14, txt, COL_YELLOW());
+    DrawStringDecal({bx + 10, by + 14}, txt, COL_YELLOW());
+}
+
+// Le barre decidono la finestra; le viste si aggiornano nel ciclo principale
+void Visualizer::syncNavigator() {
+    m_navigator.selectRange(m_bars.start(), m_bars.end() - m_bars.start());
 }
 
 Visualizer::~Visualizer() {
@@ -236,8 +261,6 @@ Visualizer::~Visualizer() {
 
 bool Visualizer::OnUserDestroy() {
     if (m_future.valid()) m_future.wait();
-    delete m_navSprite;
-    m_navSprite = nullptr;
     delete m_rawDecal;
     m_rawDecal = nullptr;
     delete m_rawSprite;

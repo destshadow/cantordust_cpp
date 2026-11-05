@@ -8,6 +8,7 @@
 #include "raw_pixels.h"
 #include "byte_info.h"
 #include "density.h"
+#include "range_sel.h"
 #include <string>
 #include <cmath>
 #include <algorithm>
@@ -236,6 +237,42 @@ int main() {
         assert(m.getRGB()[0] == 0 && m.getRGB()[2] == 0);   // uniforme: nero
         m.compute(random, ColorMode::ENTROPY, CurveMode::LINEAR);
         assert(m.getRGB()[0] > 200 && m.getRGB()[2] > 200); // casuale: viola/magenta
+    }
+
+    // --- RangeSel: la selezione delle barre resta sempre valida ---
+    {
+        RangeSel s;
+        s.min = 0; s.max = 1000; s.set(0, 1000);
+        assert(s.lo == 0 && s.hi == 1000);
+        s.setLo(990);                      // la maniglia non supera l'altra
+        s.setHi(995);
+        assert(s.hi - s.lo == RangeSel::MIN_SIZE);
+        s.set(100, 200);
+        s.slideTo(950);                    // spostando la dimensione non cambia
+        assert(s.lo == 900 && s.hi == 1000);
+        s.slideTo(0);
+        assert(s.lo == 0 && s.hi == 100);
+
+        s.set(400, 600);
+        s.zoomAround(500, 0.5);            // il byte sotto il mouse resta fermo
+        assert(s.lo == 450 && s.hi == 550);
+        for (int i = 0; i < 100; i++) s.zoomAround(500, 0.5);
+        assert(s.size() == RangeSel::MIN_SIZE);
+        for (int i = 0; i < 100; i++) s.zoomAround(500, 2.0);
+        assert(s.lo == 0 && s.hi == 1000);
+
+        s.set(100, 200);                   // ZONA dentro FILE: stessi byte...
+        s.setBounds(150, 800);
+        assert(s.lo == 150 && s.hi == 200);
+        s.setBounds(500, 800);             // ...e mai fuori dai confini
+        assert(s.lo == 500 && s.hi == 516);
+
+        for (size_t tiny : {0, 1, 5, 16}) {   // file piu' piccoli della selezione
+            RangeSel t;
+            t.min = 0; t.max = tiny; t.set(0, tiny);
+            t.setLo(tiny); t.setHi(0); t.slideTo(tiny); t.zoomAround(0, 0.5);
+            assert(t.lo <= t.hi && t.hi <= tiny);
+        }
     }
 
     std::cout << "All core regression tests passed\n";

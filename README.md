@@ -69,7 +69,8 @@ make -j
 
 ## Interfaccia
 
-- **Sinistra**: dove si trova la finestra nel file (click = vai).
+- **Sinistra**: sezioni e barre di navigazione (maniglie, trascinamento,
+  rotella): decidono quale parte del file finisce nella vista.
 - **Centro**: la vista, con una riga di legenda che spiega gli assi.
 - **Destra — Inspector**: cosa c'è sotto il mouse (offset, sezione, byte
   in hex/ASCII, composizione, entropia, ipotesi sul contenuto); per le
@@ -84,7 +85,7 @@ make -j
 | `1-9` | Cambia vista |
 | `O` | Apri file |
 | `S` | Salva PNG |
-| `←→` | Naviga nel file |
+| `B` | Barre: valore dei byte / entropia |
 | `Home` | Reset (file intero) |
 
 ### Viste 2D (tutte tranne 5)
@@ -141,12 +142,14 @@ cantordust_cpp/
 │   ├── visualizer_2d.cpp          # Canvas 2D + zoom
 │   ├── visualizer_3d.cpp          # Input 3D
 │   ├── visualizer_nav.cpp         # Navigazione + threading
-│   ├── visualizer_sections.cpp    # Overlay sezioni ELF/PE
 │   ├── visualizer_raw.cpp         # Pannello raw pixel: slider + autocorrelazione
 │   ├── autocorr.{h,cpp}           # Autocorrelazione → larghezza immagini
 │   ├── visualizer_inspector.cpp   # Inspector, legenda, barra navigazione
 │   ├── byte_info.h                # Classi di byte, entropia, ipotesi contenuto
-│   └── ui_widgets.h               # Slider
+│   ├── nav_bars.{h,cpp}           # Barre di navigazione e sezioni
+│   ├── range_sel.h                # Logica della selezione
+│   ├── density.h                  # Luminosità di digraph e dot plot
+│   └── ui_widgets.h               # Slider, pannelli
 ├── python/                  # Neural network (WIP)
 ├── setup.sh                 # Setup automatico
 ├── Makefile

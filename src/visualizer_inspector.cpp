@@ -202,9 +202,28 @@ void Visualizer::drawInspector() {
     int cx = 0, cy = 0;
     bool over = mouseToContent(GetMouseX(), GetMouseY(), cx, cy);
 
+    // ---------------- Mouse su una banda delle sezioni ----------------
+    int hs = m_bars.hoveredSection();
+    if (hs >= 0) {
+        const auto& sec = m_parser.getSections()[hs];
+        pw.field("SEZIONE", sec.name, olc::Pixel(sec.r, sec.g, sec.b));
+        pw.field("RANGE", "0x" + hex(sec.offset, 8) + "-0x" + hex(sec.offset + sec.size, 8));
+        pw.field("DIMENS.", sizeStr(sec.size) + "  (" +
+                 pct((double)sec.size / std::max<size_t>(1, bytes.size())) + " del file)");
+        pw.text("click = mostra questa sezione", COL_GREEN());
+        pw.separator("inizio della sezione");
+        writeHex(sec.offset, sec.offset, 3);
+        pw.separator("composizione");
+        writeStats(pw, zoneStats(sec.offset, sec.offset + sec.size));
+        return;
+    }
+
     // ---------------- PUNTO: un offset del file ----------------
     size_t point = SIZE_MAX;
-    if (over && m_mode == ViewMode::RAWPIXELS) {
+    size_t barOff = 0;
+    if (m_bars.hoverOffset(GetMouseX(), GetMouseY(), barOff)) {
+        point = barOff;     // mouse su una barra: il byte sotto il mouse
+    } else if (over && m_mode == ViewMode::RAWPIXELS) {
         size_t rel = m_rawpixels.byteOffsetAt(cx, cy);
         if (rel != SIZE_MAX) point = wStart + rel;
     } else if (over && m_mode == ViewMode::METRICMAP) {
@@ -330,77 +349,4 @@ void Visualizer::drawInspector() {
     }
     pw.y = SIDE_Y + SIDE_H - 14;
     pw.text("mouse sulla vista = dettagli", olc::Pixel(120, 120, 150));
-}
-
-// ---------------------------------------------------------------------
-// Barra di navigazione a sinistra (versione semplice; le due barre con le
-// sezioni arrivano al passo 2). Mostra i byte del file in sequenza, riga
-// per riga, in verde come i raw pixel a 8bpp: zeri scuri, dati chiari.
-// La parte fuori dalla finestra corrente e' attenuata.
-
-namespace {
-struct NavBar { int x, y, w, h; };
-NavBar navBar() { return {14, SIDE_Y + 18, NAV_W - 28, SIDE_H - 18 - 46}; }
-}
-
-void Visualizer::drawNavPanel() {
-    drawPanel(this, 0, SIDE_Y, NAV_W, SIDE_H, "FILE");
-    NavBar b = navBar();
-    const auto& bytes = m_reader.getBytes();
-    const size_t total = bytes.size();
-
-    // Miniatura: un pixel = un byte campionato, in ordine di file
-    if (!m_navSprite || m_navData != bytes.data() || m_navSize != total) {
-        delete m_navSprite;
-        m_navSprite = new olc::Sprite(b.w, b.h);
-        m_navData = bytes.data();
-        m_navSize = total;
-        const size_t px = (size_t)b.w * b.h;
-        for (int y = 0; y < b.h; y++)
-            for (int x = 0; x < b.w; x++) {
-                uint8_t v = 0;
-                if (total > 0) v = bytes[((size_t)y * b.w + x) * total / px];
-                m_navSprite->SetPixel(x, y, olc::Pixel(0, v, 0));
-            }
-    }
-    DrawSprite(b.x, b.y, m_navSprite);
-
-    if (total > 0) {
-        int y0 = b.y + (int)((double)m_navigator.getStart() / total * b.h);
-        int y1 = b.y + (int)((double)m_navigator.getEnd()   / total * b.h);
-        y1 = std::max(y1, y0 + 2);
-        // Attenua fuori dalla finestra
-        SetPixelMode(olc::Pixel::ALPHA);
-        if (y0 > b.y)       FillRect(b.x, b.y, b.w, y0 - b.y, olc::Pixel(0, 0, 0, 170));
-        if (y1 < b.y + b.h) FillRect(b.x, y1, b.w, b.y + b.h - y1, olc::Pixel(0, 0, 0, 170));
-        SetPixelMode(olc::Pixel::NORMAL);
-        // Cornice della finestra (sporge un po' per vederla anche sottile)
-        DrawRect(b.x - 3, y0 - 1, b.w + 5, y1 - y0 + 1, COL_YELLOW());
-    }
-    DrawRect(b.x - 1, b.y - 1, b.w + 1, b.h + 1, COL_BORDER());
-
-    // Posizione: inizio, fine, quanta parte del file
-    int ty = b.y + b.h + 6;
-    DrawString(6, ty,      "0x" + hex(m_navigator.getStart(), 8), olc::Pixel(200, 200, 100));
-    DrawString(6, ty + 10, "0x" + hex(m_navigator.getEnd(),   8), olc::Pixel(200, 200, 100));
-    std::string share = (total == 0 || m_navigator.getWindowSize() >= total)
-                        ? "file intero"
-                        : pct((double)m_navigator.getWindowSize() / total) + " del file";
-    DrawString(6, ty + 20, share, olc::Pixel(160, 160, 160));
-    DrawString(6, ty + 32, "click = vai", olc::Pixel(110, 110, 150));
-}
-
-void Visualizer::handleNavPanel() {
-    NavBar b = navBar();
-    int mx = GetMouseX(), my = GetMouseY();
-    if (!GetMouse(0).bHeld) return;
-    if (mx < b.x - 3 || mx >= b.x + b.w + 3 || my < b.y || my >= b.y + b.h) return;
-    // Centra la finestra sul punto cliccato
-    size_t total = m_navigator.getTotalSize(), win = m_navigator.getWindowSize();
-    if (total == 0 || win >= total) return;
-    double c = (double)(my - b.y) / b.h * total - win / 2.0;
-    float norm = (float)std::clamp(c / (double)(total - win), 0.0, 1.0);
-    size_t before = m_navigator.getStart();
-    m_navigator.jumpTo(norm);
-    if (m_navigator.getStart() != before) recomputeWindow();
 }
