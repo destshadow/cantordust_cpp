@@ -176,7 +176,24 @@ VISTA 5 — 3D
                   D destra (rispetto a dove stai guardando)
   Q  E            su / giu'
   Rotella         zoom
-  R               reset della camera
+  R               reset della camera (lo zoom resta)
+  C               cosa vuol dire il colore:
+                    sezione       la sezione in cui la tripla prevale
+                                  (stessi colori delle bande a sinistra)
+                    tipo di byte  zero, controllo, testo, alti, 0xFF, misti
+                    frequenza     da raro a frequente
+                  Con un formato sconosciuto non c'e' "sezione"; la legenda
+                  in basso nella vista spiega i colori del modo scelto.
+
+  Il cubo: ogni punto e' una tripla di byte. I tre assi colorati partono
+  dall'angolo 00 00 00 e arrivano a FF; la luce dice quante triple cadono
+  in quel pixel.
+
+  Mouse su un punto   l'Inspector mostra la tripla, quante volte compare,
+                      in che sezione prevale e la prima occorrenza; sulle
+                      barre compaiono i segni viola di dove sta nel file
+  Click su un punto   scorre le occorrenze, una per click (cerchio giallo)
+  Esc                 toglie la scelta
 
 
 Per sviluppatori

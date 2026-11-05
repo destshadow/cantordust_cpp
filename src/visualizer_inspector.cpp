@@ -5,14 +5,14 @@
 // Inspector: spiega cosa c'e' sotto il mouse. Qui si decide QUALE pannello
 // mostrare e ci sono i pezzi comuni; i pannelli stanno in:
 //   visualizer_inspector_file.cpp     sezione, PUNTO, TRATTO (hanno un offset)
-//   visualizer_inspector_value.cpp    VALORE (un byte o una coppia)
+//   visualizer_inspector_value.cpp    VALORE (un byte, una coppia, una tripla)
 //   visualizer_inspector_summary.cpp  riassunto, se il mouse non e' su nulla
 //
 // Cosa sia "un pixel" dipende dalla vista:
 //   - PUNTO  (RAW, MetricMap)          → un offset del file
 //   - TRATTO (DotPlot, Entropy)        → un range di offset
-//   - VALORE (Digraph, Histogram, ...) → un byte o una coppia di byte,
-//                                        con quante volte e dove compare
+//   - VALORE (Digraph, Histogram, 3D, ...) → un byte, una coppia o una
+//                                        tripla, con quante volte e dove compare
 
 using namespace Inspect;
 
@@ -42,6 +42,8 @@ void Visualizer::drawInspector() {
         inspectValue(pw, cx, cy);
         return;
     }
+    uint32_t key;
+    if (tripleUnderMouse(key)) { inspectTriple(pw, key); return; }
     if (m_pick.active()) { inspectPick(pw); return; }
     inspectSummary(pw);
 }

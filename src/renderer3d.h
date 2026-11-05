@@ -1,57 +1,50 @@
 #pragma once
 #include <vector>
-#include <array>
 #include <cstdint>
+#include "camera3d.h"
+#include "cloud_frame.h"
 #include "trigraph.h"
 #include <olcPixelGameEngine.h>
 
-using Mat3 = std::array<std::array<float, 3>, 3>;
-
 class Renderer3D {
 public:
-    Renderer3D();
-
+    // Disegna la nuvola nel viewport. Il fotogramma si ricalcola solo quando
+    // cambia qualcosa; con troppi punti, mentre ci si muove se ne usa una
+    // parte, e tutti appena ci si ferma.
     void render(olc::PixelGameEngine* pge,
                 const std::vector<Point3D>& points,
-                int offsetX, int offsetY,
-                int width,   int height,
+                const Camera3D::Viewport& vp, float dt,
                 const std::vector<bool>* highlight = nullptr,
                 olc::Pixel tint = olc::WHITE);
 
-    // Rotazione (mouse sinistro)
-    void rotate(float dx, float dy);
+    // Da chiamare quando cambiano i punti, i colori o l'evidenziazione
+    void invalidate() { m_dirty = true; }
 
-    // Pan schermo (mouse destro)
-    void pan(float dx, float dy);
+    // Cubo, assi e nomi (renderer3d_cube.cpp), sopra la nuvola
+    void drawCube(olc::PixelGameEngine* pge) const;
+    // Cerchio attorno a una tripla; se e' fuori vista non disegna nulla
+    void drawMarker(olc::PixelGameEngine* pge, uint32_t key,
+                    int radius, olc::Pixel col) const;
 
-    // Movimento camera nello spazio 3D (WASD + QE)
-    // forward/right/up sono in unita' mondo [-1,+1]
+    // La tripla sotto il punto (x, y) dello schermo
+    uint32_t keyAt(int x, int y) const;
+
+    void rotate(float dx, float dy);     // mouse sinistro
+    void pan(float dx, float dy);        // mouse destro
+    // WASD + QE: forward/right/up in unita' mondo
     void moveCamera(float forward, float right, float up);
-
     void resetRotation();
     void zoom(float delta);
 
 private:
-    bool project(float x, float y, float z,
-                 int offsetX, int offsetY,
-                 int width,   int height,
-                 int& outX,   int& outY) const;
+    void rasterize(const std::vector<Point3D>& points, uint32_t sample,
+                   const std::vector<bool>* highlight, olc::Pixel tint);
 
-    Mat3 buildRotationMatrix() const;
-    void applyRotation(const Mat3& mat,
-                       float  ix, float  iy, float  iz,
-                       float& ox, float& oy, float& oz) const;
-
-    // Rotazione mondo
-    float m_angleX =  0.4f;
-    float m_angleY =  0.6f;
-    float m_zoom   =  1.0f;
-    float m_panX   =  0.0f;
-    float m_panY   =  0.0f;
-
-    // Posizione camera nello spazio 3D
-    // Parte in (0,0,0) = centro del cubo
-    float m_camX   =  0.0f;
-    float m_camY   =  0.0f;
-    float m_camZ   =  0.0f;
+    Camera3D           m_cam;
+    Camera3D::Viewport m_vp{0, 0, 0, 0};
+    CloudFrame         m_frame;
+    bool  m_dirty  = true;    // da ridisegnare
+    bool  m_moved  = false;   // la camera si e' mossa
+    bool  m_refine = false;   // l'ultimo fotogramma usa solo una parte dei punti
+    float m_idle   = 0.0f;    // secondi da quando la camera e' ferma
 };

@@ -7,11 +7,12 @@
 
 bool Visualizer::isValueView() const {
     return m_mode == ViewMode::DIGRAPH   || m_mode == ViewMode::HISTOGRAM ||
-           m_mode == ViewMode::BYTECLOUD || m_mode == ViewMode::ONETUPLE;
+           m_mode == ViewMode::BYTECLOUD || m_mode == ViewMode::ONETUPLE  ||
+           m_mode == ViewMode::TRIGRAPH3D;
 }
 
-// Il valore rappresentato dal pixel (cx, cy) della vista: quanti byte (1 o 2)
-size_t Visualizer::valueAt(int cx, int cy, uint8_t pat[2]) const {
+// Il valore rappresentato dal pixel (cx, cy) di una vista 2D: quanti byte (1 o 2)
+size_t Visualizer::valueAt(int cx, int cy, uint8_t pat[3]) const {
     if (m_mode == ViewMode::DIGRAPH) {
         pat[0] = (uint8_t)cx;
         pat[1] = (uint8_t)cy;
@@ -20,6 +21,22 @@ size_t Visualizer::valueAt(int cx, int cy, uint8_t pat[2]) const {
     if (m_mode == ViewMode::BYTECLOUD) pat[0] = (uint8_t)((cy / 16) * 16 + cx / 16);
     else                               pat[0] = (uint8_t)cx;   // X = valore
     return 1;
+}
+
+// Il valore sotto il mouse, in qualunque vista; 0 = nessuno
+size_t Visualizer::valueUnderMouse(uint8_t pat[3]) const {
+    if (m_mode == ViewMode::TRIGRAPH3D) {
+        uint32_t key;
+        if (!tripleUnderMouse(key)) return 0;
+        pat[0] = (key >> 16) & 0xFF;
+        pat[1] = (key >>  8) & 0xFF;
+        pat[2] =  key        & 0xFF;
+        return 3;
+    }
+    int cx = 0, cy = 0;
+    if (isValueView() && mouseToContent(GetMouseX(), GetMouseY(), cx, cy))
+        return valueAt(cx, cy, pat);
+    return 0;
 }
 
 void Visualizer::rebuildMarks() {
@@ -40,11 +57,8 @@ void Visualizer::updateLinks(float dt) {
         m_pick.clear();
     if (GetKey(olc::Key::ESCAPE).bPressed) m_pick.clear();
 
-    int cx = 0, cy = 0;
-    uint8_t pat[2] = {0, 0};
-    size_t  n = 0;
-    if (isValueView() && mouseToContent(GetMouseX(), GetMouseY(), cx, cy))
-        n = valueAt(cx, cy, pat);
+    uint8_t pat[3] = {0, 0, 0};
+    const size_t n = valueUnderMouse(pat);
 
     // Click = premuto e rilasciato senza spostarsi (altrimenti e' un pan)
     if (GetMouse(0).bPressed) {
@@ -74,7 +88,7 @@ void Visualizer::updateLinks(float dt) {
 
     if (wanted.empty()) {
         if (!m_marked.empty()) { m_marked.clear(); m_bars.clearMarks(); }
-    } else if (m_markWait >= 0.08f &&
+    } else if (m_markWait >= MARK_WAIT &&
                (wanted != m_marked || m_markLo != m_bars.macroLo() ||
                                       m_markHi != m_bars.macroHi())) {
         m_marked = wanted;

@@ -1,6 +1,29 @@
 #include "visualizer.h"
+#include <cstdlib>
+
+// La tripla sotto il mouse. Mentre si ruota o si sposta non c'e': i punti
+// scorrono sotto il mouse e si cercherebbe nel file a ogni pixel.
+bool Visualizer::tripleUnderMouse(uint32_t& key) const {
+    if (m_mode != ViewMode::TRIGRAPH3D) return false;
+    const int mx = GetMouseX(), my = GetMouseY();
+    if (mx < CANVAS_X || mx >= CANVAS_X + CANVAS_W ||
+        my < CANVAS_Y || my >= CANVAS_Y + CANVAS_H) return false;
+    if (GetMouse(1).bHeld) return false;
+    if (GetMouse(0).bHeld &&
+        (std::abs(mx - m_pressX) > 2 || std::abs(my - m_pressY) > 2)) return false;
+    key = m_renderer3d.keyAt(mx, my);
+    return key != CloudFrame::NO_KEY;
+}
 
 void Visualizer::handle3DInput(float fElapsedTime) {
+
+    // C: cambia il significato del colore
+    if (GetKey(olc::Key::C).bPressed) {
+        const bool hasSections = !m_parser.getSections().empty();
+        m_cloudColor = CloudColor::next(cloudColorMode(), hasSections);
+        repaintCloud();
+        m_status = std::string("Colore: ") + CloudColor::name(m_cloudColor);
+    }
 
     // R: reset tutto
     if (GetKey(olc::Key::R).bPressed) {

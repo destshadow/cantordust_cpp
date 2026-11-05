@@ -10,7 +10,7 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
         case ViewMode::DOTPLOT:    r->dotplot.compute(window);   break;
         case ViewMode::ENTROPY:    r->entropy.compute(window);   break;
         case ViewMode::HISTOGRAM:  r->histogram.compute(window); break;
-        case ViewMode::TRIGRAPH3D: r->trigraph.compute(window);  break;
+        case ViewMode::TRIGRAPH3D: r->trigraph.compute(window, p.sections); break;
         case ViewMode::BYTECLOUD:  r->bytecloud.compute(window); break;
         case ViewMode::ONETUPLE:   r->onetuple.compute(window);  break;
         case ViewMode::RAWPIXELS:

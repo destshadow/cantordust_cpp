@@ -112,7 +112,10 @@ make -j
 | `WASD` | Muovi camera |
 | `Q/E` | Su/Giù |
 | Rotella | Zoom |
-| `R` | Reset |
+| `R` | Reset camera |
+| `C` | Colore: sezione, tipo di byte, frequenza |
+| Mouse su un punto | Tripla, conteggio, dove compare |
+| Click su un punto | Scorre le occorrenze |
 
 ---
 
@@ -133,6 +136,10 @@ cantordust_cpp/
 │   ├── histogram.{h,cpp}          # Istogramma byte
 │   ├── trigraph.{h,cpp}           # Nuvola punti 3D
 │   ├── renderer3d.{h,cpp}         # Renderer 3D software
+│   ├── renderer3d_cube.cpp        # Cubo, assi e segni nel 3D
+│   ├── camera3d.h, line_clip.h    # Proiezione e ritaglio delle linee
+│   ├── cloud_frame.{h,cpp}        # Fotogramma: densità e picking
+│   ├── cloud_color.{h,cpp}        # Colori della nuvola (tasto C)
 │   ├── file_navigator.{h,cpp}     # Navigazione nel file
 │   ├── screenshot.{h,cpp}         # Export PNG (stb)
 │   ├── input_handler.{h,cpp}      # Gestione input
@@ -141,6 +148,7 @@ cantordust_cpp/
 │   ├── visualizer.{h,cpp}         # Orchestrazione principale
 │   ├── visualizer_2d.cpp          # Canvas 2D + zoom
 │   ├── visualizer_3d.cpp          # Input 3D
+│   ├── visualizer_3d_draw.cpp     # Disegno e legenda 3D
 │   ├── visualizer_nav.cpp         # Navigazione + threading
 │   ├── visualizer_raw.cpp         # Pannello raw pixel: slider + autocorrelazione
 │   ├── autocorr.{h,cpp}           # Autocorrelazione → larghezza immagini

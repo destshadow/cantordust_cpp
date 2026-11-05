@@ -116,7 +116,7 @@ Layout obiettivo:
              fine/%, click = vai; tolta la barra di navigazione in basso
        - [x] fix: WASD del 3D (W andava indietro), vista 9 OneTuple che
              riempiva solo poche righe (ora 256 righe = tutta la finestra)
-       - [ ] Inspector per il 3D: arriva con il picking (passo 4)
+       - [x] Inspector per il 3D (passo 4)
 2. [x] **Barre di navigazione con le bande delle sezioni**
        - [x] `nav_bars.cpp`: sezioni | file | zona; byte veri o entropia
              (`B` / tasto destro); maniglie, trascinamento, rotella
@@ -137,15 +137,20 @@ Layout obiettivo:
              byte cloud: valori soprattutto nella sezione
        - [x] vista → file (`visualizer_links.cpp`, `occurrences.cpp`): segni
              viola sulle barre, click = scorre le occorrenze ("3 di 120")
-       - [ ] mancano ancora: Dot Plot come valore (Y) e 3D (arriva col picking)
+       - [ ] manca ancora: Dot Plot come valore (Y)
        - [ ] idea: dall'occorrenza scelta, portare la vista in quel punto
              (oggi si vede nell'Inspector e come riga bianca sulle barre)
-4. [ ] **Esplorazione 3D**
-       - cubo e assi etichettati (byte 1/2/3, angoli 0x00/0xFF)
-       - picking del punto sotto il mouse → tripla, conteggio, dove
-         compare, sezione; click → vai nel file
-       - colore per sezione o per selezione (con legenda) al posto
-         del colore attuale, che non comunica nulla
+4. [x] **Esplorazione 3D**
+       - [x] cubo e assi etichettati (`renderer3d_cube.cpp`): byte 1/2/3,
+             00 e FF; camera in `camera3d.h`, ritaglio in `line_clip.h`
+       - [x] fotogramma (`cloud_frame.cpp`): punti sommati, colore = media,
+             luce = densita'; ogni pixel ricorda il punto piu' pesante
+       - [x] picking: tripla, conteggio, sezione prevalente, occorrenze;
+             click = scorre le occorrenze, segni sulle barre
+       - [x] colore `C` (`cloud_color.cpp`): sezione, tipo di byte, frequenza,
+             con legenda; sezione prevalente col voto di maggioranza
+       - [x] costo: fotogramma ricalcolato solo se cambia qualcosa; oltre
+             1,5 milioni di punti, in movimento se ne usa un campione
 5. [ ] **Miniature delle viste** a destra al posto delle tab,
        **riassunto del file** (formato, architettura, entry point,
        sezioni in %, entropia media), ritocchi grafici
@@ -154,8 +159,12 @@ Layout obiettivo:
 
 - Un calcolo in corso non si può interrompere: su file grandi un cambio
   vista parte solo quando finisce quello prima.
-- 3D su dati casuali: fino a 16 milioni di punti (circa 470 MB di memoria)
-  disegnati uno per uno a ogni frame. Da rivedere al passo 4.
+- 3D su dati casuali da 100 MB: 16,7 milioni di punti, 267 MB. Calcolo 1,4 s
+  senza sezioni, 3,9 s se le sezioni coprono tutto il file (voto di
+  maggioranza). Fotogramma 30 ms in movimento, 97 ms completo.
+- 3D: la sezione "prevalente" e' esatta solo se una sezione ha piu' di meta'
+  delle occorrenze; le triple a cavallo di due sezioni non vengono contate.
+- `S` non salva la vista 3D.
 - `FileNavigator::moveForward/moveBackward` restano solo per le frecce
   commentate e per i test.
 - Per ThreadSanitizer su questo kernel: `setarch x86_64 -R ./programma`.
@@ -171,9 +180,8 @@ serve l'attribuzione richiesta dalla licenza.
 - [x] **Luminosità**: `density.h`, percentile p90 + curva logaritmica al
   posto del massimo, per digraph e dot plot; digraph verde come la GIF.
 - [x] **Click**: ripetendo il click si passa all'occorrenza dopo.
-- **Passo 4, 3D**: un buffer grande come la vista memorizza per ogni pixel
-  il punto più luminoso: il picking diventa immediato. Punti con somma
-  additiva invece che sovrascritti, così si vede la densità. Assi b0/b1/b2.
+- [x] **Passo 4, 3D**: buffer grande come la vista con il punto più pesante
+  di ogni pixel (picking immediato), punti sommati per vedere la densità.
 - [x] **Metric Map**: colore Entropy come default (è il viola/magenta
   della GIF) ed entropia locale su 32 byte come l'originale.
 

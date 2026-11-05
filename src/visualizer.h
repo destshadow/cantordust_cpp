@@ -6,6 +6,7 @@
 #include "histogram.h"
 #include "trigraph.h"
 #include "renderer3d.h"
+#include "cloud_color.h"
 #include "file_navigator.h"
 #include "screenshot.h"
 #include "input_handler.h"
@@ -42,6 +43,13 @@ private:
     void recomputeWindow();
     void applyResults();
     void handle3DInput(float fElapsedTime);
+    // Vista 3D (visualizer_3d.cpp, visualizer_3d_draw.cpp)
+    void draw3D(float fElapsedTime);
+    void drawCloudLegend();
+    void repaintCloud();
+    CloudColor::Mode cloudColorMode() const;
+    std::vector<TriGraph::Range> sectionRanges() const;
+    bool tripleUnderMouse(uint32_t& key) const;
     void handle2DInput();
     void draw2DCanvas();
     void drawSpinner(float fElapsedTime);
@@ -63,6 +71,8 @@ private:
     void inspectPoint(PanelWriter& pw, size_t point);
     void inspectRange(PanelWriter& pw, int cx, int cy);
     void inspectValue(PanelWriter& pw, int cx, int cy);
+    void inspectTriple(PanelWriter& pw, uint32_t key);
+    void writeOccurrences(PanelWriter& pw, const uint8_t* pat, size_t n);
     void inspectPick(PanelWriter& pw);
     void inspectSummary(PanelWriter& pw);
     void writeSectionField(PanelWriter& pw, size_t off);
@@ -72,7 +82,8 @@ private:
     void saveView();
     // Vista -> file (visualizer_links.cpp)
     bool   isValueView() const;
-    size_t valueAt(int cx, int cy, uint8_t pat[2]) const;
+    size_t valueAt(int cx, int cy, uint8_t pat[3]) const;
+    size_t valueUnderMouse(uint8_t pat[3]) const;    // quanti byte, 0 = nessuno
     void   updateLinks(float dt);
     void   rebuildMarks();
     // Sezione -> vista (visualizer_highlight.cpp)
@@ -169,6 +180,7 @@ private:
     // Vista -> file: valore scelto col click e segni sulle barre
     Occur::Walker        m_pick;
     std::vector<uint8_t> m_markWanted, m_marked;
+    static constexpr float MARK_WAIT = 0.08f;   // secondi col mouse fermo
     float  m_markWait = 0.0f;
     size_t m_markLo = 0, m_markHi = 0;
     bool   m_pressed = false;
@@ -179,6 +191,7 @@ private:
     std::vector<bool> m_tripleMask;      // 3D: triple presenti nella sezione
     bool       m_tripleMaskOn = false;
     olc::Pixel m_tripleTint   = olc::WHITE;
+    CloudColor::Mode m_cloudColor = CloudColor::Mode::SECTION;
 
     // Finestra su cui sono state calcolate le viste correnti
     size_t m_computedStart = SIZE_MAX, m_computedEnd = SIZE_MAX;

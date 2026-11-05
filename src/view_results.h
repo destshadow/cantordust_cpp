@@ -24,6 +24,7 @@ struct ComputeParams {
     CurveMode curveMode = CurveMode::HILBERT;
     int       rawWidth  = 256;
     size_t    rawOffset = 0;
+    std::vector<TriGraph::Range> sections;   // 3D: relative alla finestra
 };
 
 // Il risultato di un calcolo: si riempie nel thread di calcolo, che non

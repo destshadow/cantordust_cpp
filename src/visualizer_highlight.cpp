@@ -123,6 +123,7 @@ void Visualizer::highlightByValue(olc::Sprite* spr) {
 
 // 3D: le triple presenti nella sezione (2 MB di bit, una per tripla possibile)
 void Visualizer::buildTripleMask() {
+    m_renderer3d.invalidate();
     m_tripleMaskOn = m_hlEnd > m_hlStart;
     if (!m_tripleMaskOn) return;
 

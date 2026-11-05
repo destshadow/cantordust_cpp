@@ -29,6 +29,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     switch (action) {
         case Action::SWITCH_VIEW:
             m_mode     = m_input.getRequestedView();
+            m_pick.clear();     // ogni vista ha i suoi valori
             m_dragging = false;
             m_panning  = false;
             m_recomputeNeeded = true;
@@ -167,11 +168,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     Clear(olc::BLACK);
 
     if (m_mode == ViewMode::TRIGRAPH3D) {
-        m_renderer3d.render(this, m_trigraph.getPoints(),
-                            CANVAS_X, CANVAS_Y,
-                            CANVAS_W, CANVAS_H,
-                            m_tripleMaskOn ? &m_tripleMask : nullptr,
-                            m_tripleTint);
+        draw3D(fElapsedTime);
     } else {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna

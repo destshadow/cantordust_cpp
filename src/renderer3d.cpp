@@ -1,160 +1,111 @@
 #include "renderer3d.h"
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <cstring>
 
-Renderer3D::Renderer3D() {
-    m_angleX = 0.4f;
-    m_angleY = 0.6f;
-    m_zoom   = 1.0f;
-    m_panX   = 0.0f;
-    m_panY   = 0.0f;
-    m_camX   = 0.0f;
-    m_camY   = 0.0f;
-    m_camZ   = 0.0f;
-}
+namespace {
+// Oltre questi punti, mentre ci si muove se ne disegna solo una parte
+constexpr size_t MAX_MOVING_POINTS = 1500000;
+constexpr float  REFINE_AFTER      = 0.15f;     // secondi da fermi
+constexpr int    PICK_RADIUS       = 4;         // pixel attorno al mouse
 
-Mat3 Renderer3D::buildRotationMatrix() const {
-    float cx = std::cos(m_angleX), sx = std::sin(m_angleX);
-    float cy = std::cos(m_angleY), sy = std::sin(m_angleY);
-    Mat3 m;
-    m[0][0] =  cy;   m[0][1] = sy*sx;  m[0][2] = sy*cx;
-    m[1][0] =  0;    m[1][1] = cx;     m[1][2] = -sx;
-    m[2][0] = -sy;   m[2][1] = cy*sx;  m[2][2] = cy*cx;
-    return m;
-}
+// Campione stabile: la stessa tripla c'e' o non c'e' in tutti i fotogrammi,
+// e non segue l'ordine delle chiavi (eviterebbe righe regolari nei dati)
+inline uint32_t sampleHash(uint32_t key) { return (key * 2654435761u) >> 16; }
+} // namespace
 
-void Renderer3D::applyRotation(const Mat3& m,
-                                float  ix, float  iy, float  iz,
-                                float& ox, float& oy, float& oz) const {
-    ox = m[0][0]*ix + m[0][1]*iy + m[0][2]*iz;
-    oy = m[1][0]*ix + m[1][1]*iy + m[1][2]*iz;
-    oz = m[2][0]*ix + m[2][1]*iy + m[2][2]*iz;
-}
+void Renderer3D::rasterize(const std::vector<Point3D>& points, uint32_t sample,
+                           const std::vector<bool>* highlight, olc::Pixel tint) {
+    float coord[256];
+    for (int i = 0; i < 256; i++) coord[i] = i / 127.5f - 1.0f;
 
-bool Renderer3D::project(float x, float y, float z,
-                          int offsetX, int offsetY,
-                          int width,   int height,
-                          int& outX,   int& outY) const {
-    const float dist  = 3.0f;
-    const float scale = (width * 0.45f) * m_zoom;
+    const Mat3 mat = m_cam.rotation();
+    const Camera3D::Viewport view{0, 0, m_vp.w, m_vp.h};   // coordinate del fotogramma
+    m_frame.clear();
 
-    // Sottrai la posizione camera dal punto
-    // → i punti si spostano nella direzione opposta alla camera
-    float px = x - m_camX;
-    float py = y - m_camY;
-    float pz = z - m_camZ;
+    for (const Point3D& p : points) {
+        if (sampleHash(p.key) >= sample) continue;
+        Camera3D::Vec v = m_cam.toCamera(mat, coord[p.b0()], coord[p.b1()], coord[p.b2()]);
+        float sx, sy;
+        if (!m_cam.toScreen(v, view, sx, sy)) continue;
+        if (sx < 0.0f || sy < 0.0f || sx >= (float)m_vp.w || sy >= (float)m_vp.h) continue;
 
-    float denom = pz + dist;
-    if (denom < 0.001f) return false;
-
-    float cx = offsetX + width  * 0.5f + m_panX;
-    float cy = offsetY + height * 0.5f + m_panY;
-
-    outX = static_cast<int>(cx + (px / denom) * scale);
-    outY = static_cast<int>(cy - (py / denom) * scale);
-
-    if (outX < offsetX || outX >= offsetX + width)  return false;
-    if (outY < offsetY || outY >= offsetY + height) return false;
-    return true;
+        if (!highlight)
+            m_frame.add((int)sx, (int)sy, p.r, p.g, p.b, (uint32_t)p.level + 1, p.key);
+        else if ((*highlight)[p.key])
+            m_frame.add((int)sx, (int)sy, tint.r, tint.g, tint.b, (uint32_t)p.level + 64, p.key);
+        else
+            m_frame.add((int)sx, (int)sy, 60, 60, 68, 1, p.key);    // accanto ai colorati pesa poco
+    }
+    m_frame.resolve();
 }
 
 void Renderer3D::render(olc::PixelGameEngine* pge,
-                         const std::vector<Point3D>& points,
-                         int offsetX, int offsetY,
-                         int width,   int height,
-                         const std::vector<bool>* highlight,
-                         olc::Pixel tint) {
-    if (points.empty()) return;
+                        const std::vector<Point3D>& points,
+                        const Camera3D::Viewport& vp, float dt,
+                        const std::vector<bool>* highlight, olc::Pixel tint) {
+    if (vp.w != m_vp.w || vp.h != m_vp.h) m_dirty = true;
+    m_vp = vp;
+    m_frame.resize(vp.w, vp.h);
 
-    Mat3 mat = buildRotationMatrix();
-
-    // Con un'evidenziazione: prima i punti grigi, poi quelli accesi, cosi'
-    // nessun punto grigio finisce sopra a uno evidenziato
-    for (int pass = highlight ? 0 : 1; pass < 2; pass++)
-    for (const auto& p : points) {
-        bool lit = highlight && (*highlight)[p.key];
-        if (highlight && (pass == 0) == lit) continue;
-
-        float rx, ry, rz;
-        applyRotation(mat, p.x, p.y, p.z, rx, ry, rz);
-
-        int px, py;
-        if (!project(rx, ry, rz, offsetX, offsetY, width, height, px, py))
-            continue;
-
-        if (highlight) {
-            if (lit) {
-                float k = 0.5f + 0.5f * p.intensity;
-                pge->Draw(px, py, olc::Pixel((uint8_t)(tint.r * k),
-                                             (uint8_t)(tint.g * k),
-                                             (uint8_t)(tint.b * k)));
-            } else {
-                pge->Draw(px, py, olc::Pixel(38, 38, 44));
-            }
-            continue;
-        }
-
-        float boost  = std::min(1.0f, p.intensity * 1.8f);
-        uint8_t r = static_cast<uint8_t>(p.r * boost);
-        uint8_t g = static_cast<uint8_t>(p.g * boost);
-        uint8_t b = static_cast<uint8_t>(p.b * boost);
-
-        uint8_t maxCh = std::max({r, g, b});
-        if (maxCh < 60) {
-            if (p.b >= p.r && p.b >= p.g) b = 60;
-            else if (p.r >= p.g)           r = 60;
-            else                            g = 60;
-        }
-
-        pge->Draw(px, py, olc::Pixel(r, g, b));
+    const uint32_t ALL = 1u << 16;
+    if (m_dirty || m_moved) {
+        bool coarse = m_moved && points.size() > MAX_MOVING_POINTS;
+        uint32_t sample = coarse ? (uint32_t)(ALL * MAX_MOVING_POINTS / points.size()) : ALL;
+        rasterize(points, sample, highlight, tint);
+        m_refine = coarse;
+        m_idle   = 0.0f;
+        m_dirty  = m_moved = false;
+    } else if (m_refine && (m_idle += dt) >= REFINE_AFTER) {
+        rasterize(points, ALL, highlight, tint);
+        m_refine = false;
     }
+
+    // Copia sullo schermo: olc::Pixel e' un RGBA a 32 bit
+    static_assert(sizeof(olc::Pixel) == sizeof(uint32_t), "olc::Pixel non e' RGBA32");
+    olc::Sprite* target = pge->GetDrawTarget();
+    const uint32_t* src = m_frame.pixels().data();
+    for (int y = 0; y < vp.h && vp.y + y < target->height; y++)
+        std::memcpy(static_cast<void*>(target->GetData() + (size_t)(vp.y + y) * target->width + vp.x),
+                    src + (size_t)y * vp.w, (size_t)vp.w * sizeof(uint32_t));
+}
+
+uint32_t Renderer3D::keyAt(int x, int y) const {
+    return m_frame.keyNear(x - m_vp.x, y - m_vp.y, PICK_RADIUS);
 }
 
 void Renderer3D::rotate(float dx, float dy) {
-    const float sensitivity = 0.005f;
-    m_angleY -= dx * sensitivity;
-    m_angleX += dy * sensitivity;
-    m_angleX  = std::clamp(m_angleX, -1.5f, 1.5f);
+    m_cam.orbit(dx, dy);
+    m_moved = true;
 }
 
 void Renderer3D::pan(float dx, float dy) {
-    m_panX += dx * 0.8f;
-    m_panY += dy * 0.8f;
+    m_cam.panX += dx * 0.8f;
+    m_cam.panY += dy * 0.8f;
+    m_moved = true;
 }
 
-// Muove la camera nello spazio 3D
-// forward = avanti/indietro lungo Z
-// right   = destra/sinistra lungo X
-// up      = su/giu lungo Y
 // Muove la camera come in un gioco FPS: avanti = verso dove guardi.
-// La camera vive nello spazio GIA' RUOTATO (render() ruota i punti e poi
-// sottrae la camera), quindi il movimento va applicato cosi' com'e':
-// ruotarlo di nuovo con la matrice lo mandava nella direzione sbagliata.
+// La camera vive nello spazio GIA' RUOTATO, quindi il movimento va applicato
+// cosi' com'e': ruotarlo di nuovo lo manderebbe nella direzione sbagliata.
 //   forward > 0 → avanti (W),  right > 0 → destra (D),  up > 0 → su (Q)
 void Renderer3D::moveCamera(float forward, float right, float up) {
     const float speed = 0.02f;
-    m_camX += right   * speed;   // punti scorrono a sinistra
-    m_camY += up      * speed;   // punti scorrono in basso
-    m_camZ += forward * speed;   // punti si avvicinano (z positivo = lontano)
-
-    // Limiti: non allontanarsi troppo, e non oltrepassare il piano di
-    // proiezione (dist = 3 in project())
-    m_camX = std::clamp(m_camX, -2.0f, 2.0f);
-    m_camY = std::clamp(m_camY, -2.0f, 2.0f);
-    m_camZ = std::clamp(m_camZ, -4.0f, 2.9f);
+    // Limiti: non allontanarsi troppo e non oltrepassare il piano di proiezione
+    m_cam.camX = std::clamp(m_cam.camX + right   * speed, -2.0f, 2.0f);
+    m_cam.camY = std::clamp(m_cam.camY + up      * speed, -2.0f, 2.0f);
+    m_cam.camZ = std::clamp(m_cam.camZ + forward * speed, -4.0f, 2.9f);
+    m_moved = true;
 }
 
 void Renderer3D::resetRotation() {
-    m_angleX = 0.4f;
-    m_angleY = 0.6f;
-    m_panX   = 0.0f;
-    m_panY   = 0.0f;
-    m_camX   = 0.0f;
-    m_camY   = 0.0f;
-    m_camZ   = 0.0f;
+    const float zoom = m_cam.zoom;     // R rimette la camera, non lo zoom
+    m_cam = Camera3D{};
+    m_cam.zoom = zoom;
+    m_moved = true;
 }
 
 void Renderer3D::zoom(float delta) {
-    m_zoom += delta * 0.1f;
-    m_zoom  = std::clamp(m_zoom, 0.3f, 3.0f);
+    m_cam.zoom = std::clamp(m_cam.zoom + delta * 0.1f, 0.3f, 3.0f);
+    m_moved = true;
 }

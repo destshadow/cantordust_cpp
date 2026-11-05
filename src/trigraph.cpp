@@ -1,72 +1,67 @@
 #include "trigraph.h"
+#include "density.h"
 #include <algorithm>
-#include <cmath>
+
+namespace {
+inline uint32_t tripleAt(const std::vector<uint8_t>& b, size_t i) {
+    return ((uint32_t)b[i] << 16) | ((uint32_t)b[i + 1] << 8) | b[i + 2];
+}
+
+// Sezione prevalente di ogni tripla, con il voto di maggioranza
+// (Boyer-Moore): se una sezione ha piu' di meta' delle occorrenze vince, con
+// un solo candidato per tripla invece di un contatore per sezione.
+std::vector<int16_t> sectionVotes(const std::vector<uint8_t>& bytes,
+                                  const std::vector<TriGraph::Range>& ranges) {
+    std::vector<int16_t>  winner((size_t)1 << 24, -1);
+    std::vector<uint32_t> votes ((size_t)1 << 24, 0);
+    for (const auto& r : ranges) {
+        const size_t end = std::min(r.end, bytes.size());
+        for (size_t i = r.start; i + 2 < end; i++) {
+            uint32_t key = tripleAt(bytes, i);
+            if (votes[key] == 0)            { winner[key] = r.section; votes[key] = 1; }
+            else if (winner[key] == r.section) votes[key]++;
+            else                               votes[key]--;
+        }
+    }
+    return winner;
+}
+} // namespace
 
 void TriGraph::clear() {
     m_points.clear();
 }
 
+const Point3D* TriGraph::find(uint32_t key) const {
+    auto it = std::lower_bound(m_points.begin(), m_points.end(), key,
+        [](const Point3D& p, uint32_t k) { return p.key < k; });
+    return it != m_points.end() && it->key == key ? &*it : nullptr;
+}
+
 void TriGraph::compute(const std::vector<uint8_t>& bytes,
-                       size_t start, size_t end) {
+                       const std::vector<Range>& sections) {
     clear();
     if (bytes.size() < 3) return;
 
-    // Se end == 0 usiamo tutto il file
-    if (end == 0 || end > bytes.size())
-        end = bytes.size();
-
-    // Serve almeno 3 byte per una tripla
-    if (end - start < 3) return;
-
-    // --- Fase 1: conta le frequenze delle triple ---
-    // Chiave: x occupa i bit 16-23, y i bit 8-15, z i bit 0-7.
     // Le triple possibili sono 2^24: un array e' molto piu' veloce di una
     // mappa (su 100 MB casuali: 1,6 s invece di 11).
     std::vector<uint32_t> freq((size_t)1 << 24, 0);
-    uint32_t maxFreq = 0;
+    for (size_t i = 0; i + 2 < bytes.size(); i++) freq[tripleAt(bytes, i)]++;
 
-    for (size_t i = start; i < end - 2; i++) {
-        uint32_t key = ((uint32_t)bytes[i] << 16) |
-                       ((uint32_t)bytes[i + 1] <<  8) |
-                        (uint32_t)bytes[i + 2];
-        uint32_t f = ++freq[key];
-        if (f > maxFreq) maxFreq = f;
-    }
+    const std::vector<int16_t> winner =
+        sections.empty() ? std::vector<int16_t>() : sectionVotes(bytes, sections);
+    const float ref = Density::reference(freq.data(), freq.size());
 
-    if (maxFreq == 0) return;
+    size_t present = 0;
+    for (uint32_t c : freq) present += (c != 0);
+    m_points.reserve(present);
 
-    // --- Fase 2: le triple presenti diventano Point3D ---
-    // Normalizza le coordinate da [0,255] a [-1,+1]
-    // cosi' il cubo e' centrato nell'origine → facile da ruotare
     for (uint32_t key = 0; key < (uint32_t)1 << 24; key++) {
-        uint32_t count = freq[key];
-        if (count == 0) continue;
-
-        // Decodifica la tripla dalla chiave
-        uint8_t bx = (key >> 16) & 0xFF;
-        uint8_t by = (key >>  8) & 0xFF;
-        uint8_t bz =  key        & 0xFF;
-
-        Point3D p;
-        p.key = key;
-
-        // Normalizza in [-1, +1]
-        p.x = (bx / 127.5f) - 1.0f;
-        p.y = (by / 127.5f) - 1.0f;
-        p.z = (bz / 127.5f) - 1.0f;
-
-        // Intensita' con scala logaritmica
-        // Esalta i pattern anche con poche occorrenze
-        p.intensity = std::log1p((float)count) /
-                      std::log1p((float)maxFreq);
-
-        // Colore basato sulla posizione nel cubo
-        // Questo crea il gradiente viola/magenta/blu
-        // visibile negli screenshot originali
-        p.r = static_cast<uint8_t>(p.intensity * bx);
-        p.g = static_cast<uint8_t>(p.intensity * 50);
-        p.b = static_cast<uint8_t>(p.intensity * bz);
-
+        if (freq[key] == 0) continue;
+        Point3D p{};
+        p.key     = key;
+        p.count   = freq[key];
+        p.level   = Density::intensity(freq[key], ref);
+        p.section = winner.empty() ? (int16_t)-1 : winner[key];
         m_points.push_back(p);
     }
 }

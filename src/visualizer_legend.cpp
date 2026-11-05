@@ -13,7 +13,7 @@ static const char* legendFor(ViewMode m) {
         case ViewMode::HISTOGRAM:
             return "ISTOGRAMMA  X = valore del byte 0x00-0xFF   altezza = frequenza (log)";
         case ViewMode::TRIGRAPH3D:
-            return "3D  assi = 3 byte consecutivi (i, i+1, i+2)   luminosita' = frequenza";
+            return "3D  punto = 3 byte consecutivi   luce = densita'   C = colore   click = dove compare";
         case ViewMode::RAWPIXELS:
             return "RAW  i byte come pixel, in ordine, riga per riga   (bpp: [ ]  larghezza: , .)";
         case ViewMode::METRICMAP:

@@ -15,6 +15,7 @@ void Visualizer::recomputeWindow() {
         params.curveMode = m_curveMode;
         params.rawWidth  = m_rawWidth;
         params.rawOffset = (size_t)m_rawOffset;
+        if (m_mode == ViewMode::TRIGRAPH3D) params.sections = sectionRanges();
 
         m_computing = true;
         m_future = std::async(std::launch::async,
@@ -60,6 +61,7 @@ void Visualizer::applyResults() {
     m_autocorr     = std::move(r->autocorr);
     m_suggestWidth = r->suggestWidth;
     m_windowHist   = r->windowHist;
+    repaintCloud();
     updateCanvas();
 }
 

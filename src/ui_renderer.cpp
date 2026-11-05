@@ -209,14 +209,15 @@ void UIRenderer::draw3DOverlay(olc::PixelGameEngine* pge,
     int sw = pge->ScreenWidth();
     (void)sw;
     int bx = CANVAS_X + CANVAS_W - 180, by = CANVAS_Y + 8;
-    pge->FillRect(bx, by, 172, 76, olc::Pixel(18,18,45,200));
-    pge->DrawRect(bx, by, 172, 76, COL_BORDER());
+    pge->FillRect(bx, by, 172, 88, olc::Pixel(18,18,45,200));
+    pge->DrawRect(bx, by, 172, 88, COL_BORDER());
     pge->DrawString(bx+8, by+6,  "3D Controls:",          COL_YELLOW());
     pge->DrawString(bx+8, by+18, "LMB Drag = Ruota",      olc::WHITE);
     pge->DrawString(bx+8, by+30, "RMB Drag = Pan",        olc::WHITE);
     pge->DrawString(bx+8, by+42, "WASD=Muovi QE=Su/Giu",  COL_GREEN());
     pge->DrawString(bx+8, by+54, "Scroll=Zoom  R=Reset",
                     olc::Pixel(100,200,100));
+    pge->DrawString(bx+8, by+66, "C=Colore  Click=Dove",  COL_CYAN());
 }
 
 void UIRenderer::drawInputOverlay(olc::PixelGameEngine* pge,
