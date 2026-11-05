@@ -121,7 +121,7 @@ void BinaryParser::parseELF(const std::vector<uint8_t>& bytes) {
 
     // Leggi ogni sezione
     int colorIdx = 0;
-    for (uint16_t i = 0; i < shnum && i < 64; i++) {
+    for (uint16_t i = 0; i < shnum && i < MAX_SECTIONS; i++) {
         size_t entOff = shoff + i * shentsize;
         if (entOff + shentsize > bytes.size()) break;
 
@@ -197,7 +197,7 @@ void BinaryParser::parsePE(const std::vector<uint8_t>& bytes) {
 
     // Ogni PE section header è 40 bytes
     int colorIdx = 0;
-    for (uint16_t i = 0; i < numSections && i < 64; i++) {
+    for (uint16_t i = 0; i < numSections && i < MAX_SECTIONS; i++) {
         size_t entOff = secTableOff + i * 40;
         if (entOff + 40 > bytes.size()) break;
 

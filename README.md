@@ -150,6 +150,7 @@ cantordust_cpp/
 │   ├── byte_info.h                # Classi di byte, entropia, ipotesi contenuto
 │   ├── nav_bars*.{h,cpp}          # Barre: logica, disegno, geometria
 │   ├── occurrences.{h,cpp}        # Dove compare un valore
+│   ├── view_results.{h,cpp}       # Calcolo delle viste (thread separato)
 │   ├── visualizer_highlight.cpp   # Sezione -> vista
 │   ├── visualizer_links.cpp       # Vista -> file
 │   ├── range_sel.h                # Logica della selezione

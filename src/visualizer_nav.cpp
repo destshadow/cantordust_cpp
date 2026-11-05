@@ -3,65 +3,26 @@
 
 void Visualizer::recomputeWindow() {
     if (m_computing.load()) return;
-    m_computedStart = m_navigator.getStart();
-    m_computedEnd   = m_navigator.getEnd();
+    m_recomputeNeeded = false;
+    m_computedStart   = m_navigator.getStart();
+    m_computedEnd     = m_navigator.getEnd();
     try {
         auto window = m_navigator.getWindow(m_reader.getBytes());
-        BppMode bpp = m_bppMode;
-        ColorMode cmode = m_colorMode;
-        CurveMode curvemode = m_curveMode;
+        ComputeParams params;
+        params.mode      = m_mode;
+        params.bpp       = m_bppMode;
+        params.colorMode = m_colorMode;
+        params.curveMode = m_curveMode;
+        params.rawWidth  = m_rawWidth;
+        params.rawOffset = (size_t)m_rawOffset;
 
-        ViewMode mode = m_mode;
-        int    rawWidth  = m_rawWidth;
-        size_t rawOffset = (size_t)m_rawOffset;
         m_computing = true;
-        m_dirty = false;
         m_future = std::async(std::launch::async,
-            [this, window = std::move(window), bpp, cmode, curvemode, mode,
-             rawWidth, rawOffset]() {
+            [this, window = std::move(window), params]() {
                 try {
-                    DiGraph   dg;  if (mode == ViewMode::DIGRAPH) dg.compute(window);
-                    DotPlot   dp;  if (mode == ViewMode::DOTPLOT) dp.compute(window);
-                    Entropy   en;  if (mode == ViewMode::ENTROPY) en.compute(window);
-                    Histogram hi;  if (mode == ViewMode::HISTOGRAM) hi.compute(window);
-                    TriGraph  tr;  if (mode == ViewMode::TRIGRAPH3D) tr.compute(window);
-                    RawPixels rp;
-                    Autocorr  ac;
-                    int       suggest = 0;
-                    if (mode == ViewMode::RAWPIXELS) {
-                        rp.compute(window, bpp, rawWidth, rawOffset);
-                        ac.compute(window);
-                        suggest = ac.bestWidth(RawPixels::bytesPerPixel(bpp));
-                    }
-                    ClassifierData cd;
-                    if (mode == ViewMode::METRICMAP && cmode == ColorMode::CLASSIFIER && m_classifier.isReady()) {
-                        m_classifier.classifyFile(window);
-                        cd.classifications = &m_classifier.getClassifications();
-                    }
-                    MetricMap mm;  if (mode == ViewMode::METRICMAP) mm.compute(window, cmode, curvemode, 8, &cd);
-                    ByteCloud bc;  if (mode == ViewMode::BYTECLOUD) bc.compute(window);
-                    std::array<uint32_t, 256> hist{};
-                    for (uint8_t b : window) hist[b]++;
-                    OneTuple  ot;  if (mode == ViewMode::ONETUPLE) ot.compute(window);
-
-                    {
-                        std::lock_guard<std::mutex> lk(m_dataMutex);
-                        m_digraph    = std::move(dg);
-                        m_dotplot    = std::move(dp);
-                        m_entropy    = std::move(en);
-                        m_histogram  = std::move(hi);
-                        m_trigraph   = std::move(tr);
-                        m_rawpixels  = std::move(rp);
-                        m_windowHist = hist;
-                        if (mode == ViewMode::RAWPIXELS) {
-                            m_autocorr     = std::move(ac);
-                            m_suggestWidth = suggest;
-                        }
-                        m_metricmap  = std::move(mm);
-                        m_bytecloud  = std::move(bc);
-                        m_onetuple   = std::move(ot);
-                        m_dirty      = true;
-                    }
+                    auto results = computeViews(window, params, m_classifier);
+                    std::lock_guard<std::mutex> lk(m_dataMutex);
+                    m_ready = std::move(results);
                 } catch (const std::exception& e) {
                     std::lock_guard<std::mutex> lk(m_dataMutex);
                     m_computeError = std::string("Errore calcolo: ") + e.what();
@@ -72,6 +33,34 @@ void Visualizer::recomputeWindow() {
         m_computing = false;
         m_status = std::string("Errore avvio calcolo: ") + e.what();
     }
+}
+
+// Prende i risultati pronti: da qui in poi le viste sono dell'interfaccia
+void Visualizer::applyResults() {
+    std::unique_ptr<ViewResults> r;
+    {
+        std::lock_guard<std::mutex> lk(m_dataMutex);
+        if (!m_computeError.empty()) {
+            m_status = std::move(m_computeError);
+            m_computeError.clear();
+        }
+        r = std::move(m_ready);
+    }
+    if (!r) return;
+
+    m_digraph      = std::move(r->digraph);
+    m_dotplot      = std::move(r->dotplot);
+    m_entropy      = std::move(r->entropy);
+    m_histogram    = std::move(r->histogram);
+    m_trigraph     = std::move(r->trigraph);
+    m_rawpixels    = std::move(r->rawpixels);
+    m_metricmap    = std::move(r->metricmap);
+    m_bytecloud    = std::move(r->bytecloud);
+    m_onetuple     = std::move(r->onetuple);
+    m_autocorr     = std::move(r->autocorr);
+    m_suggestWidth = r->suggestWidth;
+    m_windowHist   = r->windowHist;
+    updateCanvas();
 }
 
 void Visualizer::loadFile(const std::string& filepath) {
@@ -86,6 +75,10 @@ void Visualizer::loadFile(const std::string& filepath) {
     }
 
     if (m_future.valid()) m_future.wait();
+    {   // un risultato del file precedente non serve piu'
+        std::lock_guard<std::mutex> lk(m_dataMutex);
+        m_ready.reset();
+    }
 
     const auto& bytes = m_reader.getBytes();
     m_navigator.setData(bytes, 0);
@@ -97,6 +90,10 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_bppMode = BppMode::BPP_8;
     m_colorMode = ColorMode::ENTROPY;
     m_curveMode = CurveMode::HILBERT;
+    m_rawWidth  = 256;
+    m_rawOffset = 0;
+    m_suggestWidth = 0;
+    m_occKey.clear();     // la cache vale per il file precedente
     m_hlStart = m_hlEnd = 0;
     m_tripleMaskOn = false;
     m_pick.clear();
@@ -104,6 +101,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_markWanted.clear();
     m_bars.clearMarks();
     m_bars.setCursor(SIZE_MAX);
+    m_recomputeNeeded = true;
     recomputeWindow();
 
     std::string fmt  = m_parser.getFormatName();

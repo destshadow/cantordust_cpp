@@ -150,6 +150,16 @@ Layout obiettivo:
        **riassunto del file** (formato, architettura, entry point,
        sezioni in %, entropia media), ritocchi grafici
 
+## Limiti noti (controllo del 2026-11-05)
+
+- Un calcolo in corso non si può interrompere: su file grandi un cambio
+  vista parte solo quando finisce quello prima.
+- 3D su dati casuali: fino a 16 milioni di punti (circa 470 MB di memoria)
+  disegnati uno per uno a ogni frame. Da rivedere al passo 4.
+- `FileNavigator::moveForward/moveBackward` restano solo per le frecce
+  commentate e per i test.
+- Per ThreadSanitizer su questo kernel: `setarch x86_64 -R ./programma`.
+
 ## Spunti dal CantorDust originale
 
 Sorgente letto il 2026-11-05: <https://github.com/Battelle/cantordust>

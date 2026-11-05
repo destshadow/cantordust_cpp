@@ -47,6 +47,7 @@ SRC = src/main.cpp \
       src/visualizer_highlight.cpp \
       src/visualizer_links.cpp \
       src/occurrences.cpp \
+      src/view_results.cpp \
       src/nav_bars_draw.cpp
 
 OUT = cantordust

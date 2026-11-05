@@ -63,7 +63,6 @@ void Visualizer::recomputeRawPixels() {
     m_rawpixels.compute(m_reader.getBytes(),
                         m_navigator.getStart(), m_navigator.getEnd(),
                         m_bppMode, m_rawWidth, (size_t)m_rawOffset);
-    std::lock_guard<std::mutex> lk(m_dataMutex);
     updateCanvas();
 }
 

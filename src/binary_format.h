@@ -43,4 +43,6 @@ private:
 
     // Palette colori per le sezioni — ciclica
     static const uint8_t PALETTE[][3];
+    // Tetto per file ostili: libc ne ha gia' 64, i .o anche migliaia
+    static constexpr int MAX_SECTIONS = 4096;
 };

@@ -112,7 +112,7 @@ int main() {
 
     MetricMap map;
     map.compute({});
-    assert(map.fileIndexAt(0, 0) == 0);
+    assert(map.fileIndexAt(0, 0) == SIZE_MAX);          // nessun byte
     std::vector<uint8_t> unique(16);
     for (int i = 0; i < 16; ++i) unique[i] = i;
     map.compute(unique, ColorMode::ENTROPY, CurveMode::LINEAR);
@@ -336,6 +336,38 @@ int main() {
                 }
             assert(Occur::rows(b, lo, hi, p, m, rows) == direct);
         }
+    }
+
+    // --- MetricMap: offset esatti anche su file grandi, pixel senza byte ---
+    {
+        std::vector<uint8_t> big(50 * 1000 * 1000, 1);
+        MetricMap m;
+        m.compute(big, ColorMode::WAVELENGTH, CurveMode::LINEAR, 8);
+        // Ultimo pixel della curva: riga 255 (dispari) percorsa a rovescio
+        assert(m.fileIndexAt(0, 255) == size_t(65535.0 * big.size() / 65536.0));
+        std::vector<uint8_t> small(10, 1);
+        m.compute(small, ColorMode::WAVELENGTH, CurveMode::LINEAR, 8);
+        assert(m.fileIndexAt(9, 0) == 9);
+        assert(m.fileIndexAt(10, 0) == SIZE_MAX);           // oltre la fine del file
+    }
+
+    // --- Parser: piu' di 64 sezioni non vengono perse ---
+    {
+        const size_t nsec = 100, shoff = 64, stroff = shoff + nsec * 64;
+        std::vector<uint8_t> e(stroff + 64, 0);
+        e[0] = 0x7f; e[1] = 'E'; e[2] = 'L'; e[3] = 'F'; e[4] = 2; e[5] = 1;
+        put(e, 0x28, shoff, 8); put(e, 0x3a, 64, 2);
+        put(e, 0x3c, nsec, 2);  put(e, 0x3e, 0, 2);
+        put(e, shoff + 0x18, stroff, 8);                    // tabella dei nomi
+        e[stroff + 1] = '.'; e[stroff + 2] = 'x';
+        for (size_t i = 1; i < nsec; ++i) {
+            size_t h = shoff + i * 64;
+            put(e, h, 1, 4); put(e, h + 4, 1, 4);           // nome ".x", PROGBITS
+            put(e, h + 0x18, 16, 8); put(e, h + 0x20, 8, 8);
+        }
+        BinaryParser p;
+        p.parse(e);
+        assert(p.getSections().size() == nsec - 1);
     }
 
     std::cout << "All core regression tests passed\n";

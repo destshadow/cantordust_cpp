@@ -26,7 +26,6 @@ void Visualizer::setHighlight(size_t start, size_t end) {
         buildTripleMask();
         return;
     }
-    std::lock_guard<std::mutex> lk(m_dataMutex);
     updateCanvas();
 }
 
@@ -67,7 +66,9 @@ void Visualizer::highlightByPosition(olc::Sprite* spr) {
                 if (rel == SIZE_MAX) continue;
                 a = b = ws + rel;
             } else if (m_mode == ViewMode::METRICMAP) {
-                a = b = ws + m_metricmap.fileIndexAt(x, y);
+                size_t rel = m_metricmap.fileIndexAt(x, y);
+                if (rel == SIZE_MAX) continue;
+                a = b = ws + rel;
             } else if (m_mode == ViewMode::ONETUPLE) {   // riga = tratto
                 if (y >= rows) continue;
                 a = ws + (size_t)y * len / rows;

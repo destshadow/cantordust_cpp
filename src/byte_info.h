@@ -74,6 +74,8 @@ inline Stats statsFromHist(const std::array<uint32_t, 256>& hist) {
 inline float smoothness(const std::vector<uint8_t>& bytes, size_t start, size_t end) {
     end = std::min(end, bytes.size());
     if (start >= end || end - start < 16) return -1.0f;
+    // Bastano 64 KB: si ricalcola a ogni frame col mouse su una sezione
+    end = std::min(end, start + (size_t)65536);
     float best = 1e9f;
     for (size_t k = 1; k <= 4; k++) {
         uint64_t sum = 0;

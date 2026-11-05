@@ -56,7 +56,8 @@ size_t Visualizer::pointUnderMouse(bool over, int cx, int cy) const {
         size_t rel = m_rawpixels.byteOffsetAt(cx, cy);
         if (rel != SIZE_MAX) return w.start + rel;
     } else if (over && m_mode == ViewMode::METRICMAP) {
-        return w.start + m_metricmap.fileIndexAt(cx, cy);
+        size_t rel = m_metricmap.fileIndexAt(cx, cy);
+        if (rel != SIZE_MAX) return w.start + rel;
     }
     return SIZE_MAX;
 }

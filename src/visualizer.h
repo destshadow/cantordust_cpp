@@ -24,6 +24,7 @@
 #include "autocorr.h"
 #include "ui_widgets.h"
 #include "byte_info.h"
+#include "view_results.h"
 #include "occurrences.h"
 #include <array>
 
@@ -39,6 +40,7 @@ private:
     void loadFile(const std::string& filepath);
     void updateCanvas();
     void recomputeWindow();
+    void applyResults();
     void handle3DInput(float fElapsedTime);
     void handle2DInput();
     void draw2DCanvas();
@@ -67,6 +69,7 @@ private:
     void writeHexDump(PanelWriter& pw, size_t center, size_t mark, int rows);
     ByteInfo::Stats zoneStats(size_t a, size_t b) const;
     void syncNavigator();                  // barre -> finestra
+    void saveView();
     // Vista -> file (visualizer_links.cpp)
     bool   isValueView() const;
     size_t valueAt(int cx, int cy, uint8_t pat[2]) const;
@@ -137,7 +140,6 @@ private:
     BppMode       m_bppMode   = BppMode::BPP_8;
     ColorMode     m_colorMode = ColorMode::ENTROPY;  // come l'originale
     CurveMode     m_curveMode = CurveMode::HILBERT;
-    bool          m_dirty     = false;
     std::string   m_status;
     std::string   m_computeError;
     std::string   m_initPath;
@@ -145,7 +147,9 @@ private:
     // Threading
     std::future<void>  m_future;
     std::atomic<bool>  m_computing{false};
-    std::mutex         m_dataMutex;
+    std::mutex         m_dataMutex;       // protegge solo m_ready e m_computeError
+    std::unique_ptr<ViewResults> m_ready; // risultati pronti da prendere
+    bool               m_recomputeNeeded = false;
     float              m_spinnerAngle = 0.0f;
 
     // Mouse

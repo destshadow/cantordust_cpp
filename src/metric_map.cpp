@@ -93,11 +93,12 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
 
     int totalPixels = m_size * m_size;
     m_rgb.assign(totalPixels * 3, 0);
-    m_indexMap.assign(totalPixels, 0);
+    m_indexMap.assign(totalPixels, SIZE_MAX);   // SIZE_MAX = nessun byte
 
-    float step = (bytes.size() >= (size_t)totalPixels)
-                 ? (float)bytes.size() / (float)totalPixels
-                 : 1.0f;
+    // double: con float l'offset sbaglia di qualche byte sui file grandi
+    double step = (bytes.size() >= (size_t)totalPixels)
+                  ? (double)bytes.size() / (double)totalPixels
+                  : 1.0;
 
     // Lambda che mappa indice → (px, py) in base alla curva scelta
     auto getPoint = [&](int i) -> std::pair<int,int> {
@@ -157,7 +158,7 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
 
 size_t MetricMap::fileIndexAt(int x, int y) const {
     if (m_indexMap.empty() || x < 0 || x >= m_size || y < 0 || y >= m_size)
-        return 0;
+        return SIZE_MAX;
     return m_indexMap[y * m_size + x];
 }
 

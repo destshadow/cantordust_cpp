@@ -45,7 +45,8 @@ public:
     ColorMode  getColorMode()  const { return m_colorMode; }
     CurveMode  getCurveMode()  const { return m_curveMode; }
 
-    // Indice file per coordinate pixel — utile per click
+    // Indice file per coordinate pixel; SIZE_MAX se il pixel non corrisponde
+    // a nessun byte (file piu' piccolo della mappa)
     size_t fileIndexAt(int x, int y) const;
 
     static const char* colorModeName(ColorMode m);

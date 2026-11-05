@@ -17,53 +17,37 @@ bool Visualizer::OnUserCreate() {
 }
 
 bool Visualizer::OnUserUpdate(float fElapsedTime) {
+    applyResults();
     bool busy = m_computing.load();
-
-    {
-        std::lock_guard<std::mutex> lk(m_dataMutex);
-        if (!m_computeError.empty()) {
-            m_status = std::move(m_computeError);
-            m_computeError.clear();
-        }
-        if (m_dirty && !busy) {
-            updateCanvas();
-            m_dirty = false;
-        }
-    }
 
     // Nella finestra "Apri file" i tasti servono solo per scrivere
     bool typing = m_input.isInputMode();
     Action action = m_input.update(this, fElapsedTime);
 
-    if (!busy) {
-        switch (action) {
-            case Action::SWITCH_VIEW:
-                m_mode     = m_input.getRequestedView();
-                m_dragging = false;
-                m_panning  = false;
-                recomputeWindow();
-                if (m_mode == ViewMode::TRIGRAPH3D) buildTripleMask();
-                m_status = "";
-                break;
-            case Action::OPEN_FILE:
-                loadFile(m_input.getRequestedPath());
-                break;
-            case Action::SAVE_PNG:
-                if (m_mode != ViewMode::TRIGRAPH3D) {
-                    std::string fname = "export_" +
-                                        std::to_string((int)m_mode) + ".png";
-                    int sw = 256, sh = 256;
-                    contentSize(sw, sh);  // i raw pixel hanno dimensione propria
-                    Screenshot::save(fname, getCurrentRGB(), sw, sh);
-                    m_status = "Salvato: " + fname;
-                }
-                break;
-            case Action::CANCEL:
-                m_status = "Annullato.";
-                break;
-            default: break;
-        }
+    // I comandi valgono anche durante un calcolo: la vista nuova parte
+    // appena finisce quello in corso
+    switch (action) {
+        case Action::SWITCH_VIEW:
+            m_mode     = m_input.getRequestedView();
+            m_dragging = false;
+            m_panning  = false;
+            m_recomputeNeeded = true;
+            if (m_mode == ViewMode::TRIGRAPH3D) buildTripleMask();
+            m_status = "";
+            break;
+        case Action::OPEN_FILE:
+            loadFile(m_input.getRequestedPath());
+            break;
+        case Action::SAVE_PNG:
+            saveView();
+            break;
+        case Action::CANCEL:
+            m_status = "Annullato.";
+            break;
+        default: break;
+    }
 
+    if (!busy) {
         if (!typing) {
             // --- Cambio bpp con [ ] (solo RawPixels) ---
             if (!m_computing && m_mode == ViewMode::RAWPIXELS) {
@@ -163,7 +147,8 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     }
 
     // Finestra cambiata e nessun calcolo in corso: aggiorna le viste
-    if (!m_computing && (m_navigator.getStart() != m_computedStart ||
+    if (!m_computing && (m_recomputeNeeded ||
+                         m_navigator.getStart() != m_computedStart ||
                          m_navigator.getEnd()   != m_computedEnd))
         recomputeWindow();
 
@@ -182,12 +167,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     Clear(olc::BLACK);
 
     if (m_mode == ViewMode::TRIGRAPH3D) {
-        std::vector<Point3D> pts;
-        {
-            std::lock_guard<std::mutex> lk(m_dataMutex);
-            pts = m_trigraph.getPoints();
-        }
-        m_renderer3d.render(this, pts,
+        m_renderer3d.render(this, m_trigraph.getPoints(),
                             CANVAS_X, CANVAS_Y,
                             CANVAS_W, CANVAS_H,
                             m_tripleMaskOn ? &m_tripleMask : nullptr,
@@ -248,6 +228,22 @@ void Visualizer::drawSpinner(float fElapsedTime) {
     std::string txt = "Calcolo";
     for (int i = 0; i < dots; i++) txt += ".";
     DrawStringDecal({bx + 10, by + 14}, txt, COL_YELLOW());
+}
+
+// Salva la vista corrente come PNG, alla sua dimensione reale
+void Visualizer::saveView() {
+    if (m_mode == ViewMode::TRIGRAPH3D) return;
+    if (m_computing) { m_status = "Calcolo in corso: riprova tra un attimo"; return; }
+    int w = 256, h = 256;
+    contentSize(w, h);
+    std::vector<uint8_t> rgb = getCurrentRGB();
+    if (rgb.size() < (size_t)w * h * 3) {   // es. file vuoto
+        m_status = "Niente da salvare in questa vista";
+        return;
+    }
+    std::string fname = "export_" + std::to_string((int)m_mode) + ".png";
+    Screenshot::save(fname, rgb, w, h);
+    m_status = "Salvato: " + fname;
 }
 
 // Le barre decidono la finestra; le viste si aggiornano nel ciclo principale

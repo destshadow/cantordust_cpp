@@ -17,6 +17,7 @@ void NavBars::setFile(const std::vector<uint8_t>* bytes,
     m_builtLo[0] = m_builtLo[1] = 1;   // forza la ricostruzione
     m_builtHi[0] = m_builtHi[1] = 0;
     m_drag = Drag::NONE;
+    m_hoverSec = -1;     // l'indice valeva per le sezioni del file precedente
     reset();
 }
 
@@ -74,6 +75,7 @@ void NavBars::selectSection(int index) {
 }
 
 bool NavBars::update(olc::PixelGameEngine* pge) {
+    m_hoverSec = -1;
     if (!m_bytes || m_bytes->empty()) return false;
 
     int mx = m_mouseX = pge->GetMouseX();

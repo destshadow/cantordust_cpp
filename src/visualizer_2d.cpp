@@ -28,7 +28,11 @@ void Visualizer::updateCanvas() {
     }
 
     auto rgb = getCurrentRGB();
-    if (rgb.size() < 256 * 256 * 3) return;
+    if (rgb.size() < 256 * 256 * 3) {     // vista vuota (es. file vuoto)
+        std::fill_n(m_canvas->GetData(), 256 * 256, olc::BLACK);
+        m_decal->Update();
+        return;
+    }
     for (int y = 0; y < 256; y++)
         for (int x = 0; x < 256; x++) {
             int idx = (y * 256 + x) * 3;
@@ -210,8 +214,9 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
             << " -> 0x" << std::setw(2) << std::setfill('0') << cy;
     } else if (m_mode == ViewMode::METRICMAP) {
         // fileIndexAt e' relativo alla finestra: aggiungiamo l'inizio
-        size_t fidx = m_navigator.getStart() +
-                      m_metricmap.fileIndexAt(cx, cy);
+        size_t rel = m_metricmap.fileIndexAt(cx, cy);
+        if (rel == SIZE_MAX) return "";
+        size_t fidx = m_navigator.getStart() + rel;
         oss << "FILE IDX: 0x" << std::uppercase << std::hex
             << std::setw(8) << std::setfill('0') << fidx;
     } else if (m_mode == ViewMode::RAWPIXELS) {
