@@ -242,16 +242,21 @@ void NavBars::drawSections(olc::PixelGameEngine* pge) {
         const auto& s = (*m_secs)[i];
         int y0 = yOf(0, s.offset);
         int y1 = std::max(y0 + 2, yOf(0, s.offset + s.size));
-        bool hov = (i == m_hoverSec);
-        olc::Pixel col = hov ? olc::Pixel(s.r, s.g, s.b)
-                             : olc::Pixel(s.r / 3, s.g / 3, s.b / 3);
-        pge->FillRect(SEC_X, y0, SEC_W, y1 - y0, col);
-        pge->FillRect(SEC_X, y0, 3, y1 - y0, olc::Pixel(s.r, s.g, s.b));
-        if (y1 - y0 >= 9 && y0 >= lastTextY + 9) {
-            pge->DrawString(SEC_X + 5, y0 + 1, s.name.substr(0, maxChars),
-                            hov ? olc::BLACK : olc::WHITE);
+        pge->FillRect(SEC_X, y0, SEC_W, y1 - y0, olc::Pixel(s.r, s.g, s.b));
+        // Riga scura in cima: separa due sezioni vicine di colore simile
+        if (y1 - y0 >= 4)
+            pge->DrawLine(SEC_X, y0, SEC_X + SEC_W - 1, y0, olc::Pixel(8, 8, 24));
+        if (y1 - y0 >= 11 && y0 >= lastTextY + 9) {
+            pge->DrawString(SEC_X + 3, y0 + 2, s.name.substr(0, maxChars), olc::BLACK);
             lastTextY = y0;
         }
+    }
+    // Cornice per ultima: le bande successive non devono coprirla
+    if (m_hoverSec >= 0) {
+        const auto& s = (*m_secs)[m_hoverSec];
+        int y0 = yOf(0, s.offset);
+        int y1 = std::max(y0 + 2, yOf(0, s.offset + s.size));
+        pge->DrawRect(SEC_X, y0, SEC_W - 1, y1 - y0 - 1, olc::WHITE);
     }
 }
 
