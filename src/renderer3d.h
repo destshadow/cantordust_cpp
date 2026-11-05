@@ -14,7 +14,9 @@ public:
     void render(olc::PixelGameEngine* pge,
                 const std::vector<Point3D>& points,
                 int offsetX, int offsetY,
-                int width,   int height);
+                int width,   int height,
+                const std::vector<bool>* highlight = nullptr,
+                olc::Pixel tint = olc::WHITE);
 
     // Rotazione (mouse sinistro)
     void rotate(float dx, float dy);

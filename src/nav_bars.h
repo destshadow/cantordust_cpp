@@ -30,6 +30,15 @@ public:
     size_t start() const { return m_micro.lo; }
     size_t end()   const { return m_micro.hi; }
 
+    size_t macroLo() const { return m_macro.lo; }
+    size_t macroHi() const { return m_macro.hi; }
+
+    // Segni sulle barre: una voce per riga, vedi rows()
+    static int rows();
+    void setMarks(std::vector<bool> fileRows, std::vector<bool> zoneRows);
+    void clearMarks();
+    void setCursor(size_t offset) { m_cursor = offset; }   // SIZE_MAX = nessuno
+
     int  hoveredSection() const { return m_hoverSec; }   // -1 = nessuna
     // Byte sotto il mouse, se e' sopra una delle due barre
     bool hoverOffset(int mx, int my, size_t& off) const;
@@ -46,6 +55,7 @@ private:
     void   selectSection(int index);
     void   buildStrip(int bar);
     void   drawBar(olc::PixelGameEngine* pge, int bar);
+    void   drawMarks(olc::PixelGameEngine* pge, int bar);
     void   drawSections(olc::PixelGameEngine* pge);
 
     const std::vector<uint8_t>*       m_bytes = nullptr;
@@ -64,4 +74,7 @@ private:
     olc::Sprite* m_strip[2] = {nullptr, nullptr};
     size_t m_builtLo[2] = {1, 1}, m_builtHi[2] = {0, 0};
     bool   m_builtEntropy[2] = {false, false};
+
+    std::vector<bool> m_marks[2];
+    size_t m_cursor = SIZE_MAX;
 };

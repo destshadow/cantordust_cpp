@@ -61,18 +61,38 @@ bool Renderer3D::project(float x, float y, float z,
 void Renderer3D::render(olc::PixelGameEngine* pge,
                          const std::vector<Point3D>& points,
                          int offsetX, int offsetY,
-                         int width,   int height) {
+                         int width,   int height,
+                         const std::vector<bool>* highlight,
+                         olc::Pixel tint) {
     if (points.empty()) return;
 
     Mat3 mat = buildRotationMatrix();
 
+    // Con un'evidenziazione: prima i punti grigi, poi quelli accesi, cosi'
+    // nessun punto grigio finisce sopra a uno evidenziato
+    for (int pass = highlight ? 0 : 1; pass < 2; pass++)
     for (const auto& p : points) {
+        bool lit = highlight && (*highlight)[p.key];
+        if (highlight && (pass == 0) == lit) continue;
+
         float rx, ry, rz;
         applyRotation(mat, p.x, p.y, p.z, rx, ry, rz);
 
         int px, py;
         if (!project(rx, ry, rz, offsetX, offsetY, width, height, px, py))
             continue;
+
+        if (highlight) {
+            if (lit) {
+                float k = 0.5f + 0.5f * p.intensity;
+                pge->Draw(px, py, olc::Pixel((uint8_t)(tint.r * k),
+                                             (uint8_t)(tint.g * k),
+                                             (uint8_t)(tint.b * k)));
+            } else {
+                pge->Draw(px, py, olc::Pixel(38, 38, 44));
+            }
+            continue;
+        }
 
         float boost  = std::min(1.0f, p.intensity * 1.8f);
         uint8_t r = static_cast<uint8_t>(p.r * boost);

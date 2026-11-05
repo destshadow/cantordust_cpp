@@ -130,11 +130,16 @@ Layout obiettivo:
              `moveForward`/`moveBackward` ancora in `FileNavigator`
        - [x] fix: i decal coprono i pixel normali, quindi la finestra
              "Apri file" e lo spinner restavano sotto la vista
-3. [ ] **Evidenziazione collegata**
-       - selezione → vista: fatto per RAW, Metric Map, Dot Plot, Entropy
-         (hover su sezione); mancano digraph e 3D, dove i punti della zona
-         vanno ricalcolati
-       - vista → file: hover su coppia/tripla → segni sulla barra
+3. [x] **Evidenziazione collegata**
+       - [x] sezione → vista, in tutte le viste (`visualizer_highlight.cpp`):
+             per posizione si attenua il resto; digraph e 3D: punti della
+             sezione accesi, gli altri grigi; istogramma: quota della barra;
+             byte cloud: valori soprattutto nella sezione
+       - [x] vista → file (`visualizer_links.cpp`, `occurrences.cpp`): segni
+             viola sulle barre, click = scorre le occorrenze ("3 di 120")
+       - [ ] mancano ancora: Dot Plot come valore (Y) e 3D (arriva col picking)
+       - [ ] idea: dall'occorrenza scelta, portare la vista in quel punto
+             (oggi si vede nell'Inspector e come riga bianca sulle barre)
 4. [ ] **Esplorazione 3D**
        - cubo e assi etichettati (byte 1/2/3, angoli 0x00/0xFF)
        - picking del punto sotto il mouse → tripla, conteggio, dove
@@ -155,8 +160,7 @@ serve l'attribuzione richiesta dalla licenza.
   selezione che resta sugli stessi byte quando cambia la zona.
 - [x] **Luminosità**: `density.h`, percentile p90 + curva logaritmica al
   posto del massimo, per digraph e dot plot; digraph verde come la GIF.
-- **Passo 3, click**: click su un pixel → salta all'offset, o cerca il
-  valore; ripetendo il click si passa all'occorrenza dopo ("3 di 120").
+- [x] **Click**: ripetendo il click si passa all'occorrenza dopo.
 - **Passo 4, 3D**: un buffer grande come la vista memorizza per ogni pixel
   il punto più luminoso: il picking diventa immediato. Punti con somma
   additiva invece che sovrascritti, così si vede la densità. Assi b0/b1/b2.

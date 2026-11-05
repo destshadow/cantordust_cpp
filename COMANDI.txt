@@ -29,9 +29,16 @@ AREE DELLA FINESTRA (1280x800)
     sezioni       Le sezioni ELF/PE come bande colorate, alla stessa
                   altezza della barra "file". Le piu' piccole sono solo
                   sottili strisce senza nome.
-                  Mouse sopra = la vista attenua tutto cio' che e' fuori
-                  dalla sezione (RAW, Metric Map, Dot Plot, Entropy) e
-                  l'Inspector la descrive.
+                  Mouse sopra = la vista mostra la sezione e l'Inspector
+                  la descrive:
+                    RAW, Metric Map, Dot Plot, Entropy, One Tuple:
+                                  si attenua cio' che sta fuori
+                    Digraph, 3D:  restano accesi i punti della sezione,
+                                  gli altri diventano grigi
+                    Istogramma:   resta colorata la parte di barra che
+                                  viene dalla sezione
+                    Byte Cloud:   restano accesi i valori che stanno
+                                  soprattutto nella sezione
                   Click = la vista mostra esattamente quella sezione.
 
     file          Tutto il file. La selezione sceglie quale parte
@@ -47,6 +54,9 @@ AREE DELLA FINESTRA (1280x800)
     Rotella                      stringe / allarga intorno al mouse
     Tasto destro  oppure  B      striscia: valore dei byte / entropia
     Mouse sopra                  l'Inspector mostra quel byte
+
+    Segni viola                  dove compare il valore sotto il mouse
+    Riga bianca                  l'occorrenza scelta col click
 
   Colori della striscia:
     valore        verde = valore del byte, nero = zeri
@@ -108,6 +118,18 @@ MOUSE NELLE VISTE 2D (1-4, 6-9)
   Rotella         zoom avanti / indietro
   Trascina (sx)   sposta la vista (solo con zoom > 1x)
   Scrollbar       orizzontale e verticale quando c'e' zoom
+
+
+DOVE COMPARE UN VALORE (Digraph, Istogramma, Byte Cloud, One Tuple)
+-------------------------------------------------------------------
+
+  Mouse su un valore  segni viola sulle barre: dove compare nel file
+  Click               sceglie il valore: l'Inspector mostra la prima
+                      occorrenza nella finestra ("1 di 4408")
+  Altri click         l'occorrenza successiva; dopo l'ultima, la prima
+  Esc                 toglie la scelta
+
+  La scelta sparisce anche cambiando vista o finestra.
 
 
 VISTA 6 — RAW PIXELS

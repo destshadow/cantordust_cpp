@@ -42,6 +42,7 @@ void Visualizer::drawInspector() {
         inspectValue(pw, cx, cy);
         return;
     }
+    if (m_pick.active()) { inspectPick(pw); return; }
     inspectSummary(pw);
 }
 

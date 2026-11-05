@@ -24,6 +24,7 @@
 #include "autocorr.h"
 #include "ui_widgets.h"
 #include "byte_info.h"
+#include "occurrences.h"
 #include <array>
 
 class Visualizer : public olc::PixelGameEngine {
@@ -60,12 +61,24 @@ private:
     void inspectPoint(PanelWriter& pw, size_t point);
     void inspectRange(PanelWriter& pw, int cx, int cy);
     void inspectValue(PanelWriter& pw, int cx, int cy);
+    void inspectPick(PanelWriter& pw);
     void inspectSummary(PanelWriter& pw);
     void writeSectionField(PanelWriter& pw, size_t off);
     void writeHexDump(PanelWriter& pw, size_t center, size_t mark, int rows);
     ByteInfo::Stats zoneStats(size_t a, size_t b) const;
     void syncNavigator();                  // barre -> finestra
-    void applyHighlight(olc::Sprite* spr); // attenua fuori dalla sezione
+    // Vista -> file (visualizer_links.cpp)
+    bool   isValueView() const;
+    size_t valueAt(int cx, int cy, uint8_t pat[2]) const;
+    void   updateLinks(float dt);
+    void   rebuildMarks();
+    // Sezione -> vista (visualizer_highlight.cpp)
+    void setHighlight(size_t start, size_t end);
+    bool highlightInWindow(size_t& a, size_t& b) const;
+    void applyHighlight(olc::Sprite* spr);
+    void highlightByPosition(olc::Sprite* spr);
+    void highlightByValue(olc::Sprite* spr);
+    void buildTripleMask();
     bool mouseToContent(int mx, int my, int& cx, int& cy) const;
     int  sectionAt(size_t offset) const;   // -1 se nessuna
     size_t firstOccurrence(const uint8_t* pat, size_t n);  // con cache
@@ -149,8 +162,19 @@ private:
     // Barre di navigazione
     NavBars m_bars;
 
+    // Vista -> file: valore scelto col click e segni sulle barre
+    Occur::Walker        m_pick;
+    std::vector<uint8_t> m_markWanted, m_marked;
+    float  m_markWait = 0.0f;
+    size_t m_markLo = 0, m_markHi = 0;
+    bool   m_pressed = false;
+    int    m_pressX = 0, m_pressY = 0;
+
     // Zona evidenziata nella vista (hover su una sezione); start == end = nessuna
     size_t m_hlStart = 0, m_hlEnd = 0;
+    std::vector<bool> m_tripleMask;      // 3D: triple presenti nella sezione
+    bool       m_tripleMaskOn = false;
+    olc::Pixel m_tripleTint   = olc::WHITE;
 
     // Finestra su cui sono state calcolate le viste correnti
     size_t m_computedStart = SIZE_MAX, m_computedEnd = SIZE_MAX;

@@ -55,6 +55,7 @@ void TriGraph::compute(const std::vector<uint8_t>& bytes,
         uint8_t bz =  key        & 0xFF;
 
         Point3D p;
+        p.key = key;
 
         // Normalizza in [-1, +1]
         p.x = (bx / 127.5f) - 1.0f;

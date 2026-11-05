@@ -10,6 +10,7 @@ struct Point3D {
     float x, y, z;     // coordinate normalizzate [-1, +1]
     float intensity;    // frequenza normalizzata → luminosita'
     uint8_t r, g, b;   // colore calcolato da posizione
+    uint32_t key;      // la tripla: byte[i]<<16 | byte[i+1]<<8 | byte[i+2]
 };
 
 class TriGraph {

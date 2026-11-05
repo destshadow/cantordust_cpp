@@ -148,7 +148,10 @@ cantordust_cpp/
 │   ├── inspector_format.h         # Formattazione dei pannelli
 │   ├── visualizer_legend.cpp      # Legenda delle viste
 │   ├── byte_info.h                # Classi di byte, entropia, ipotesi contenuto
-│   ├── nav_bars.{h,cpp}           # Barre di navigazione e sezioni
+│   ├── nav_bars*.{h,cpp}          # Barre: logica, disegno, geometria
+│   ├── occurrences.{h,cpp}        # Dove compare un valore
+│   ├── visualizer_highlight.cpp   # Sezione -> vista
+│   ├── visualizer_links.cpp       # Vista -> file
 │   ├── range_sel.h                # Logica della selezione
 │   ├── density.h                  # Luminosità di digraph e dot plot
 │   └── ui_widgets.h               # Slider, pannelli

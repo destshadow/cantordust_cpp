@@ -42,6 +42,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                 m_dragging = false;
                 m_panning  = false;
                 recomputeWindow();
+                if (m_mode == ViewMode::TRIGRAPH3D) buildTripleMask();
                 m_status = "";
                 break;
             case Action::OPEN_FILE:
@@ -157,12 +158,8 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
             hlA = m_parser.getSections()[hs].offset;
             hlB = hlA + m_parser.getSections()[hs].size;
         }
-        if ((hlA != m_hlStart || hlB != m_hlEnd) && !m_computing) {
-            m_hlStart = hlA;
-            m_hlEnd   = hlB;
-            std::lock_guard<std::mutex> lk(m_dataMutex);
-            updateCanvas();
-        }
+        if ((hlA != m_hlStart || hlB != m_hlEnd) && !m_computing)
+            setHighlight(hlA, hlB);
     }
 
     // Finestra cambiata e nessun calcolo in corso: aggiorna le viste
@@ -171,6 +168,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         recomputeWindow();
 
     busy = m_computing.load();
+    if (!typing && !busy) updateLinks(fElapsedTime);
 
     // Input modalita'
     if (!typing) {
@@ -191,7 +189,9 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         }
         m_renderer3d.render(this, pts,
                             CANVAS_X, CANVAS_Y,
-                            CANVAS_W, CANVAS_H);
+                            CANVAS_W, CANVAS_H,
+                            m_tripleMaskOn ? &m_tripleMask : nullptr,
+                            m_tripleTint);
     } else {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna

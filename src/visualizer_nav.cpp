@@ -98,6 +98,12 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_colorMode = ColorMode::ENTROPY;
     m_curveMode = CurveMode::HILBERT;
     m_hlStart = m_hlEnd = 0;
+    m_tripleMaskOn = false;
+    m_pick.clear();
+    m_marked.clear();
+    m_markWanted.clear();
+    m_bars.clearMarks();
+    m_bars.setCursor(SIZE_MAX);
     recomputeWindow();
 
     std::string fmt  = m_parser.getFormatName();
