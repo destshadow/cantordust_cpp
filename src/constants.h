@@ -14,7 +14,7 @@ static constexpr int WIN_H = 800;
 //   ├───────┴──────── file / navigazione / comandi ──────────┤
 
 // --- Barre orizzontali ---
-static constexpr int TOPBAR_H      = 40;   // tab cliccabili
+static constexpr int TOPBAR_H      = 26;   // tab cliccabili
 static constexpr int LEGEND_H      = 16;   // "cosa mostra questa vista"
 static constexpr int SCROLLBAR_H   = 12;   // scrollbar canvas orizzontale
 static constexpr int FILE_STATUS_H = 20;   // file + byte sotto cursore
@@ -25,6 +25,7 @@ static constexpr int PADDING       = 8;    // padding generico
 static constexpr int NAV_W         = 214;  // sezioni + barre FILE e ZONA
 static constexpr int INSPECTOR_W   = 328;  // pannello informazioni (39 char utili)
 static constexpr int SCROLLBAR_V_W = 12;   // scrollbar verticale canvas
+static constexpr int TAB_W         = 135;  // 9 tab; a destra restano gli fps
 
 // --- Area canvas (la vista) ---
 static constexpr int LEGEND_Y      = TOPBAR_H;
@@ -52,15 +53,19 @@ static constexpr int SIDE_Y         = TOPBAR_H;
 static constexpr int SIDE_H         = FILE_STATUS_Y - TOPBAR_H;
 static constexpr int INSPECTOR_X    = WIN_W - INSPECTOR_W;
 
-// --- Colori ricorrenti ---
-// Li definiamo come funzioni inline per non avere problemi con
-// l'inizializzazione statica di olc::Pixel
+// --- Colori dell'interfaccia ---
+// Ogni colore ha un ruolo. L'interfaccia resta neutra e c'e' un solo accento,
+// per cio' che e' attivo o scelto: cosi' spiccano i dati, che sono l'unica
+// cosa colorata (sezioni, tipi di byte, le viste).
+// Sono funzioni inline per non avere problemi con l'inizializzazione statica
+// di olc::Pixel.
 #include <olcPixelGameEngine.h>
-inline olc::Pixel COL_BG()        { return olc::Pixel(18,  18,  45);  }
-inline olc::Pixel COL_BG_LIGHT()  { return olc::Pixel(30,  30,  70);  }
-inline olc::Pixel COL_BORDER()    { return olc::Pixel(60,  60, 120);  }
-inline olc::Pixel COL_SCROLLBAR() { return olc::Pixel(40,  40,  80);  }
-inline olc::Pixel COL_CURSOR()    { return olc::Pixel(80, 140, 200);  }
-inline olc::Pixel COL_CYAN()      { return olc::Pixel( 0, 200, 220);  }
-inline olc::Pixel COL_YELLOW()    { return olc::Pixel(255, 220,  50); }
-inline olc::Pixel COL_GREEN()     { return olc::Pixel( 80, 220, 100); }
+inline olc::Pixel COL_BG()        { return olc::Pixel( 22,  23,  29); }  // pannelli
+inline olc::Pixel COL_BG_LIGHT()  { return olc::Pixel( 34,  36,  44); }  // intestazioni, tab attiva
+inline olc::Pixel COL_BG_DEEP()   { return olc::Pixel( 12,  13,  17); }  // dietro ai dati
+inline olc::Pixel COL_BORDER()    { return olc::Pixel( 56,  59,  70); }
+inline olc::Pixel COL_SCROLLBAR() { return olc::Pixel( 40,  42,  50); }
+inline olc::Pixel COL_CURSOR()    { return olc::Pixel(110, 115, 130); }
+inline olc::Pixel COL_TEXT()      { return olc::Pixel(205, 208, 214); }  // testo normale
+inline olc::Pixel COL_DIM()       { return olc::Pixel(128, 132, 145); }  // etichette, suggerimenti
+inline olc::Pixel COL_ACCENT()    { return olc::Pixel(255, 190,  70); }  // attivo, scelto

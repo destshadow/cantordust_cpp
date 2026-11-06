@@ -21,7 +21,6 @@ public:
     std::string getInputBuffer()     const { return m_inputBuffer; }
     float       getCursorBlink()     const { return m_cursorBlink; }
     bool        lastClickWasTab()    const { return m_lastClickWasTab; }
-    int         getTabScrollOffset() const { return m_tabScrollOffset; }
 
 private:
     Action handleNormalKeys(olc::PixelGameEngine* pge);
@@ -33,7 +32,5 @@ private:
     float       m_cursorBlink       = 0.0f;
     ViewMode    m_requestedView     = ViewMode::DIGRAPH;
     bool        m_lastClickWasTab   = false;
-    int         m_tabScrollOffset   = 0;
-    bool        m_tabScrollDragging = false;
     int         m_lastMouseX        = 0;
 };

@@ -51,7 +51,7 @@ inline void writeStats(PanelWriter& pw, const ByteInfo::Stats& s) {
     std::ostringstream e;
     e << std::fixed << std::setprecision(2) << s.entropy << " / 8 bit";
     pw.field("ENTROPIA", e.str());
-    pw.field("IPOTESI", ByteInfo::guess(s), COL_GREEN());
+    pw.field("IPOTESI", ByteInfo::guess(s), COL_TEXT());
 }
 
 } // namespace Inspect

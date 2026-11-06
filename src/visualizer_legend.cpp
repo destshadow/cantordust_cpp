@@ -34,5 +34,5 @@ void Visualizer::drawLegend() {
     if (m_mode == ViewMode::METRICMAP && m_colorMode == ColorMode::BYTE_CLASS)
         s = "METRIC MAP  grigio=zero  verde=controllo  blu=testo  rosso=alti  bianco=0xFF";
     int room = (CANVAS_W + SCROLLBAR_V_W - 12) / 8;
-    DrawString(CANVAS_X + 6, LEGEND_Y + 4, s.substr(0, room), olc::Pixel(200, 200, 140));
+    DrawString(CANVAS_X + 6, LEGEND_Y + 4, s.substr(0, room), COL_TEXT());
 }

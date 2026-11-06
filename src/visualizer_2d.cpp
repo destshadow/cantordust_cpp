@@ -217,12 +217,12 @@ std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
         size_t rel = m_metricmap.fileIndexAt(cx, cy);
         if (rel == SIZE_MAX) return "";
         size_t fidx = m_navigator.getStart() + rel;
-        oss << "FILE IDX: 0x" << std::uppercase << std::hex
+        oss << "OFFSET: 0x" << std::uppercase << std::hex
             << std::setw(8) << std::setfill('0') << fidx;
     } else if (m_mode == ViewMode::RAWPIXELS) {
         size_t rel = m_rawpixels.byteOffsetAt(cx, cy);
         if (rel == SIZE_MAX) return "";
-        oss << "OFF: 0x" << std::uppercase << std::hex
+        oss << "OFFSET: 0x" << std::uppercase << std::hex
             << std::setw(8) << std::setfill('0')
             << (m_navigator.getStart() + rel)
             << std::dec << "  (" << cx << "," << cy << ")";

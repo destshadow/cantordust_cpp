@@ -14,7 +14,7 @@ void Visualizer::inspectSection(PanelWriter& pw, int index) {
     pw.field("RANGE", "0x" + hex(sec.offset, 8) + "-0x" + hex(sec.offset + sec.size, 8));
     pw.field("DIMENS.", sizeStr(sec.size) + "  (" +
              pct((double)sec.size / std::max<size_t>(1, total)) + " del file)");
-    pw.text("click = mostra questa sezione", COL_GREEN());
+    pw.text("click = mostra questa sezione", COL_DIM());
     pw.separator("inizio della sezione");
     writeHexDump(pw, sec.offset, sec.offset, 3);
     pw.separator("composizione");
@@ -24,7 +24,7 @@ void Visualizer::inspectSection(PanelWriter& pw, int index) {
 // PUNTO: un offset del file
 void Visualizer::inspectPoint(PanelWriter& pw, size_t point) {
     const auto& bytes = m_reader.getBytes();
-    pw.field("OFFSET", "0x" + hex(point, 8) + "  (" + std::to_string(point) + ")", COL_YELLOW());
+    pw.field("OFFSET", "0x" + hex(point, 8) + "  (" + std::to_string(point) + ")", COL_ACCENT());
     writeSectionField(pw, point);
     pw.field("BYTE", byteDesc(bytes[point]), classPixel(ByteInfo::classOf(bytes[point])));
     pw.separator("byte intorno");
@@ -42,7 +42,7 @@ void Visualizer::inspectRange(PanelWriter& pw, int cx, int cy) {
     size_t a = w.start + (size_t)((double)cx * w.len / 255.0);
     size_t b = w.start + (size_t)((double)(cx + 1) * w.len / 255.0);
     b = std::min(std::max(b, a + 1), w.end);
-    pw.field("TRATTO", "0x" + hex(a, 8) + "-0x" + hex(b, 8), COL_YELLOW());
+    pw.field("TRATTO", "0x" + hex(a, 8) + "-0x" + hex(b, 8), COL_ACCENT());
     pw.field("LUNGH.", sizeStr(b - a));
     writeSectionField(pw, a);
     if (m_mode == ViewMode::DOTPLOT) {

@@ -38,7 +38,7 @@ void Visualizer::draw3D(float fElapsedTime) {
     const auto& p = m_pick.pattern;
     if (m_pick.active() && p.size() == 3)
         m_renderer3d.drawMarker(this, ((uint32_t)p[0] << 16) | ((uint32_t)p[1] << 8) | p[2],
-                                7, COL_YELLOW());
+                                7, COL_ACCENT());
     uint32_t key;
     if (!m_computing && tripleUnderMouse(key))
         m_renderer3d.drawMarker(this, key, 5, olc::WHITE);
@@ -49,7 +49,7 @@ void Visualizer::draw3D(float fElapsedTime) {
 // In basso a sinistra nella vista: cosa vuol dire il colore
 void Visualizer::drawCloudLegend() {
     const int x = CANVAS_X + 8, y = CANVAS_Y + CANVAS_H - 26;
-    const olc::Pixel grey(170, 170, 170);
+    const olc::Pixel grey = COL_DIM();
     const CloudColor::Mode mode = cloudColorMode();
 
     std::string title = std::string("COLORE [C]: ") + CloudColor::name(mode) +

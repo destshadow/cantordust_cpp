@@ -184,7 +184,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     // Status bar info MetricMap
     std::string statusStr = m_status;
     if (m_mode == ViewMode::METRICMAP && !busy)
-        statusStr = "[C=Color:" +
+        statusStr = "[C=Colore:" +
                     std::string(MetricMap::colorModeName(m_colorMode)) +
                     " V=Curva:" +
                     std::string(MetricMap::curveModeName(m_curveMode)) +
@@ -197,7 +197,6 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
                     "  [ ]=bpp  , .=W  Ctrl=OFF  A=auto]  " + m_status;
 
     UIState state;
-    state.tabOffset      = m_input.getTabScrollOffset();
     state.currentView    = m_mode;
     state.cmdStatus      = busy ? "Calcolo in corso..." : statusStr;
     state.filepath       = m_reader.getFilepath();
@@ -221,11 +220,11 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 void Visualizer::drawSpinner(float fElapsedTime) {
     m_spinnerAngle += fElapsedTime * 3.0f;
     float bx = CANVAS_X + CANVAS_W / 2.0f - 80, by = WIN_H / 2.0f - 20;
-    FillRectDecal({bx, by}, {160, 40}, olc::Pixel(10, 10, 30, 230));
+    FillRectDecal({bx, by}, {160, 40}, olc::Pixel(22, 23, 29, 230));
     int dots = (int)(m_spinnerAngle * 2) % 4;
     std::string txt = "Calcolo";
     for (int i = 0; i < dots; i++) txt += ".";
-    DrawStringDecal({bx + 10, by + 14}, txt, COL_YELLOW());
+    DrawStringDecal({bx + 10, by + 14}, txt, COL_ACCENT());
 }
 
 // Salva la vista corrente come PNG, alla sua dimensione reale

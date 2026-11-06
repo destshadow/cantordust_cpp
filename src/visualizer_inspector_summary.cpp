@@ -12,7 +12,7 @@ void Visualizer::inspectSummary(PanelWriter& pw) {
 
     std::string path = m_reader.getFilepath();
     std::string name = path.substr(path.find_last_of('/') + 1);
-    pw.field("FILE", name, COL_CYAN());
+    pw.field("FILE", name, COL_TEXT());
     pw.field("DIMENS.", sizeStr(bytes.size()) + "  (" + std::to_string(bytes.size()) + " B)");
     pw.field("FORMATO", m_parser.getFormatName());
     if (m_parser.hasSections())
@@ -41,8 +41,8 @@ void Visualizer::inspectSummary(PanelWriter& pw) {
         int rest = (int)idx.size() - shown;
         if (rest > 0)
             pw.text("+ " + std::to_string(rest) + " sezioni piccole (<0.5%)",
-                    olc::Pixel(150, 150, 150));
+                    COL_DIM());
     }
     pw.y = SIDE_Y + SIDE_H - 14;
-    pw.text("mouse sulla vista = dettagli", olc::Pixel(120, 120, 150));
+    pw.text("mouse sulla vista = dettagli", COL_DIM());
 }

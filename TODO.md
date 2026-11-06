@@ -155,6 +155,13 @@ Layout obiettivo:
        **riassunto del file** (formato, architettura, entry point,
        sezioni in %, entropia media), ritocchi grafici
 
+6. [x] **Pulizia visiva**: palette con ruoli in `constants.h` (fondo neutro,
+       testo, testo secondario, un solo accento per cio' che e' attivo; i
+       colori vivaci solo sui dati), tab con i nomi interi, tolta la
+       scrollbar delle tab
+7. [ ] **Riga di opzioni** al posto della barra di stato, nelle viste 6 e 7:
+       tutte le scelte visibili e cliccabili, quella attiva evidenziata
+
 ## Limiti noti (controllo del 2026-11-05)
 
 - Un calcolo in corso non si può interrompere: su file grandi un cambio

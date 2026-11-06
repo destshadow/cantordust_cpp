@@ -106,9 +106,9 @@ void NavBars::drawBar(olc::PixelGameEngine* pge, int bar) {
 
 // Le sezioni come bande colorate, con il nome dove c'e' spazio
 void NavBars::drawSections(olc::PixelGameEngine* pge) {
-    pge->FillRect(SEC_X, TRACK_Y, SEC_W, TRACK_H, olc::Pixel(8, 8, 24));
+    pge->FillRect(SEC_X, TRACK_Y, SEC_W, TRACK_H, COL_BG_DEEP());
     if (!m_secs || m_secs->empty()) {
-        pge->DrawString(SEC_X + 2, TRACK_Y + 4, "nessuna", olc::Pixel(110, 110, 150));
+        pge->DrawString(SEC_X + 2, TRACK_Y + 4, "nessuna", COL_DIM());
         return;
     }
     const int maxChars = (SEC_W - 4) / 8;
@@ -120,7 +120,7 @@ void NavBars::drawSections(olc::PixelGameEngine* pge) {
         pge->FillRect(SEC_X, y0, SEC_W, y1 - y0, olc::Pixel(s.r, s.g, s.b));
         // Riga scura in cima: separa due sezioni vicine di colore simile
         if (y1 - y0 >= 4)
-            pge->DrawLine(SEC_X, y0, SEC_X + SEC_W - 1, y0, olc::Pixel(8, 8, 24));
+            pge->DrawLine(SEC_X, y0, SEC_X + SEC_W - 1, y0, COL_BG_DEEP());
         if (y1 - y0 >= 11 && y0 >= lastTextY + 9) {
             pge->DrawString(SEC_X + 3, y0 + 2, s.name.substr(0, maxChars), olc::BLACK);
             lastTextY = y0;
@@ -139,9 +139,9 @@ void NavBars::draw(olc::PixelGameEngine* pge) {
     pge->FillRect(0, SIDE_Y, NAV_W, SIDE_H, COL_BG());
     pge->DrawRect(0, SIDE_Y, NAV_W - 1, SIDE_H - 1, COL_BORDER());
     pge->FillRect(1, SIDE_Y + 1, NAV_W - 2, 12, COL_BG_LIGHT());
-    pge->DrawString(6, SIDE_Y + 3, "NAVIGAZIONE", COL_YELLOW());
+    pge->DrawString(6, SIDE_Y + 3, "NAVIGAZIONE", COL_TEXT());
 
-    const olc::Pixel label(170, 170, 190);
+    const olc::Pixel label = COL_DIM();
     int ly = SIDE_Y + 16;
     pge->DrawString(SEC_X + 2, ly, "sezioni", label);
     pge->DrawString(BAR_X[0] + 14, ly, "file", label);
@@ -154,15 +154,15 @@ void NavBars::draw(olc::PixelGameEngine* pge) {
 
         size_t total = m_bytes->size();
         int ty = TRACK_Y + TRACK_H + HANDLE_H + 4;
-        const olc::Pixel addr(200, 200, 100);
+        const olc::Pixel addr = COL_TEXT();
         pge->DrawString(6, ty, hex8(m_micro.lo), addr);
-        pge->DrawString(6 + 11 * 8, ty, "inizio", olc::Pixel(130, 130, 160));
+        pge->DrawString(6 + 11 * 8, ty, "inizio", COL_DIM());
         pge->DrawString(6, ty + 10, hex8(m_micro.hi), addr);
-        pge->DrawString(6 + 11 * 8, ty + 10, "fine", olc::Pixel(130, 130, 160));
+        pge->DrawString(6 + 11 * 8, ty + 10, "fine", COL_DIM());
         std::ostringstream o;
         if (m_micro.size() >= total) o << "file intero";
         else o << std::fixed << std::setprecision(1)
                << 100.0 * m_micro.size() / total << "% del file";
-        pge->DrawString(6, ty + 20, o.str(), olc::Pixel(160, 160, 160));
+        pge->DrawString(6, ty + 20, o.str(), COL_DIM());
     }
 }

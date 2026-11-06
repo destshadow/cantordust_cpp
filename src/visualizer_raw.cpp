@@ -140,18 +140,18 @@ void Visualizer::drawRawPanel() {
         title += "suggerita W=" + std::to_string(m_suggestWidth) + " [A]";
     else
         title += "nessuna larghezza evidente";
-    DrawString(L.gx, L.py + 5, title, COL_CYAN());
+    DrawString(L.gx, L.py + 5, title, COL_TEXT());
 
     bool hoverGraph = maxW > 0 && mx >= L.gx && mx < L.gx + L.gw &&
                       my >= L.gy && my < L.gy + GRAPH_H;
     if (hoverGraph) {
         int w = 1 + (mx - L.gx) * maxW / L.gw;
         std::string h = "click: W=" + std::to_string(w);
-        DrawString(L.gx + L.gw - (int)h.size() * 8, L.py + 5, h, COL_YELLOW());
+        DrawString(L.gx + L.gw - (int)h.size() * 8, L.py + 5, h, COL_ACCENT());
     }
 
     // --- Grafico: una colonna per gruppo di larghezze, altezza = max ---
-    FillRect(L.gx, L.gy, L.gw, GRAPH_H, olc::Pixel(8, 8, 24));
+    FillRect(L.gx, L.gy, L.gw, GRAPH_H, COL_BG_DEEP());
     const auto& sim = m_autocorr.similarity();
     if (maxW > 0) {
         for (int c = 0; c < L.gw; c++) {
@@ -174,7 +174,7 @@ void Visualizer::drawRawPanel() {
         }
         if (m_rawWidth <= maxW) {
             int x = markX(m_rawWidth);
-            DrawLine(x, L.gy, x, L.gy + GRAPH_H - 1, COL_YELLOW());
+            DrawLine(x, L.gy, x, L.gy + GRAPH_H - 1, COL_ACCENT());
         }
     }
     DrawRect(L.gx, L.gy, L.gw - 1, GRAPH_H - 1, COL_BORDER());

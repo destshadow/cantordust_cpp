@@ -20,7 +20,7 @@ void Visualizer::drawInspector() {
     drawPanel(this, INSPECTOR_X, SIDE_Y, INSPECTOR_W, SIDE_H, "INSPECTOR");
     PanelWriter pw{this, INSPECTOR_X + 8, SIDE_Y + 20, INSPECTOR_W - 16};
 
-    if (m_computing.load()) { pw.text("calcolo in corso...", COL_YELLOW()); return; }
+    if (m_computing.load()) { pw.text("calcolo in corso...", COL_ACCENT()); return; }
 
     const InspectWindow w = inspectWindow();
     int cx = 0, cy = 0;
@@ -119,11 +119,11 @@ size_t Visualizer::firstOccurrence(const uint8_t* pat, size_t n) {
 
 void Visualizer::writeSectionField(PanelWriter& pw, size_t off) {
     if (m_parser.getFormat() == BinaryFormat::UNKNOWN) {
-        pw.field("SEZIONE", "(formato non riconosciuto)", olc::Pixel(150, 150, 150));
+        pw.field("SEZIONE", "(formato non riconosciuto)", COL_DIM());
         return;
     }
     int s = sectionAt(off);
-    if (s < 0) { pw.field("SEZIONE", "(fuori dalle sezioni)", olc::Pixel(150, 150, 150)); return; }
+    if (s < 0) { pw.field("SEZIONE", "(fuori dalle sezioni)", COL_DIM()); return; }
     const auto& sec = m_parser.getSections()[s];
     pw.field("SEZIONE", sec.name + "  (" + sizeStr(sec.size) + ")",
              olc::Pixel(sec.r, sec.g, sec.b));
@@ -139,7 +139,7 @@ void Visualizer::writeHexDump(PanelWriter& pw, size_t center, size_t mark, int r
         size_t rowOff = first + (size_t)r * 8;
         if (rowOff >= bytes.size()) break;
         int y = pw.y;
-        DrawString(pw.x, y, hex(rowOff & 0xFFFFFF, 6), olc::Pixel(110, 110, 150));
+        DrawString(pw.x, y, hex(rowOff & 0xFFFFFF, 6), COL_DIM());
         for (int c = 0; c < 8; c++) {
             size_t o = rowOff + c;
             if (o >= bytes.size()) break;
@@ -147,11 +147,11 @@ void Visualizer::writeHexDump(PanelWriter& pw, size_t center, size_t mark, int r
             int hx = pw.x + (7 + c * 3) * 8;
             int ax = pw.x + (31 + c) * 8;
             bool sel = (o == mark);
-            if (sel) { FillRect(hx - 1, y - 1, 18, 10, COL_YELLOW()); FillRect(ax, y - 1, 8, 10, COL_YELLOW()); }
+            if (sel) { FillRect(hx - 1, y - 1, 18, 10, COL_ACCENT()); FillRect(ax, y - 1, 8, 10, COL_ACCENT()); }
             olc::Pixel col = sel ? olc::BLACK : classPixel(ByteInfo::classOf(v));
             DrawString(hx, y, hex(v, 2), col);
             char ch = (v >= 0x20 && v < 0x7F) ? (char)v : '.';
-            DrawString(ax, y, std::string(1, ch), sel ? olc::BLACK : olc::Pixel(180, 180, 180));
+            DrawString(ax, y, std::string(1, ch), sel ? olc::BLACK : COL_TEXT());
         }
         pw.y += pw.lineH;
     }

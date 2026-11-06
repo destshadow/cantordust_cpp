@@ -17,7 +17,7 @@ void Visualizer::inspectValue(PanelWriter& pw, int cx, int cy) {
     if (m_mode == ViewMode::DIGRAPH) {
         count  = m_digraph.get(pat[0], pat[1]);
         total  = w.len > 0 ? w.len - 1 : 0;
-        pw.field("COPPIA", "0x" + hex(pat[0], 2) + " seguito da 0x" + hex(pat[1], 2), COL_YELLOW());
+        pw.field("COPPIA", "0x" + hex(pat[0], 2) + " seguito da 0x" + hex(pat[1], 2), COL_ACCENT());
         pw.field("1o BYTE", byteDesc(pat[0]), classPixel(ByteInfo::classOf(pat[0])));
         pw.field("2o BYTE", byteDesc(pat[1]), classPixel(ByteInfo::classOf(pat[1])));
     } else {
@@ -39,7 +39,7 @@ void Visualizer::inspectValue(PanelWriter& pw, int cx, int cy) {
     pw.field("VOLTE", std::to_string(count) +
              (total ? "  (" + pct((double)count / total) + ")" : ""));
     if (count == 0) {
-        pw.text("non compare in questa finestra", olc::Pixel(150, 150, 150));
+        pw.text("non compare in questa finestra", COL_DIM());
         return;
     }
 
@@ -54,7 +54,7 @@ void Visualizer::inspectTriple(PanelWriter& pw, uint32_t key) {
     const InspectWindow w = inspectWindow();
     const size_t total = w.len > 2 ? w.len - 2 : 0;
 
-    pw.field("TRIPLA", "0x" + hex(pat[0], 2) + " 0x" + hex(pat[1], 2) + " 0x" + hex(pat[2], 2), COL_YELLOW());
+    pw.field("TRIPLA", "0x" + hex(pat[0], 2) + " 0x" + hex(pat[1], 2) + " 0x" + hex(pat[2], 2), COL_ACCENT());
     pw.field("1o BYTE", byteDesc(pat[0]), classPixel(ByteInfo::classOf(pat[0])));
     pw.field("2o BYTE", byteDesc(pat[1]), classPixel(ByteInfo::classOf(pat[1])));
     pw.field("3o BYTE", byteDesc(pat[2]), classPixel(ByteInfo::classOf(pat[2])));
@@ -81,14 +81,14 @@ void Visualizer::writeOccurrences(PanelWriter& pw, const uint8_t* pat, size_t n)
     if (at == SIZE_MAX) return;
     if (picked)
         pw.field("POSIZ.", std::to_string(m_pick.index) + " di " + std::to_string(m_pick.count));
-    pw.field(picked ? "OFFSET" : "PRIMA", "0x" + hex(at, 8), COL_YELLOW());
+    pw.field(picked ? "OFFSET" : "PRIMA", "0x" + hex(at, 8), COL_ACCENT());
     writeSectionField(pw, at);
     pw.separator(picked ? "questa occorrenza" : "prima occorrenza");
     writeHexDump(pw, at, at, 3);
     pw.gap(6);
     pw.text("segni viola: dove compare nel file", olc::Pixel(255, 110, 255));
     pw.text(picked ? "click = la prossima, Esc = togli"
-                   : "click = scorri le occorrenze", COL_GREEN());
+                   : "click = scorri le occorrenze", COL_DIM());
 }
 
 // Valore scelto col click, con il mouse altrove
@@ -96,12 +96,12 @@ void Visualizer::inspectPick(PanelWriter& pw) {
     const auto& p = m_pick.pattern;
     std::string v = "0x" + hex(p[0], 2);
     for (size_t i = 1; i < p.size(); i++) v += " 0x" + hex(p[i], 2);
-    pw.field("SCELTO", v, COL_YELLOW());
+    pw.field("SCELTO", v, COL_ACCENT());
     pw.field("POSIZ.", std::to_string(m_pick.index) + " di " + std::to_string(m_pick.count));
-    pw.field("OFFSET", "0x" + hex(m_pick.target, 8), COL_YELLOW());
+    pw.field("OFFSET", "0x" + hex(m_pick.target, 8), COL_ACCENT());
     writeSectionField(pw, m_pick.target);
     pw.separator("questa occorrenza");
     writeHexDump(pw, m_pick.target, m_pick.target, 6);
     pw.gap(6);
-    pw.text("Esc = togli la scelta", COL_GREEN());
+    pw.text("Esc = togli la scelta", COL_DIM());
 }

@@ -55,10 +55,10 @@ struct Slider {
 
     void draw(olc::PixelGameEngine* pge) const {
         const olc::Pixel btnBg(220, 215, 235), btnFg(60, 60, 90);
-        const olc::Pixel track(200, 200, 210), knob(40, 150, 170);
+        const olc::Pixel track = COL_CURSOR(), knob = COL_ACCENT();
 
         pge->DrawString(x, y + 3, label + " " + std::to_string(value),
-                        olc::Pixel(200, 200, 200));
+                        COL_TEXT());
 
         int bl = x + LABEL_W, br = trackX() + trackW() + 4;
         pge->FillRect(bl, y, BTN, H, btnBg);
@@ -81,7 +81,7 @@ inline void drawPanel(olc::PixelGameEngine* pge, int x, int y, int w, int h,
     pge->DrawRect(x, y, w - 1, h - 1, COL_BORDER());
     if (!title.empty()) {
         pge->FillRect(x + 1, y + 1, w - 2, 12, COL_BG_LIGHT());
-        pge->DrawString(x + 6, y + 3, title, COL_YELLOW());
+        pge->DrawString(x + 6, y + 3, title, COL_TEXT());
     }
 }
 
@@ -94,15 +94,15 @@ struct PanelWriter {
 
     int maxChars() const { return std::max(0, w / 8); }
 
-    void text(const std::string& s, olc::Pixel col = olc::Pixel(210, 210, 210)) {
+    void text(const std::string& s, olc::Pixel col = COL_TEXT()) {
         std::string t = (int)s.size() > maxChars() ? s.substr(0, maxChars()) : s;
         pge->DrawString(x, y, t, col);
         y += lineH;
     }
     // "ETICHETTA  valore" con l'etichetta in grigio
     void field(const std::string& label, const std::string& value,
-               olc::Pixel col = olc::WHITE) {
-        pge->DrawString(x, y, label, olc::Pixel(130, 130, 160));
+               olc::Pixel col = COL_TEXT()) {
+        pge->DrawString(x, y, label, COL_DIM());
         int vx = x + 9 * 8;
         int room = std::max(0, (x + w - vx) / 8);
         pge->DrawString(vx, y, value.substr(0, room), col);
@@ -115,19 +115,19 @@ struct PanelWriter {
         if (!title.empty()) {
             int tw = (int)title.size() * 8 + 8;
             pge->FillRect(x + 8, y - 1, tw, 9, COL_BG());
-            pge->DrawString(x + 12, y, title, COL_CYAN());
+            pge->DrawString(x + 12, y, title, COL_DIM());
         }
         y += 12;
     }
     // Barra orizzontale di percentuale con etichetta
     void bar(const std::string& label, float frac, olc::Pixel col) {
         frac = std::clamp(frac, 0.0f, 1.0f);
-        pge->DrawString(x, y, label, olc::Pixel(180, 180, 180));
+        pge->DrawString(x, y, label, COL_TEXT());
         int bx = x + 12 * 8, bw = w - 12 * 8 - 5 * 8;
-        pge->FillRect(bx, y + 1, bw, 6, olc::Pixel(30, 30, 55));
+        pge->FillRect(bx, y + 1, bw, 6, COL_BG_LIGHT());
         pge->FillRect(bx, y + 1, (int)(bw * frac), 6, col);
         std::string pct = std::to_string((int)std::lround(frac * 100)) + "%";
-        pge->DrawString(x + w - (int)pct.size() * 8, y, pct, olc::Pixel(180, 180, 180));
+        pge->DrawString(x + w - (int)pct.size() * 8, y, pct, COL_TEXT());
         y += lineH;
     }
 };
