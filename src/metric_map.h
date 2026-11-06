@@ -51,6 +51,8 @@ public:
     size_t fileIndexAt(int x, int y) const;
 
     static const char* colorModeName(ColorMode m);
+    // Il modo dopo, saltando il classifier se non ci sono i template
+    static ColorMode nextColorMode(ColorMode m, bool classifierReady);
     static const char* curveModeName(CurveMode m);
 
 private:

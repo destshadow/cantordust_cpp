@@ -28,6 +28,7 @@
 #include "view_results.h"
 #include "occurrences.h"
 #include <array>
+#include <functional>
 
 class Visualizer : public olc::PixelGameEngine {
 public:
@@ -101,6 +102,18 @@ private:
     void handleRawInput();
     void recomputeRawPixels();
     void syncRawSliders();
+    // Opzioni delle viste (visualizer_options.cpp)
+    bool hasOptions() const;
+    void handleOptionKeys();
+    void applyPendingOption();
+    void drawOptions(bool clickable);
+    void drawRawOptions(bool clickable);
+    void drawMetricOptions(bool clickable);
+    void setBpp(BppMode m);
+    void setRawFilter(RawFilter f);
+    void applySuggestedWidth();
+    void setColorMode(ColorMode m);
+    void setCurveMode(CurveMode m);
     std::vector<uint8_t> getCurrentRGB() const;
     std::string getByteInfo(int mouseX, int mouseY) const;
 
@@ -138,6 +151,7 @@ private:
     int           m_rawWidth     = 256;
     int           m_rawOffset    = 0;
     RawFilter     m_rawFilter;
+    std::function<void()> m_pendingOption;   // click sulla riga di opzioni
     Autocorr      m_autocorr;
     int           m_suggestWidth = 0;   // 0 = nessuna larghezza trovata
     Slider        m_widthSlider;

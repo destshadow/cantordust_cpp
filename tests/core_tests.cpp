@@ -575,6 +575,15 @@ int main() {
         assert(RawFilter{}.prev().id == 10 && RawFilter{10}.next().none());
     }
 
+    {   // Metric Map: giro dei colori, senza template si salta il classifier
+        ColorMode m = ColorMode::SPECTRUM;
+        m = MetricMap::nextColorMode(m, false);
+        assert(m == ColorMode::BYTE_CLASS);
+        assert(MetricMap::nextColorMode(m, false) == ColorMode::WAVELENGTH);
+        assert(MetricMap::nextColorMode(m, true)  == ColorMode::CLASSIFIER);
+        assert(MetricMap::nextColorMode(ColorMode::CLASSIFIER, true) == ColorMode::WAVELENGTH);
+    }
+
     {   // Metric Map: colore per tipo di byte
         std::vector<uint8_t> b = {'A', 0x00, 0xFF, 0x80, 0x01};
         MetricMap m;

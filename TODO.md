@@ -159,7 +159,8 @@ Layout obiettivo:
        testo, testo secondario, un solo accento per cio' che e' attivo; i
        colori vivaci solo sui dati), tab con i nomi interi, tolta la
        scrollbar delle tab
-7. [ ] **Riga di opzioni** al posto della barra di stato, nelle viste 6 e 7:
+7. [x] **Riga di opzioni** (`option_bar.h`, `visualizer_options.cpp`) al
+       posto della barra di stato, nelle viste 6 e 7:
        tutte le scelte visibili e cliccabili, quella attiva evidenziata
 
 ## Limiti noti (controllo del 2026-11-05)

@@ -140,6 +140,9 @@ VISTA 6 — RAW PIXELS
   Shift + , .     larghezza -10 / +10
   Ctrl + , .      offset -1 / +1     (Ctrl+Shift = -10 / +10)
   A               usa la larghezza suggerita dall'autocorrelazione
+  Nella riga in basso vedi bpp e filtri, con quello attivo: click per
+  sceglierne uno, oppure i tasti:
+
   F               filtro (Shift+F = indietro); cambia solo l'immagine,
                   l'Inspector mostra sempre i byte veri:
                     normale
@@ -174,6 +177,9 @@ VISTA 6 — RAW PIXELS
 
 VISTA 7 — METRIC MAP
 --------------------
+
+  Nella riga in basso vedi tutte le scelte e quella attiva: click per
+  sceglierne una, oppure:
 
   C               cambia colore (si parte da Entropy):
                   Wavelength / Entropy / Gradient /

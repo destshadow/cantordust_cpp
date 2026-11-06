@@ -169,6 +169,12 @@ size_t MetricMap::fileIndexAt(int x, int y) const {
     return m_indexMap[y * m_size + x];
 }
 
+ColorMode MetricMap::nextColorMode(ColorMode m, bool classifierReady) {
+    int next = ((int)m + 1) % 6;
+    if (next == (int)ColorMode::CLASSIFIER && !classifierReady) next = 0;
+    return (ColorMode)next;
+}
+
 const char* MetricMap::colorModeName(ColorMode m) {
     switch (m) {
         case ColorMode::WAVELENGTH:  return "Wavelength";

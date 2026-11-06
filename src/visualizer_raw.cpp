@@ -95,14 +95,12 @@ void Visualizer::handleRawInput() {
 
     // A = applica la larghezza suggerita dall'autocorrelazione
     if (GetKey(olc::Key::A).bPressed && m_suggestWidth > 0) {
-        m_rawWidth = m_suggestWidth;
-        changed = true;
+        applySuggestedWidth();
     }
 
     // F = filtro successivo, Shift+F = precedente
     if (GetKey(olc::Key::F).bPressed) {
-        m_rawFilter = GetKey(olc::Key::SHIFT).bHeld ? m_rawFilter.prev() : m_rawFilter.next();
-        changed = true;
+        setRawFilter(GetKey(olc::Key::SHIFT).bHeld ? m_rawFilter.prev() : m_rawFilter.next());
     }
 
     // Click sul grafico = usa quella larghezza
@@ -120,7 +118,6 @@ void Visualizer::handleRawInput() {
     if (changed) {
         syncRawSliders();   // riallinea l'offset alla nuova larghezza
         recomputeRawPixels();
-        m_status = "Filtro: " + m_rawFilter.name();
     }
 }
 

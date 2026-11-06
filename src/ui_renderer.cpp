@@ -98,11 +98,14 @@ void UIRenderer::drawFileStatus(olc::PixelGameEngine* pge,
             sizeStr = std::to_string(state.filesize) + "B";
         // Spazio fino all'info byte (a destra, larga 260 px)
         std::string tail = "  [" + sizeStr + "]";
-        int maxChars = (sw - 260 - 12) / 8 - 6 - (int)tail.size();
+        int fileEnd  = state.notice.empty() ? sw - 260 : sw / 2;
+        int maxChars = (fileEnd - 12) / 8 - 6 - (int)tail.size();
         pge->DrawString(6, y+6,
                         "FILE: " + fitTail(state.filepath, maxChars) + tail,
                         COL_DIM());
     }
+    if (!state.notice.empty())
+        pge->DrawString(sw / 2, y+6, fitTail(state.notice, (sw / 2 - 260) / 8), COL_TEXT());
     if (!state.byteInfo.empty())
         pge->DrawString(sw-260, y+6, fitTail(state.byteInfo, 32), COL_TEXT());
 }
@@ -114,7 +117,7 @@ void UIRenderer::drawCmdStatus(olc::PixelGameEngine* pge,
     pge->FillRect(0, y, sw, CMD_STATUS_H, COL_BG());
     pge->DrawLine(0, y, sw, y, COL_BORDER());
     std::string cmds =
-        "O = apri   S = salva   B = barre   Home = file intero";
+        "O apri   S salva   B barre   Home file intero";
     int cmdsX = sw - (int)(cmds.size()*8) - 6;
     // Lo stato a sinistra non deve finire sotto l'elenco comandi
     if (!state.cmdStatus.empty())

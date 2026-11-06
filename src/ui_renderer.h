@@ -7,6 +7,7 @@
 struct UIState {
     ViewMode    currentView;
     std::string cmdStatus;
+    std::string notice;       // messaggio nella riga del file
     std::string filepath;
     size_t      filesize    = 0;
     std::string byteInfo;

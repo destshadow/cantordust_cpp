@@ -18,6 +18,7 @@ bool Visualizer::OnUserCreate() {
 
 bool Visualizer::OnUserUpdate(float fElapsedTime) {
     applyResults();
+    applyPendingOption();
     bool busy = m_computing.load();
 
     // Nella finestra "Apri file" i tasti servono solo per scrivere
@@ -50,58 +51,11 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 
     if (!busy) {
         if (!typing) {
-            // --- Cambio bpp con [ ] (solo RawPixels) ---
-            if (!m_computing && m_mode == ViewMode::RAWPIXELS) {
-                bool changed = false;
-                if (GetKey(olc::Key::OEM_4).bPressed) {
-                    int m = ((int)m_bppMode - 1 + 5) % 5;
-                    m_bppMode = (BppMode)m;
-                    changed = true;
-                }
-                if (GetKey(olc::Key::OEM_6).bPressed) {
-                    int m = ((int)m_bppMode + 1) % 5;
-                    m_bppMode = (BppMode)m;
-                    changed = true;
-                }
-                if (changed) {
-                    syncRawSliders();      // l'offset dipende dai byte per pixel
-                    recomputeRawPixels();  // sulla finestra corrente
-                    m_suggestWidth = m_autocorr.bestWidth(
-                        RawPixels::bytesPerPixel(m_bppMode));
-                    m_status = std::string("BPP: ") +
-                               RawPixels::modeName(m_bppMode);
-                }
-            }
+            handleOptionKeys();
 
             // --- Larghezza / offset / autocorrelazione (solo RawPixels) ---
             if (!m_computing && m_mode == ViewMode::RAWPIXELS)
                 handleRawInput();
-
-            // --- C = ColorMode, V = CurveMode (solo MetricMap) ---
-            if (!m_computing && m_mode == ViewMode::METRICMAP) {
-                bool recompute = false;
-                if (GetKey(olc::Key::C).bPressed) {
-                    int cm = ((int)m_colorMode + 1) % 6;
-                    if (cm == (int)ColorMode::CLASSIFIER && !m_classifier.isReady()) {
-                        cm = 0;
-                        m_status = "Classifier non disponibile: aggiungi template in templates/";
-                    }
-                    m_colorMode = (ColorMode)cm;
-                    recompute = true;
-                    if (cm != 0 || m_classifier.isReady())
-                        m_status = std::string("Color: ") + MetricMap::colorModeName(m_colorMode);
-                }
-                if (GetKey(olc::Key::V).bPressed) {
-                    int cv = ((int)m_curveMode + 1) % 3;
-                    m_curveMode = (CurveMode)cv;
-                    recompute = true;
-                    m_status = std::string("Curva: ") +
-                               MetricMap::curveModeName(m_curveMode);
-                }
-                if (recompute) {
-                    recomputeWindow();
-                }
-            }
 
             // --- Frecce: disattivate, ora si naviga con le barre a sinistra.
             // Lasciate commentate nel caso servissero di nuovo (la prima
@@ -181,24 +135,11 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 
     if (busy) drawSpinner(fElapsedTime);
 
-    // Status bar info MetricMap
-    std::string statusStr = m_status;
-    if (m_mode == ViewMode::METRICMAP && !busy)
-        statusStr = "[C=Colore:" +
-                    std::string(MetricMap::colorModeName(m_colorMode)) +
-                    " V=Curva:" +
-                    std::string(MetricMap::curveModeName(m_curveMode)) +
-                    "]  " + m_status;
-    if (m_mode == ViewMode::RAWPIXELS && !busy)
-        statusStr = "[" + std::string(RawPixels::modeName(m_bppMode)) +
-                    " W=" + std::to_string(m_rawWidth) +
-                    " OFF=" + std::to_string(m_rawOffset) +
-                    " F=" + m_rawFilter.name() +
-                    "  [ ]=bpp  , .=W  Ctrl=OFF  A=auto]  " + m_status;
-
     UIState state;
     state.currentView    = m_mode;
-    state.cmdStatus      = busy ? "Calcolo in corso..." : statusStr;
+    // Dove ci sono le opzioni, i messaggi vanno nella riga del file
+    const std::string status = busy ? "Calcolo in corso..." : m_status;
+    (hasOptions() ? state.notice : state.cmdStatus) = status;
     state.filepath       = m_reader.getFilepath();
     state.filesize       = m_reader.getSize();
     state.byteInfo       = busy ? "" : getByteInfo(GetMouseX(), GetMouseY());
@@ -213,6 +154,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     state.cursorBlink    = m_input.getCursorBlink();
 
     m_ui.draw(this, state);
+    if (!typing) drawOptions(!busy);
     return true;
 }
 

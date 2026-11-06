@@ -44,6 +44,7 @@ SRC = src/main.cpp \
       src/autocorr.cpp \
       src/autocorr_period.cpp \
       src/visualizer_raw.cpp \
+      src/visualizer_options.cpp \
       src/visualizer_inspector.cpp \
       src/visualizer_inspector_file.cpp \
       src/visualizer_inspector_value.cpp \
