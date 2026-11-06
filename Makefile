@@ -29,13 +29,18 @@ SRC = src/main.cpp \
       src/ui_renderer.cpp \
       src/visualizer.cpp \
       src/visualizer_2d.cpp \
+      src/visualizer_canvas.cpp \
+      src/visualizer_status.cpp \
       src/visualizer_3d.cpp \
       src/visualizer_nav.cpp \
       src/binary_format.cpp \
+      src/binary_format_elf.cpp \
+      src/binary_format_pe.cpp \
       src/raw_pixels.cpp \
       src/wavelength_rgb.cpp \
       src/hilbert.cpp \
       src/metric_map.cpp \
+      src/metric_map_color.cpp \
       src/ngram_model.cpp \
       src/classifier_model.cpp \
       src/byte_cloud.cpp \
@@ -81,9 +86,10 @@ run: all
 	./$(OUT) $(FILE)
 
 TEST_OUT ?= build/core_tests
-TEST_SRC = tests/core_tests.cpp src/file_navigator.cpp src/ngram_model.cpp \
-           src/classifier_model.cpp src/binary_format.cpp src/binary_reader.cpp \
-           src/metric_map.cpp src/hilbert.cpp src/wavelength_rgb.cpp \
+TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
+           src/classifier_model.cpp src/binary_format.cpp src/binary_format_elf.cpp \
+           src/binary_format_pe.cpp src/binary_reader.cpp \
+           src/metric_map.cpp src/metric_map_color.cpp src/hilbert.cpp src/wavelength_rgb.cpp \
            src/autocorr.cpp src/autocorr_period.cpp src/raw_pixels.cpp src/occurrences.cpp \
            src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp
 

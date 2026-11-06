@@ -25,12 +25,11 @@ public:
 private:
     Action handleNormalKeys(olc::PixelGameEngine* pge);
     Action handleTextInput(olc::PixelGameEngine* pge);
-    char   keyToChar(olc::PixelGameEngine* pge, olc::Key key, bool shift);
+    char   keyToChar(olc::Key key, bool shift);
 
     bool        m_inputMode         = false;
     std::string m_inputBuffer;
     float       m_cursorBlink       = 0.0f;
     ViewMode    m_requestedView     = ViewMode::DIGRAPH;
     bool        m_lastClickWasTab   = false;
-    int         m_lastMouseX        = 0;
 };

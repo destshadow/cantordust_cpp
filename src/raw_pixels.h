@@ -41,7 +41,6 @@ public:
     const std::vector<uint8_t>& getRGB() const { return m_rgb; }
     std::vector<uint8_t> toRGB() const { return m_rgb; }
 
-    BppMode getMode()    const { return m_mode; }
     int     getWidth()   const { return m_width; }
     int     getHeight()  const { return m_height; }
     size_t  getRowStep() const { return m_rowStep; }

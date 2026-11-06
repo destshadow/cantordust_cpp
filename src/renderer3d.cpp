@@ -17,7 +17,7 @@ inline uint32_t sampleHash(uint32_t key) { return (key * 2654435761u) >> 16; }
 void Renderer3D::rasterize(const std::vector<Point3D>& points, uint32_t sample,
                            const std::vector<bool>* highlight, olc::Pixel tint) {
     float coord[256];
-    for (int i = 0; i < 256; i++) coord[i] = i / 127.5f - 1.0f;
+    for (int i = 0; i < 256; i++) coord[i] = Camera3D::coord(i);
 
     const Mat3 mat = m_cam.rotation();
     const Camera3D::Viewport view{0, 0, m_vp.w, m_vp.h};   // coordinate del fotogramma

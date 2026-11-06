@@ -39,6 +39,12 @@ public:
     bool OnUserUpdate(float fElapsedTime) override;
 
 private:
+    // I passi di un frame (visualizer.cpp)
+    void handleAction(Action action);
+    void handleCommandKeys();
+    void updateBars();
+    void drawFrame(float fElapsedTime, bool busy);
+    void drawChrome(float fElapsedTime, bool busy);      // visualizer_status.cpp
     void loadFile(const std::string& filepath);
     void updateCanvas();
     void recomputeWindow();

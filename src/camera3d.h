@@ -13,6 +13,10 @@ struct Camera3D {
     static constexpr float NEAR = 0.05f;   // piu' vicino di cosi' non si proietta
 
     struct Vec      { float x, y, z; };
+
+    // Un valore di byte come coordinata del cubo [-1, +1]
+    static float coord(int byte) { return byte / 127.5f - 1.0f; }
+
     struct Viewport { int x, y, w, h; };
 
     // Si guarda il cubo dall'alto, con l'angolo 00 00 00 in fondo e i tre assi

@@ -129,7 +129,7 @@ cantordust_cpp/
 ├── src/
 │   ├── main.cpp
 │   ├── binary_reader.{h,cpp}      # Lettura file binario
-│   ├── binary_format.{h,cpp}      # Parser ELF/PE
+│   ├── binary_format{,_elf,_pe}.cpp  # Parser ELF/PE
 │   ├── digraph.{h,cpp}            # Visualizzazione digraph
 │   ├── dotplot.{h,cpp}            # Dot plot
 │   ├── entropy.{h,cpp}            # Entropia di Shannon
@@ -146,7 +146,10 @@ cantordust_cpp/
 │   ├── ui_renderer.{h,cpp}        # Rendering UI
 │   ├── constants.h                # Layout e costanti
 │   ├── visualizer.{h,cpp}         # Orchestrazione principale
-│   ├── visualizer_2d.cpp          # Canvas 2D + zoom
+│   ├── visualizer_2d.cpp          # Area della vista, zoom, scorrimento
+│   ├── visualizer_canvas.cpp      # Vista nello sprite, salvataggio PNG
+│   ├── visualizer_status.cpp      # Spinner, tab, barre di stato
+│   ├── visualizer_options.cpp     # Riga di opzioni, viste 6 e 7
 │   ├── visualizer_3d.cpp          # Input 3D
 │   ├── visualizer_3d_draw.cpp     # Disegno e legenda 3D
 │   ├── visualizer_nav.cpp         # Navigazione + threading

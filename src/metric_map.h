@@ -43,8 +43,6 @@ public:
 
     const std::vector<uint8_t>& getRGB()  const { return m_rgb; }
     int                          getSize() const { return m_size; }
-    ColorMode  getColorMode()  const { return m_colorMode; }
-    CurveMode  getCurveMode()  const { return m_curveMode; }
 
     // Indice file per coordinate pixel; SIZE_MAX se il pixel non corrisponde
     // a nessun byte (file piu' piccolo della mappa)
@@ -68,6 +66,4 @@ private:
     std::vector<uint8_t> m_rgb;
     std::vector<size_t>  m_indexMap;
     int       m_size      = 256;
-    ColorMode m_colorMode = ColorMode::WAVELENGTH;
-    CurveMode m_curveMode = CurveMode::HILBERT;
 };

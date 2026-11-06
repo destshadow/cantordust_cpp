@@ -14,7 +14,7 @@ public:
     void jumpTo(float normalized);
 
     // Reset: torna a mostrare il file intero
-    void resetWindow(const std::vector<uint8_t>& bytes);
+    void resetWindow();
 
     size_t getStart()      const { return m_start; }
     size_t getEnd()        const { return m_end; }

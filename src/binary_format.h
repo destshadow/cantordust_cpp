@@ -32,6 +32,7 @@ public:
 private:
     void parseELF(const std::vector<uint8_t>& bytes);
     void parsePE (const std::vector<uint8_t>& bytes);
+    void addSection(const std::string& name, size_t offset, size_t size);
 
     // Helper per leggere valori little-endian dal buffer
     uint16_t read16(const std::vector<uint8_t>& b, size_t off) const;

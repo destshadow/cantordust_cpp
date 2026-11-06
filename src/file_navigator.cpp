@@ -16,7 +16,7 @@ void FileNavigator::setData(const std::vector<uint8_t>& bytes,
 }
 
 // Reset: torna a mostrare il file intero
-void FileNavigator::resetWindow(const std::vector<uint8_t>& bytes) {
+void FileNavigator::resetWindow() {
     m_windowSize = m_totalSize;
     m_step       = std::max((size_t)4096, m_windowSize / 16);
     m_start      = 0;

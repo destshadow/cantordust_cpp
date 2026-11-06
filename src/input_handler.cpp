@@ -1,18 +1,6 @@
 #include "input_handler.h"
+#include "view_tabs.h"
 #include <algorithm>
-
-static const ViewMode TAB_MODES[] = {
-    ViewMode::DIGRAPH,
-    ViewMode::DOTPLOT,
-    ViewMode::ENTROPY,
-    ViewMode::HISTOGRAM,
-    ViewMode::TRIGRAPH3D,
-    ViewMode::RAWPIXELS,
-    ViewMode::METRICMAP,
-    ViewMode::BYTECLOUD,
-    ViewMode::ONETUPLE,
-};
-static constexpr int N_TABS  = 9;
 
 Action InputHandler::update(olc::PixelGameEngine* pge,
                              float fElapsedTime) {
@@ -27,8 +15,8 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     // --- Click sulle tab ---
     if (pge->GetMouse(0).bPressed && pge->GetMouseY() < TOPBAR_H) {
         int tabIdx = pge->GetMouseX() / TAB_W;
-        if (tabIdx >= 0 && tabIdx < N_TABS) {
-            m_requestedView   = TAB_MODES[tabIdx];
+        if (tabIdx >= 0 && tabIdx < VIEW_TAB_COUNT) {
+            m_requestedView   = VIEW_TABS[tabIdx].mode;
             m_lastClickWasTab = true;
             return Action::SWITCH_VIEW;
         }
@@ -39,24 +27,11 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
         m_lastClickWasTab = false;
 
     // --- Tasti 1-9 ---
-    if (pge->GetKey(olc::Key::K1).bPressed) {
-        m_requestedView = ViewMode::DIGRAPH;    return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K2).bPressed) {
-        m_requestedView = ViewMode::DOTPLOT;    return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K3).bPressed) {
-        m_requestedView = ViewMode::ENTROPY;    return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K4).bPressed) {
-        m_requestedView = ViewMode::HISTOGRAM;  return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K5).bPressed) {
-        m_requestedView = ViewMode::TRIGRAPH3D; return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K6).bPressed) {
-        m_requestedView = ViewMode::RAWPIXELS;  return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K7).bPressed) {
-        m_requestedView = ViewMode::METRICMAP;  return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K8).bPressed) {
-        m_requestedView = ViewMode::BYTECLOUD;  return Action::SWITCH_VIEW; }
-    if (pge->GetKey(olc::Key::K9).bPressed) {
-        m_requestedView = ViewMode::ONETUPLE;   return Action::SWITCH_VIEW; }
+    for (int i = 0; i < VIEW_TAB_COUNT; i++)
+        if (pge->GetKey((olc::Key)((int)olc::Key::K1 + i)).bPressed) {
+            m_requestedView = VIEW_TABS[i].mode;
+            return Action::SWITCH_VIEW;
+        }
 
     if (pge->GetKey(olc::Key::O).bPressed) {
         m_inputMode   = true;
@@ -79,14 +54,13 @@ Action InputHandler::handleTextInput(olc::PixelGameEngine* pge) {
         if (key == olc::Key::ESCAPE) { m_inputMode = false; m_inputBuffer = ""; return Action::CANCEL; }
         if (key == olc::Key::BACK)   { if (!m_inputBuffer.empty()) m_inputBuffer.pop_back(); continue; }
         if (key == olc::Key::NP_DIV) { m_inputBuffer += '/'; continue; }
-        char c = keyToChar(pge, key, shift);
+        char c = keyToChar(key, shift);
         if (c != 0) m_inputBuffer += c;
     }
     return Action::NONE;
 }
 
-char InputHandler::keyToChar(olc::PixelGameEngine* pge,
-                              olc::Key key, bool shift) {
+char InputHandler::keyToChar(olc::Key key, bool shift) {
     int k  = static_cast<int>(key);
     int kA = static_cast<int>(olc::Key::A);
     int kZ = static_cast<int>(olc::Key::Z);

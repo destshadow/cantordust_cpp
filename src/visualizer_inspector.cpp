@@ -37,8 +37,7 @@ void Visualizer::drawInspector() {
         inspectRange(pw, cx, cy);
         return;
     }
-    if (over && (m_mode == ViewMode::DIGRAPH || m_mode == ViewMode::HISTOGRAM ||
-                 m_mode == ViewMode::BYTECLOUD || m_mode == ViewMode::ONETUPLE)) {
+    if (over && isValueView()) {
         inspectValue(pw, cx, cy);
         return;
     }

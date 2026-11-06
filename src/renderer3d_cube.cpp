@@ -79,9 +79,9 @@ void Renderer3D::drawCube(olc::PixelGameEngine* pge) const {
 
 void Renderer3D::drawMarker(olc::PixelGameEngine* pge, uint32_t key,
                             int radius, olc::Pixel col) const {
-    const float x = ((key >> 16) & 0xFF) / 127.5f - 1.0f;
-    const float y = ((key >>  8) & 0xFF) / 127.5f - 1.0f;
-    const float z = ( key        & 0xFF) / 127.5f - 1.0f;
+    const float x = Camera3D::coord((key >> 16) & 0xFF);
+    const float y = Camera3D::coord((key >>  8) & 0xFF);
+    const float z = Camera3D::coord( key        & 0xFF);
     float sx, sy;
     if (!m_cam.toScreen(m_cam.toCamera(m_cam.rotation(), x, y, z), m_vp, sx, sy)) return;
     if (sx < m_vp.x || sy < m_vp.y || sx >= m_vp.x + m_vp.w || sy >= m_vp.y + m_vp.h) return;

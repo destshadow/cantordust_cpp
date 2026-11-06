@@ -1,17 +1,8 @@
 #include "ui_renderer.h"
+#include "view_tabs.h"
+#include "inspector_format.h"
 #include <cmath>
 #include <string>
-
-static const char* const TAB_LABEL[] = {
-    "1 Digraph", "2 Dot Plot", "3 Entropia", "4 Istogramma", "5 3D",
-    "6 Raw", "7 Metric Map", "8 Byte Cloud", "9 One Tuple",
-};
-static const ViewMode TAB_VIEW[] = {
-    ViewMode::DIGRAPH, ViewMode::DOTPLOT, ViewMode::ENTROPY, ViewMode::HISTOGRAM,
-    ViewMode::TRIGRAPH3D, ViewMode::RAWPIXELS, ViewMode::METRICMAP,
-    ViewMode::BYTECLOUD, ViewMode::ONETUPLE,
-};
-static constexpr int TOTAL_TABS = 9;
 
 // Accorcia un testo a maxChars tenendo la parte finale ("...fine"):
 // per i percorsi la parte utile e' il nome del file.
@@ -31,7 +22,7 @@ void UIRenderer::draw(olc::PixelGameEngine* pge,
     drawFileStatus(pge, state);
     drawCmdStatus(pge, state);
     if (state.currentView == ViewMode::TRIGRAPH3D)
-        draw3DOverlay(pge, state);
+        draw3DOverlay(pge);
     if (state.inputMode)
         drawInputOverlay(pge, state);
 }
@@ -43,16 +34,16 @@ void UIRenderer::drawTopBar(olc::PixelGameEngine* pge,
     pge->DrawLine(0, TOPBAR_H - 1, sw, TOPBAR_H - 1, COL_BORDER());
 
     const int textY = (TOPBAR_H - 8) / 2;
-    for (int i = 0; i < TOTAL_TABS; i++) {
+    for (int i = 0; i < VIEW_TAB_COUNT; i++) {
         const int  tx     = i * TAB_W;
-        const bool active = state.currentView == TAB_VIEW[i];
+        const bool active = state.currentView == VIEW_TABS[i].mode;
         const bool hover  = state.mouseY < TOPBAR_H &&
                             state.mouseX >= tx && state.mouseX < tx + TAB_W;
         if (active) {
             pge->FillRect(tx, 0, TAB_W, TOPBAR_H - 1, COL_BG_LIGHT());
             pge->FillRect(tx, TOPBAR_H - 2, TAB_W, 2, COL_ACCENT());
         }
-        pge->DrawString(tx + 10, textY, TAB_LABEL[i],
+        pge->DrawString(tx + 10, textY, VIEW_TABS[i].label,
                         active ? COL_ACCENT() : hover ? COL_TEXT() : COL_DIM());
     }
 
@@ -89,15 +80,8 @@ void UIRenderer::drawFileStatus(olc::PixelGameEngine* pge,
     pge->FillRect(0, y, sw, FILE_STATUS_H, COL_BG());
     pge->DrawLine(0, y, sw, y, COL_BORDER());
     if (!state.filepath.empty()) {
-        std::string sizeStr;
-        if      (state.filesize >= 1024*1024)
-            sizeStr = std::to_string(state.filesize/(1024*1024)) + "MB";
-        else if (state.filesize >= 1024)
-            sizeStr = std::to_string(state.filesize/1024) + "KB";
-        else
-            sizeStr = std::to_string(state.filesize) + "B";
         // Spazio fino all'info byte (a destra, larga 260 px)
-        std::string tail = "  [" + sizeStr + "]";
+        std::string tail = "  [" + Inspect::sizeStr(state.filesize) + "]";
         int fileEnd  = state.notice.empty() ? sw - 260 : sw / 2;
         int maxChars = (fileEnd - 12) / 8 - 6 - (int)tail.size();
         pge->DrawString(6, y+6,
@@ -126,9 +110,7 @@ void UIRenderer::drawCmdStatus(olc::PixelGameEngine* pge,
     pge->DrawString(cmdsX, y+5, cmds, COL_DIM());
 }
 
-void UIRenderer::draw3DOverlay(olc::PixelGameEngine* pge,
-                                 const UIState& state) {
-    (void)state;
+void UIRenderer::draw3DOverlay(olc::PixelGameEngine* pge) {
     const int boxW = 24 * 8 + 16;      // la riga piu' lunga + i margini
     int bx = CANVAS_X + CANVAS_W - boxW - 8, by = CANVAS_Y + 8;
     pge->FillRect(bx, by, boxW, 80, COL_BG());

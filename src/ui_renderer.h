@@ -34,6 +34,6 @@ private:
     void drawScrollbarV(olc::PixelGameEngine* pge, const UIState& state);
     void drawFileStatus(olc::PixelGameEngine* pge, const UIState& state);
     void drawCmdStatus(olc::PixelGameEngine* pge,  const UIState& state);
-    void draw3DOverlay(olc::PixelGameEngine* pge,  const UIState& state);
+    void draw3DOverlay(olc::PixelGameEngine* pge);
     void drawInputOverlay(olc::PixelGameEngine* pge, const UIState& state);
 };

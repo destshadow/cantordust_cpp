@@ -1,63 +1,7 @@
 #include "visualizer.h"
 #include <algorithm>
-#include <sstream>
-#include <iomanip>
 
-// Copia l'RGB della vista corrente nello sprite giusto.
-// Le viste classiche usano il canvas 256x256; i raw pixel hanno uno
-// sprite proprio, ricreato quando cambia la dimensione.
-void Visualizer::updateCanvas() {
-    if (m_mode == ViewMode::TRIGRAPH3D) return;
-
-    if (m_mode == ViewMode::RAWPIXELS) {
-        int w = m_rawpixels.getWidth(), h = m_rawpixels.getHeight();
-        if (w <= 0 || h <= 0) return;
-        if (!m_rawSprite || m_rawSprite->width != w || m_rawSprite->height != h) {
-            delete m_rawDecal;  m_rawDecal  = nullptr;
-            delete m_rawSprite;
-            m_rawSprite = new olc::Sprite(w, h);
-            m_rawDecal  = new olc::Decal(m_rawSprite);
-        }
-        const auto& rgb = m_rawpixels.getRGB();
-        olc::Pixel* dst = m_rawSprite->GetData();
-        for (size_t i = 0, n = (size_t)w * h; i < n; i++)
-            dst[i] = olc::Pixel(rgb[i*3], rgb[i*3 + 1], rgb[i*3 + 2]);
-        applyHighlight(m_rawSprite);
-        m_rawDecal->Update();
-        return;
-    }
-
-    auto rgb = getCurrentRGB();
-    if (rgb.size() < 256 * 256 * 3) {     // vista vuota (es. file vuoto)
-        std::fill_n(m_canvas->GetData(), 256 * 256, olc::BLACK);
-        m_decal->Update();
-        return;
-    }
-    for (int y = 0; y < 256; y++)
-        for (int x = 0; x < 256; x++) {
-            int idx = (y * 256 + x) * 3;
-            m_canvas->SetPixel(x, y, olc::Pixel(
-                rgb[idx], rgb[idx+1], rgb[idx+2]
-            ));
-        }
-    applyHighlight(m_canvas);
-    m_decal->Update();
-}
-
-std::vector<uint8_t> Visualizer::getCurrentRGB() const {
-    switch (m_mode) {
-        case ViewMode::DIGRAPH:    return m_digraph.toRGB();
-        case ViewMode::DOTPLOT:    return m_dotplot.toRGB();
-        case ViewMode::ENTROPY:    return m_entropy.toRGB();
-        case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
-        case ViewMode::TRIGRAPH3D: return {};
-        case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
-        case ViewMode::METRICMAP:  return m_metricmap.getRGB();
-        case ViewMode::BYTECLOUD:  return m_bytecloud.toRGB();
-        case ViewMode::ONETUPLE:   return m_onetuple.toRGB();
-    }
-    return {};
-}
+// Viste 2D: dove sta il contenuto sullo schermo, zoom e scorrimento.
 
 void Visualizer::viewArea(int& x, int& y, int& w, int& h) const {
     x = CANVAS_X;  y = CANVAS_Y;  w = CANVAS_W;  h = CANVAS_H;
@@ -92,37 +36,6 @@ void Visualizer::canvasTransform(float& drawX, float& drawY,
                               : (float)ax - m_scrollH * maxOffX;
     drawY = (sh <= (float)ah) ? ay + ((float)ah - sh) * 0.5f
                               : (float)ay - m_scrollV * maxOffY;
-}
-
-void Visualizer::draw2DCanvas() {
-    if (m_mode == ViewMode::TRIGRAPH3D) return;
-
-    olc::Decal* decal = m_decal;
-    if (m_mode == ViewMode::RAWPIXELS) {
-        if (!m_rawDecal || m_rawpixels.getWidth() <= 0) return;
-        decal = m_rawDecal;
-    }
-
-    int ax, ay, aw, ah, cw, ch;
-    viewArea(ax, ay, aw, ah);
-    contentSize(cw, ch);
-    float drawX, drawY, scale;
-    canvasTransform(drawX, drawY, scale);
-
-    float clipLeft   = std::max(drawX,              (float)ax);
-    float clipTop    = std::max(drawY,              (float)ay);
-    float clipRight  = std::min(drawX + cw * scale, (float)(ax + aw));
-    float clipBottom = std::min(drawY + ch * scale, (float)(ay + ah));
-
-    if (clipRight <= clipLeft || clipBottom <= clipTop) return;
-
-    DrawPartialDecal(
-        {clipLeft, clipTop},
-        {clipRight - clipLeft, clipBottom - clipTop},
-        decal,
-        {(clipLeft - drawX) / scale, (clipTop - drawY) / scale},
-        {(clipRight - clipLeft) / scale, (clipBottom - clipTop) / scale}
-    );
 }
 
 void Visualizer::handle2DInput() {
@@ -186,48 +99,4 @@ void Visualizer::handle2DInput() {
         mx >= SCROLLBAR_V_X && mx < SCROLLBAR_V_X + SCROLLBAR_V_W &&
         my >= ay && my < ay + ah)
         m_scrollV = std::clamp((float)(my-ay)/(float)ah, 0.0f, 1.0f);
-}
-
-std::string Visualizer::getByteInfo(int mouseX, int mouseY) const {
-    if (!m_reader.isLoaded()) return "";
-    if (m_mode == ViewMode::TRIGRAPH3D) return "";
-
-    int ax, ay, aw, ah, cw, ch;
-    viewArea(ax, ay, aw, ah);
-    contentSize(cw, ch);
-    if (mouseX < ax || mouseX >= ax + aw) return "";
-    if (mouseY < ay || mouseY >= ay + ah) return "";
-
-    float drawX, drawY, scale;
-    canvasTransform(drawX, drawY, scale);
-
-    float fx = ((float)mouseX - drawX) / scale;
-    float fy = ((float)mouseY - drawY) / scale;
-    if (fx < 0 || fy < 0) return "";
-    int cx = (int)fx, cy = (int)fy;
-    if (cx >= cw || cy >= ch) return "";
-
-    std::ostringstream oss;
-    if (m_mode == ViewMode::DIGRAPH) {
-        oss << "COPPIA: 0x" << std::uppercase << std::hex
-            << std::setw(2) << std::setfill('0') << cx
-            << " -> 0x" << std::setw(2) << std::setfill('0') << cy;
-    } else if (m_mode == ViewMode::METRICMAP) {
-        // fileIndexAt e' relativo alla finestra: aggiungiamo l'inizio
-        size_t rel = m_metricmap.fileIndexAt(cx, cy);
-        if (rel == SIZE_MAX) return "";
-        size_t fidx = m_navigator.getStart() + rel;
-        oss << "OFFSET: 0x" << std::uppercase << std::hex
-            << std::setw(8) << std::setfill('0') << fidx;
-    } else if (m_mode == ViewMode::RAWPIXELS) {
-        size_t rel = m_rawpixels.byteOffsetAt(cx, cy);
-        if (rel == SIZE_MAX) return "";
-        oss << "OFFSET: 0x" << std::uppercase << std::hex
-            << std::setw(8) << std::setfill('0')
-            << (m_navigator.getStart() + rel)
-            << std::dec << "  (" << cx << "," << cy << ")";
-    } else {
-        oss << "POS: (" << std::dec << cx << "," << cy << ")";
-    }
-    return oss.str();
 }
