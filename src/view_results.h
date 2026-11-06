@@ -24,6 +24,7 @@ struct ComputeParams {
     CurveMode curveMode = CurveMode::HILBERT;
     int       rawWidth  = 256;
     size_t    rawOffset = 0;
+    RawFilter rawFilter;
     std::vector<TriGraph::Range> sections;   // 3D: relative alla finestra
 };
 

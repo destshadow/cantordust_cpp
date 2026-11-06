@@ -140,6 +140,16 @@ VISTA 6 — RAW PIXELS
   Shift + , .     larghezza -10 / +10
   Ctrl + , .      offset -1 / +1     (Ctrl+Shift = -10 / +10)
   A               usa la larghezza suggerita dall'autocorrelazione
+  F               filtro (Shift+F = indietro); cambia solo l'immagine,
+                  l'Inspector mostra sempre i byte veri:
+                    normale
+                    delta       differenza dal pixel prima: audio e immagini
+                                non compressi diventano quasi piatti
+                    delta riga  differenza dalla riga sopra: con la larghezza
+                                giusta una tabella di record diventa piatta
+                                e restano i campi che cambiano
+                    bit 7..0    un solo bit di ogni byte: dati nascosti nei
+                                bit bassi, flag
 
   Pannello in fondo:
   AUTOCORR        grafico: picchi = larghezze probabili di un'immagine
@@ -157,13 +167,20 @@ VISTA 6 — RAW PIXELS
     3. se l'immagine e' "spezzata" in orizzontale, sistema OFFSET
     4. ritocca la larghezza con , . se e' leggermente inclinata
 
+  Come riconoscere una tabella di record:
+    1. premi A per la larghezza, che e' la dimensione del record
+    2. F fino a "delta riga": cio' che resta acceso sono i campi che cambiano
+
 
 VISTA 7 — METRIC MAP
 --------------------
 
   C               cambia colore (si parte da Entropy):
                   Wavelength / Entropy / Gradient /
-                  Spectrum / Classifier (serve la cartella templates/)
+                  Spectrum / Tipo di byte / Classifier (serve la
+                  cartella templates/)
+                  Tipo di byte: grigio = zero, verde = controllo,
+                  blu = testo, rosso = alti, bianco = 0xFF
   V               cambia curva: Hilbert / Z-Order / Linear
 
 

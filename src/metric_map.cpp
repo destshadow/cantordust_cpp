@@ -1,5 +1,6 @@
 #include "metric_map.h"
 #include "classifier_model.h"
+#include "byte_info.h"
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -54,6 +55,12 @@ WavelengthRGB::RGB MetricMap::colorForByte(
         case ColorMode::SPECTRUM: {
             double wave = 380.0 + (byte_val/255.0) * 400.0;
             return WavelengthRGB::wavelengthToRGB(wave);
+        }
+
+        case ColorMode::BYTE_CLASS: {
+            WavelengthRGB::RGB c{};
+            ByteInfo::classColor(ByteInfo::classOf(byte_val), c.r, c.g, c.b);
+            return c;
         }
 
         case ColorMode::CLASSIFIER: {
@@ -168,6 +175,7 @@ const char* MetricMap::colorModeName(ColorMode m) {
         case ColorMode::ENTROPY:     return "Entropy";
         case ColorMode::GRADIENT:    return "Gradient";
         case ColorMode::SPECTRUM:    return "Spectrum";
+        case ColorMode::BYTE_CLASS:  return "Tipo di byte";
         case ColorMode::CLASSIFIER:  return "Classifier";
     }
     return "???";

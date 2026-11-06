@@ -44,6 +44,11 @@ void Autocorr::compute(const std::vector<uint8_t>& bytes,
 
 int Autocorr::bestWidth(size_t bpp, int minWidth) const {
     if (bpp == 0 || m_mad.empty()) return 0;
+    int w = imageWidth(bpp, minWidth);
+    return w > 0 ? w : bestPeriod(bpp);
+}
+
+int Autocorr::imageWidth(size_t bpp, int minWidth) const {
     const int n = (int)(maxLag() / bpp);   // larghezza massima misurabile
     const int NEAR = 8, FAR = 16;           // anello per la linea di base
     minWidth = std::max(minWidth, FAR + 3);

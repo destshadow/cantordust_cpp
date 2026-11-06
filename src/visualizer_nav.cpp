@@ -15,6 +15,7 @@ void Visualizer::recomputeWindow() {
         params.curveMode = m_curveMode;
         params.rawWidth  = m_rawWidth;
         params.rawOffset = (size_t)m_rawOffset;
+        params.rawFilter = m_rawFilter;
         if (m_mode == ViewMode::TRIGRAPH3D) params.sections = sectionRanges();
 
         m_computing = true;
@@ -94,6 +95,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_curveMode = CurveMode::HILBERT;
     m_rawWidth  = 256;
     m_rawOffset = 0;
+    m_rawFilter = RawFilter{};
     m_suggestWidth = 0;
     m_occKey.clear();     // la cache vale per il file precedente
     m_hlStart = m_hlEnd = 0;

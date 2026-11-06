@@ -185,6 +185,42 @@ int main() {
         assert(ac.bestWidth(3) == 0 && ac.bestWidth(1) == 0);  // niente falsi positivi
     }
 
+    // --- Autocorr: dimensione dei record di una tabella ---
+    {
+        std::mt19937 noise(11);
+        auto table = [&](int size, int rows) {
+            std::vector<uint8_t> b;
+            for (int r = 0; r < rows; r++)
+                for (int i = 0; i < size; i++) {
+                    uint8_t v = uint8_t(i * 37);                 // campi fissi
+                    if (i == 3)        v = uint8_t(r);           // contatore
+                    if (i == size / 2) v = uint8_t(noise());     // campo casuale
+                    b.push_back(v);
+                }
+            return b;
+        };
+        for (int size : {16, 24, 64, 100, 256}) {
+            Autocorr ac;
+            ac.compute(table(size, 40000 / size + 200));
+            int found = ac.bestWidth(1);
+            if (found != size)
+                std::cerr << "Autocorr: record " << size << " -> " << found << "\n";
+            assert(found == size);
+        }
+        // Una tabella in mezzo a dati casuali
+        std::vector<uint8_t> mixed(50000);
+        for (auto& x : mixed) x = uint8_t(noise());
+        auto t = table(64, 2000);
+        mixed.insert(mixed.end(), t.begin(), t.end());
+        Autocorr ac;
+        ac.compute(mixed);
+        assert(ac.bestWidth(1) == 64);
+        // Un file tutto uguale non ha nessun periodo
+        Autocorr flat;
+        flat.compute(std::vector<uint8_t>(100000, 7));
+        assert(flat.bestWidth(1) == 0);
+    }
+
     // --- ByteInfo: classi di byte e ipotesi sul contenuto ---
     {
         using ByteInfo::Class;
@@ -491,6 +527,63 @@ int main() {
                 screen(down, x1, y1);
                 assert(y1 > y0);
             }
+    }
+
+    {   // RAW: filtri. Il byte d'immagine a 8 bpp e' il canale verde.
+        std::vector<uint8_t> b = {10, 13, 13, 200, 0x81};
+        RawPixels rp;
+        auto green = [&](int x) { return rp.getRGB()[(size_t)x * 3 + 1]; };
+
+        rp.compute(b, BppMode::BPP_8, 5, 0, RawFilter{1});   // delta
+        assert(green(0) == 128);                  // nessun byte prima
+        assert(green(1) == 131);                  // +3
+        assert(green(2) == 128);                  // uguale al precedente
+        assert(green(3) == (uint8_t)(187 + 128)); // differenza che va a capo
+
+        RawFilter bit0{10}, bit7{3};
+        assert(bit0.bit() == 0 && bit7.bit() == 7);
+        rp.compute(b, BppMode::BPP_8, 5, 0, bit7);
+        assert(green(3) == 255 && green(0) == 0 && green(4) == 255);
+        rp.compute(b, BppMode::BPP_8, 5, 0, bit0);
+        assert(green(0) == 0 && green(1) == 255 && green(4) == 255);
+
+        // Delta riga: record identici diventano piatti, un campo diverso resta
+        std::vector<uint8_t> rec = {1, 2, 3, 4,  1, 2, 3, 4,  1, 9, 3, 4};
+        rp.compute(rec, BppMode::BPP_8, 4, 0, RawFilter{2});
+        for (int x = 0; x < 4; x++) assert(rp.getRGB()[(4 + x) * 3 + 1] == 128);
+        assert(rp.getRGB()[(8 + 1) * 3 + 1] == 128 + 7);
+
+        // 24 bpp: il delta confronta lo stesso canale del pixel prima
+        std::vector<uint8_t> rgb = {10, 20, 30,  11, 22, 33};
+        rp.compute(rgb, BppMode::BPP_24, 2, 0, RawFilter{1});
+        assert(rp.getRGB()[3] == 129 && rp.getRGB()[4] == 130 && rp.getRGB()[5] == 131);
+
+        // Stessa finestra = stessa immagine, che i byte stiano in un buffer
+        // piu' grande o siano una copia della finestra (thread di calcolo)
+        std::vector<uint8_t> file = {99, 98, 97, 10, 13, 13, 200};
+        std::vector<uint8_t> win(file.begin() + 3, file.end());
+        RawPixels a, c;
+        a.compute(file, 3, file.size(), BppMode::BPP_8, 4, 0, RawFilter{1});
+        c.compute(win, BppMode::BPP_8, 4, 0, RawFilter{1});
+        assert(a.getRGB() == c.getRGB());
+        // L'offset del pixel non cambia con il filtro
+        assert(a.byteOffsetAt(2, 0) == 2);
+
+        RawFilter ring;
+        for (int i = 0; i < RawFilter::COUNT; i++) ring = ring.next();
+        assert(ring.none());
+        assert(RawFilter{}.prev().id == 10 && RawFilter{10}.next().none());
+    }
+
+    {   // Metric Map: colore per tipo di byte
+        std::vector<uint8_t> b = {'A', 0x00, 0xFF, 0x80, 0x01};
+        MetricMap m;
+        m.compute(b, ColorMode::BYTE_CLASS, CurveMode::LINEAR);
+        uint8_t r, g, bl;
+        ByteInfo::classColor(ByteInfo::Class::TEXT, r, g, bl);
+        assert(m.getRGB()[0] == r && m.getRGB()[1] == g && m.getRGB()[2] == bl);
+        ByteInfo::classColor(ByteInfo::Class::FF, r, g, bl);
+        assert(m.getRGB()[6] == r);
     }
 
     {   // Ritaglio delle linee

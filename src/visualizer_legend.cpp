@@ -15,7 +15,7 @@ static const char* legendFor(ViewMode m) {
         case ViewMode::TRIGRAPH3D:
             return "3D  punto = 3 byte consecutivi   luce = densita'   C = colore   click = dove compare";
         case ViewMode::RAWPIXELS:
-            return "RAW  i byte come pixel, in ordine, riga per riga   (bpp: [ ]  larghezza: , .)";
+            return "RAW  i byte come pixel, riga per riga   bpp: [ ]   larghezza: , .   filtro: F";
         case ViewMode::METRICMAP:
             return "METRIC MAP  curva: byte vicini nel file = pixel vicini   colore: C   curva: V";
         case ViewMode::BYTECLOUD:
@@ -31,6 +31,8 @@ void Visualizer::drawLegend() {
     DrawLine(CANVAS_X, LEGEND_Y + LEGEND_H - 1,
              CANVAS_X + CANVAS_W + SCROLLBAR_V_W, LEGEND_Y + LEGEND_H - 1, COL_BORDER());
     std::string s = legendFor(m_mode);
+    if (m_mode == ViewMode::METRICMAP && m_colorMode == ColorMode::BYTE_CLASS)
+        s = "METRIC MAP  grigio=zero  verde=controllo  blu=testo  rosso=alti  bianco=0xFF";
     int room = (CANVAS_W + SCROLLBAR_V_W - 12) / 8;
     DrawString(CANVAS_X + 6, LEGEND_Y + 4, s.substr(0, room), olc::Pixel(200, 200, 140));
 }

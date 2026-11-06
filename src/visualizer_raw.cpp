@@ -62,7 +62,7 @@ void Visualizer::syncRawSliders() {
 void Visualizer::recomputeRawPixels() {
     m_rawpixels.compute(m_reader.getBytes(),
                         m_navigator.getStart(), m_navigator.getEnd(),
-                        m_bppMode, m_rawWidth, (size_t)m_rawOffset);
+                        m_bppMode, m_rawWidth, (size_t)m_rawOffset, m_rawFilter);
     updateCanvas();
 }
 
@@ -99,6 +99,12 @@ void Visualizer::handleRawInput() {
         changed = true;
     }
 
+    // F = filtro successivo, Shift+F = precedente
+    if (GetKey(olc::Key::F).bPressed) {
+        m_rawFilter = GetKey(olc::Key::SHIFT).bHeld ? m_rawFilter.prev() : m_rawFilter.next();
+        changed = true;
+    }
+
     // Click sul grafico = usa quella larghezza
     PanelLayout L = panelLayout();
     int mx = GetMouseX(), my = GetMouseY();
@@ -114,8 +120,7 @@ void Visualizer::handleRawInput() {
     if (changed) {
         syncRawSliders();   // riallinea l'offset alla nuova larghezza
         recomputeRawPixels();
-        m_status = "W=" + std::to_string(m_rawWidth) +
-                   "  OFF=" + std::to_string(m_rawOffset);
+        m_status = "Filtro: " + m_rawFilter.name();
     }
 }
 

@@ -137,6 +137,7 @@ private:
     // Raw pixel: larghezza/offset, autocorrelazione, slider
     int           m_rawWidth     = 256;
     int           m_rawOffset    = 0;
+    RawFilter     m_rawFilter;
     Autocorr      m_autocorr;
     int           m_suggestWidth = 0;   // 0 = nessuna larghezza trovata
     Slider        m_widthSlider;

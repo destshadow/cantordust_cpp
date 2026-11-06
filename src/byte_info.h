@@ -9,7 +9,7 @@
 
 // Classificazione dei singoli byte e statistiche su una zona.
 // Generica: vale per qualunque file, formato noto o no.
-// Usata dall'Inspector (e in futuro dalla ColorMode "classe di byte").
+// Usata dall'Inspector, dalla Metric Map e dalla nuvola 3D.
 namespace ByteInfo {
 
 enum class Class { ZERO, CONTROL, TEXT, HIGH, FF };

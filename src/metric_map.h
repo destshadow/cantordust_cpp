@@ -11,6 +11,7 @@ enum class ColorMode {
     ENTROPY,      // entropia locale → rosso/blu
     GRADIENT,     // posizione nel file → gradiente blu→rosso
     SPECTRUM,     // variante dello spettro
+    BYTE_CLASS,   // tipo di byte: zero, controllo, testo, alti, 0xFF
     CLASSIFIER,   // classificazione NGram → colore per classe
 };
 

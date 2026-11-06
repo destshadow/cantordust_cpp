@@ -23,12 +23,15 @@ public:
     const std::vector<float>& similarity() const { return m_sim; }
     int maxLag() const { return (int)m_sim.size() - 1; }
 
-    // Larghezza (in pixel da `bpp` byte) piu' promettente come riga di
-    // un'immagine, preferendo la fondamentale ai suoi multipli.
-    // 0 se non trovata.
+    // Larghezza (in pixel da `bpp` byte) piu' promettente: la riga di
+    // un'immagine, preferendo la fondamentale ai suoi multipli, oppure la
+    // dimensione di un record. 0 se non trovata.
     int bestWidth(size_t bpp, int minWidth = 16) const;
 
 private:
+    int imageWidth(size_t bpp, int minWidth) const;
+    int bestPeriod(size_t bpp) const;          // autocorr_period.cpp
+
     std::vector<float> m_mad;   // differenza media assoluta per distanza
     std::vector<float> m_sim;   // 1 = piu' simile, 0 = meno simile
 };

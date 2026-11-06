@@ -62,7 +62,8 @@ void RawPixels::decodePixel(BppMode mode, const uint8_t* p,
 // l'intera finestra resta visibile (a risoluzione ridotta in verticale).
 void RawPixels::compute(const std::vector<uint8_t>& bytes,
                         size_t start, size_t end,
-                        BppMode mode, int width, size_t offset) {
+                        BppMode mode, int width, size_t offset,
+                        RawFilter filter) {
     clear();
     m_mode  = mode;
     m_width = std::clamp(width, MIN_WIDTH, MAX_WIDTH);
@@ -72,7 +73,10 @@ void RawPixels::compute(const std::vector<uint8_t>& bytes,
 
     m_offset = offset;
     const size_t   bpp       = bytesPerPixel(mode);
-    const uint8_t* data      = bytes.data() + start + offset;
+    // Il confronto dei filtri puo' guardare fino all'inizio della finestra,
+    // ma mai prima: il risultato non dipende da cosa c'e' fuori
+    const uint8_t* window    = bytes.data() + start;
+    const uint8_t* data      = window + offset;
     const size_t   len       = end - start - offset;
     const size_t   rowBytes  = (size_t)m_width * bpp;
     const size_t   totalRows = (len + rowBytes - 1) / rowBytes;
@@ -80,6 +84,7 @@ void RawPixels::compute(const std::vector<uint8_t>& bytes,
     m_rowStep = (totalRows + MAX_ROWS - 1) / MAX_ROWS;  // >= 1
     m_height  = (int)((totalRows + m_rowStep - 1) / m_rowStep);
     m_rgb.assign((size_t)m_width * m_height * 3, 0);
+    const size_t dist = filter.deltaRow() ? rowBytes : bpp;
 
     for (int y = 0; y < m_height; y++) {
         size_t rowStart = (size_t)y * m_rowStep * rowBytes;
@@ -87,7 +92,14 @@ void RawPixels::compute(const std::vector<uint8_t>& bytes,
             size_t i = rowStart + (size_t)x * bpp;
             if (i + bpp > len) break;  // ultimo pixel incompleto: resta nero
             uint8_t r, g, b;
-            decodePixel(mode, data + i, r, g, b);
+            if (filter.none()) {
+                decodePixel(mode, data + i, r, g, b);
+            } else {
+                uint8_t px[8];
+                for (size_t k = 0; k < bpp; k++)
+                    px[k] = filter.apply(window, offset + i + k, dist);
+                decodePixel(mode, px, r, g, b);
+            }
             size_t o = ((size_t)y * m_width + x) * 3;
             m_rgb[o] = r; m_rgb[o + 1] = g; m_rgb[o + 2] = b;
         }

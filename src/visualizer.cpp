@@ -81,7 +81,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
             if (!m_computing && m_mode == ViewMode::METRICMAP) {
                 bool recompute = false;
                 if (GetKey(olc::Key::C).bPressed) {
-                    int cm = ((int)m_colorMode + 1) % 5;
+                    int cm = ((int)m_colorMode + 1) % 6;
                     if (cm == (int)ColorMode::CLASSIFIER && !m_classifier.isReady()) {
                         cm = 0;
                         m_status = "Classifier non disponibile: aggiungi template in templates/";
@@ -193,6 +193,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         statusStr = "[" + std::string(RawPixels::modeName(m_bppMode)) +
                     " W=" + std::to_string(m_rawWidth) +
                     " OFF=" + std::to_string(m_rawOffset) +
+                    " F=" + m_rawFilter.name() +
                     "  [ ]=bpp  , .=W  Ctrl=OFF  A=auto]  " + m_status;
 
     UIState state;

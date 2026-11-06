@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cstdint>
+#include "raw_filter.h"
 
 // Modalita' di interpretazione dei byte come pixel
 enum class BppMode {
@@ -26,12 +27,13 @@ public:
                  size_t start, size_t end,
                  BppMode mode   = BppMode::BPP_8,
                  int     width  = 256,
-                 size_t  offset = 0);
+                 size_t  offset = 0,
+                 RawFilter filter = {});
     // Comodita': tutto il buffer
     void compute(const std::vector<uint8_t>& bytes,
                  BppMode mode = BppMode::BPP_8,
-                 int width = 256, size_t offset = 0) {
-        compute(bytes, 0, bytes.size(), mode, width, offset);
+                 int width = 256, size_t offset = 0, RawFilter filter = {}) {
+        compute(bytes, 0, bytes.size(), mode, width, offset, filter);
     }
     void clear();
 

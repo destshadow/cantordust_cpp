@@ -187,14 +187,13 @@ serve l'attribuzione richiesta dalla licenza.
 
 ## Viste e modalità nuove (dopo)
 
-1. [ ] **Colorazione per classe di byte** sulla MetricMap (nuova
-       `ColorMode`, stile binvis.io): `0x00` nero, `0xFF` bianco, ASCII
-       stampabile blu, controllo verde, alti rosso. Utile anche
-       all'Inspector ("tipo di byte").
-2. [ ] **Bit-plane** come opzione dei raw pixel: un solo bit (0..7) per
-       byte in bianco/nero. Utile per steganografia e struttura.
-3. [ ] **Delta** come opzione dei raw pixel: `byte[i] - byte[i-1]`.
-       Audio/immagini non compressi diventano quasi piatti.
+1. [x] **Colorazione per tipo di byte** sulla Metric Map (`C`)
+2. [x] **Bit-plane** come filtro dei raw pixel (`F`, `raw_filter.h`)
+3. [x] **Delta** come filtro dei raw pixel: dal pixel prima e dalla riga
+       sopra (quest'ultimo per le tabelle di record)
+       - [x] `A` trova anche la dimensione dei record, non solo la riga di
+             un'immagine (`autocorr_period.cpp`); negli ELF trova spesso 24,
+             la dimensione delle tabelle di simboli e rilocazioni
 4. [ ] *(bassa priorità)* **Forma d'onda**: byte come campioni audio con
        segno (8/16 bit), per riconoscere il PCM.
 
