@@ -18,7 +18,7 @@ size_t Visualizer::valueAt(int cx, int cy, uint8_t pat[3]) const {
         pat[1] = (uint8_t)cy;
         return 2;
     }
-    if (m_mode == ViewMode::BYTECLOUD) pat[0] = (uint8_t)((cy / 16) * 16 + cx / 16);
+    if (m_mode == ViewMode::BYTECLOUD) pat[0] = ByteCloud::valueAt(cx, cy);
     else                               pat[0] = (uint8_t)cx;   // X = valore
     return 1;
 }

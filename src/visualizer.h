@@ -144,6 +144,8 @@ private:
     olc::Decal*   m_decal     = nullptr;
     olc::Sprite*  m_rawSprite = nullptr;
     olc::Decal*   m_rawDecal  = nullptr;
+    olc::Sprite*  m_cloudSprite = nullptr;   // Byte Cloud: testo piu' grande
+    olc::Decal*   m_cloudDecal  = nullptr;
 
     // Istogramma della finestra corrente (calcolato nel thread di calcolo):
     // base per Inspector, riassunto e viste "per valore"

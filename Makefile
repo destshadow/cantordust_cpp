@@ -91,7 +91,7 @@ TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
            src/binary_format_pe.cpp src/binary_reader.cpp \
            src/dotplot.cpp src/entropy.cpp src/metric_map.cpp src/metric_map_color.cpp src/hilbert.cpp src/wavelength_rgb.cpp \
            src/autocorr.cpp src/autocorr_period.cpp src/raw_pixels.cpp src/occurrences.cpp \
-           src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp
+           src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp src/byte_cloud.cpp
 
 .PHONY: all clean run test
 test:

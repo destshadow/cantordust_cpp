@@ -4,8 +4,8 @@
 // Le viste 2D nello sprite e sullo schermo, e il salvataggio in PNG.
 
 // Copia l'RGB della vista corrente nello sprite giusto.
-// Le viste classiche usano il canvas 256x256; i raw pixel hanno uno
-// sprite proprio, ricreato quando cambia la dimensione.
+// Le viste classiche usano il canvas 256x256; la Byte Cloud ha un canvas piu'
+// grande e i raw pixel uno sprite proprio, ricreato quando cambia la dimensione.
 void Visualizer::updateCanvas() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
 
@@ -27,21 +27,26 @@ void Visualizer::updateCanvas() {
         return;
     }
 
+    const bool cloud = m_mode == ViewMode::BYTECLOUD;
+    olc::Sprite* sprite = cloud ? m_cloudSprite : m_canvas;
+    olc::Decal*  decal  = cloud ? m_cloudDecal  : m_decal;
+    const int n = sprite->width;
+
     auto rgb = getCurrentRGB();
-    if (rgb.size() < 256 * 256 * 3) {     // vista vuota (es. file vuoto)
-        std::fill_n(m_canvas->GetData(), 256 * 256, olc::BLACK);
-        m_decal->Update();
+    if (rgb.size() < (size_t)n * n * 3) {     // vista vuota (es. file vuoto)
+        std::fill_n(sprite->GetData(), (size_t)n * n, olc::BLACK);
+        decal->Update();
         return;
     }
-    for (int y = 0; y < 256; y++)
-        for (int x = 0; x < 256; x++) {
-            int idx = (y * 256 + x) * 3;
-            m_canvas->SetPixel(x, y, olc::Pixel(
+    for (int y = 0; y < n; y++)
+        for (int x = 0; x < n; x++) {
+            size_t idx = ((size_t)y * n + x) * 3;
+            sprite->SetPixel(x, y, olc::Pixel(
                 rgb[idx], rgb[idx+1], rgb[idx+2]
             ));
         }
-    applyHighlight(m_canvas);
-    m_decal->Update();
+    applyHighlight(sprite);
+    decal->Update();
 }
 
 std::vector<uint8_t> Visualizer::getCurrentRGB() const {
@@ -62,7 +67,7 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
 void Visualizer::draw2DCanvas() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
 
-    olc::Decal* decal = m_decal;
+    olc::Decal* decal = m_mode == ViewMode::BYTECLOUD ? m_cloudDecal : m_decal;
     if (m_mode == ViewMode::RAWPIXELS) {
         if (!m_rawDecal || m_rawpixels.getWidth() <= 0) return;
         decal = m_rawDecal;

@@ -14,6 +14,8 @@ void Visualizer::contentSize(int& w, int& h) const {
         m_rawpixels.getWidth() > 0 && m_rawpixels.getHeight() > 0) {
         w = m_rawpixels.getWidth();
         h = m_rawpixels.getHeight();
+    } else if (m_mode == ViewMode::BYTECLOUD) {
+        w = h = ByteCloud::SIZE;
     }
 }
 

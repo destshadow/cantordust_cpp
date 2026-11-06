@@ -19,6 +19,7 @@
 #include "entropy.h"
 #include "view_mode.h"
 #include "line_clip.h"
+#include "byte_cloud.h"
 #include <string>
 #include <cmath>
 #include <algorithm>

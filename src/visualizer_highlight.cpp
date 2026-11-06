@@ -115,9 +115,10 @@ void Visualizer::highlightByValue(olc::Sprite* spr) {
         }
     } else {
         // Byte Cloud: acceso se almeno meta' delle volte viene dalla sezione
-        for (int y = 0; y < 256; y++)
-            for (int x = 0; x < 256; x++)
-                if (share((y / 16) * 16 + x / 16) < 0.5f) gray(px[y * 256 + x]);
+        const int n = spr->width;
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+                if (share(ByteCloud::valueAt(x, y)) < 0.5f) gray(px[(size_t)y * n + x]);
     }
 }
 

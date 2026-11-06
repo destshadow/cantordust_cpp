@@ -1,6 +1,44 @@
 #include "tests.h"
 
 void testBytes() {
+    // --- ByteCloud: conta tutta la finestra, 00/FF fuori scala, testo nella cella ---
+    {
+        std::vector<uint8_t> b(30000, 'a');
+        b[29999] = 'z';                         // oltre i vecchi 9999 byte
+        b[0] = 0x00;
+        ByteCloud c;
+        c.compute(b);
+        assert(c.getFreq('a') == 1.0f);
+        assert(c.getFreq('z') > 0.0f);
+        assert(c.getFreq(0x00) > 0.0f && c.getFreq('b') == 0.0f);
+
+        std::vector<uint8_t> zeros(1000, 0x00);  // 00 domina ma non cambia la scala
+        zeros[0] = 'a';
+        zeros[1] = 'a';
+        zeros[2] = 'b';
+        c.compute(zeros);
+        assert(c.getFreq('a') == 1.0f && c.getFreq('b') == 0.5f);
+        assert(c.getFreq(0x00) == 1.0f);         // saturo, ma visibile
+
+        c.compute({});
+        assert(c.toRGB().size() == (size_t)ByteCloud::SIZE * ByteCloud::SIZE * 3);
+
+        // Tutti i valori alla grandezza massima: nessun pixel sul bordo di una cella
+        std::vector<uint8_t> all;
+        for (int v = 0; v < 256; v++) all.push_back(uint8_t(v));
+        c.compute(all);
+        const auto rgb = c.toRGB();
+        const int C = ByteCloud::CELL;
+        for (int y = 0; y < ByteCloud::SIZE; y++)
+            for (int x = 0; x < ByteCloud::SIZE; x++)
+                if (x % C == 0 || y % C == 0 || x % C == C - 1 || y % C == C - 1)
+                    assert(rgb[((size_t)y * ByteCloud::SIZE + x) * 3 + 1] == 0);
+
+        assert(ByteCloud::valueAt(0, 0) == 0x00);
+        assert(ByteCloud::valueAt(ByteCloud::SIZE - 1, ByteCloud::SIZE - 1) == 0xFF);
+        assert(ByteCloud::valueAt(C, 2 * C) == 0x21);
+    }
+
     // --- ByteInfo: classi di byte e ipotesi sul contenuto ---
     {
         using ByteInfo::Class;

@@ -9,6 +9,8 @@ Visualizer::Visualizer(const std::string& filepath)
 bool Visualizer::OnUserCreate() {
     m_canvas = new olc::Sprite(256, 256);
     m_decal  = new olc::Decal(m_canvas);
+    m_cloudSprite = new olc::Sprite(ByteCloud::SIZE, ByteCloud::SIZE);
+    m_cloudDecal  = new olc::Decal(m_cloudSprite);
     std::error_code ec;
     if (std::filesystem::is_directory("templates", ec))
         m_classifier.loadTemplates("templates");
@@ -155,6 +157,10 @@ bool Visualizer::OnUserDestroy() {
     m_rawDecal = nullptr;
     delete m_rawSprite;
     m_rawSprite = nullptr;
+    delete m_cloudDecal;
+    m_cloudDecal = nullptr;
+    delete m_cloudSprite;
+    m_cloudSprite = nullptr;
     delete m_decal;
     m_decal = nullptr;
     delete m_canvas;

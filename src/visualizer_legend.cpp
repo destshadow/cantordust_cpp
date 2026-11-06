@@ -19,7 +19,7 @@ static const char* legendFor(ViewMode m) {
         case ViewMode::METRICMAP:
             return "METRIC MAP  curva: byte vicini nel file = pixel vicini   colore: C   curva: V";
         case ViewMode::BYTECLOUD:
-            return "BYTE CLOUD  griglia 16x16 = valori 0x00-0xFF   grandezza = frequenza";
+            return "BYTE CLOUD  griglia 16x16 = valori 0x00-0xFF   grandezza = frequenza   00 e FF fuori scala";
         case ViewMode::ONETUPLE:
             return "ONE TUPLE  X = valore del byte   Y = tratto del file (256 righe)   luminosita' = frequenza nella riga";
     }
