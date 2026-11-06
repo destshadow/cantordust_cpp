@@ -45,7 +45,8 @@ void Autocorr::compute(const std::vector<uint8_t>& bytes,
 int Autocorr::bestWidth(size_t bpp, int minWidth) const {
     if (bpp == 0 || m_mad.empty()) return 0;
     int w = imageWidth(bpp, minWidth);
-    return w > 0 ? w : bestPeriod(bpp);
+    if (w > MAX_WIDTH) w = 0;       // non si potrebbe mostrare
+    return w > 0 ? w : std::min(bestPeriod(bpp), MAX_WIDTH);
 }
 
 int Autocorr::imageWidth(size_t bpp, int minWidth) const {

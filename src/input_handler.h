@@ -25,7 +25,6 @@ public:
 private:
     Action handleNormalKeys(olc::PixelGameEngine* pge);
     Action handleTextInput(olc::PixelGameEngine* pge);
-    char   keyToChar(olc::Key key, bool shift);
 
     bool        m_inputMode         = false;
     std::string m_inputBuffer;

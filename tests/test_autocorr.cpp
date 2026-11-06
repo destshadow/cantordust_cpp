@@ -68,6 +68,21 @@ void testAutocorr() {
         Autocorr ac;
         ac.compute(mixed);
         assert(ac.bestWidth(1) == 64);
+        // Un'immagine piu' larga del massimo mostrabile non si suggerisce
+        std::vector<int> row(3000);
+        int v = 128;
+        for (auto& x : row) { v = std::clamp(v + int(noise() % 17) - 8, 0, 255); x = v; }
+        std::vector<uint8_t> wide;
+        for (int y = 0; y < 200; y++)
+            for (auto& x : row) {
+                x = std::clamp(x + int(noise() % 7) - 3, 0, 255);
+                wide.push_back(uint8_t(x));
+            }
+        Autocorr wa;
+        wa.compute(wide);
+        assert(wa.bestWidth(1) <= Autocorr::MAX_WIDTH);
+        assert(Autocorr::MAX_WIDTH == RawPixels::MAX_WIDTH);
+
         // Un file tutto uguale non ha nessun periodo
         Autocorr flat;
         flat.compute(std::vector<uint8_t>(100000, 7));

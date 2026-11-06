@@ -63,6 +63,7 @@ void Visualizer::applyResults() {
     m_suggestWidth = r->suggestWidth;
     m_windowHist   = r->windowHist;
     repaintCloud();
+    if (m_mode == ViewMode::TRIGRAPH3D && m_tripleMaskOn) buildTripleMask();
     updateCanvas();
 }
 

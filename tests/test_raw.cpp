@@ -55,6 +55,16 @@ void testRaw() {
         // L'offset del pixel non cambia con il filtro
         assert(a.byteOffsetAt(2, 0) == 2);
 
+        // I pixel dopo la fine dei dati non hanno byte
+        std::vector<uint8_t> shortFile(1000, 200);
+        RawPixels s;
+        s.compute(shortFile, BppMode::BPP_8, 256);
+        assert(s.byteOffsetAt(231, 3) == 999);
+        assert(s.byteOffsetAt(232, 3) == SIZE_MAX);
+        s.compute(shortFile, 0, 1000, BppMode::BPP_24, 256, 1);  // 333 pixel interi
+        assert(s.byteOffsetAt(76, 1) == 1 + 332 * 3);
+        assert(s.byteOffsetAt(77, 1) == SIZE_MAX);
+
         RawFilter ring;
         for (int i = 0; i < RawFilter::COUNT; i++) ring = ring.next();
         assert(ring.none());

@@ -25,7 +25,7 @@ void Visualizer::drawChrome(float fElapsedTime, bool busy) {
     state.filesize       = m_reader.getSize();
     state.byteInfo       = busy ? "" : getByteInfo(GetMouseX(), GetMouseY());
     state.fps            = fElapsedTime > 0.0f ? 1.0f / fElapsedTime : 0.0f;
-    state.zoomLevel      = m_zoom2d;
+    state.zoomLevel      = m_mode == ViewMode::TRIGRAPH3D ? 1.0f : m_zoom2d;
     state.scrollH        = m_scrollH;
     state.scrollV        = m_scrollV;
     state.mouseX         = GetMouseX();

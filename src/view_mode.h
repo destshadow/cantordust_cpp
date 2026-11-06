@@ -1,5 +1,13 @@
 #pragma once
 
+#include <cstddef>
+
+// Dot Plot ed Entropy: la posizione i di n sta nella colonna i * 256 / n.
+// Primo indice della colonna x, l'inverso di quella formula.
+inline size_t columnStart(int x, size_t n) {
+    return ((size_t)x * n + 255) / 256;
+}
+
 enum class ViewMode {
     DIGRAPH    = 0,
     DOTPLOT    = 1,

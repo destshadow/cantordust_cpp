@@ -12,6 +12,7 @@ class Autocorr {
 public:
     static constexpr int MAX_LAG     = 6144;   // 2048 pixel a 24bpp
     static constexpr int MAX_SAMPLES = 16384;  // posizioni campionate
+    static constexpr int MAX_WIDTH   = 2048;   // come RawPixels::MAX_WIDTH
 
     void compute(const std::vector<uint8_t>& bytes, size_t start, size_t end);
     void compute(const std::vector<uint8_t>& bytes) {

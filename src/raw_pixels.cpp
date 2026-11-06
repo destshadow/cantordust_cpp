@@ -6,6 +6,7 @@ void RawPixels::clear() {
     m_width = m_height = 0;
     m_rowStep = 1;
     m_offset  = 0;
+    m_len     = 0;
 }
 
 size_t RawPixels::bytesPerPixel(BppMode m) {
@@ -78,6 +79,7 @@ void RawPixels::compute(const std::vector<uint8_t>& bytes,
     const uint8_t* window    = bytes.data() + start;
     const uint8_t* data      = window + offset;
     const size_t   len       = end - start - offset;
+    m_len = len;
     const size_t   rowBytes  = (size_t)m_width * bpp;
     const size_t   totalRows = (len + rowBytes - 1) / rowBytes;
 
@@ -109,7 +111,8 @@ void RawPixels::compute(const std::vector<uint8_t>& bytes,
 size_t RawPixels::byteOffsetAt(int x, int y) const {
     if (x < 0 || x >= m_width || y < 0 || y >= m_height) return SIZE_MAX;
     size_t bpp = bytesPerPixel(m_mode);
-    return m_offset + ((size_t)y * m_rowStep * m_width + x) * bpp;
+    size_t i = ((size_t)y * m_rowStep * m_width + x) * bpp;
+    return i + bpp <= m_len ? m_offset + i : SIZE_MAX;
 }
 
 const char* RawPixels::modeName(BppMode m) {

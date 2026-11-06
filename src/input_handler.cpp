@@ -45,34 +45,23 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     return Action::NONE;
 }
 
+// I tasti speciali si leggono come tasti, i caratteri dalla cache del motore:
+// ha il carattere vero digitato, qualunque sia la tastiera. I tasti di olcPGE
+// conoscono pochi simboli: '_', '+' o '(' non si potrebbero scrivere.
 Action InputHandler::handleTextInput(olc::PixelGameEngine* pge) {
-    bool shift = pge->GetKey(olc::Key::SHIFT).bHeld;
-    for (int k = 0; k < 256; k++) {
-        olc::Key key = static_cast<olc::Key>(k);
-        if (!pge->GetKey(key).bPressed) continue;
-        if (key == olc::Key::ENTER)  { m_inputMode = false; return Action::OPEN_FILE; }
-        if (key == olc::Key::ESCAPE) { m_inputMode = false; m_inputBuffer = ""; return Action::CANCEL; }
-        if (key == olc::Key::BACK)   { if (!m_inputBuffer.empty()) m_inputBuffer.pop_back(); continue; }
-        if (key == olc::Key::NP_DIV) { m_inputBuffer += '/'; continue; }
-        char c = keyToChar(key, shift);
-        if (c != 0) m_inputBuffer += c;
+    if (pge->GetKey(olc::Key::ENTER).bPressed) {
+        m_inputMode = false;
+        return Action::OPEN_FILE;
     }
+    if (pge->GetKey(olc::Key::ESCAPE).bPressed) {
+        m_inputMode = false;
+        m_inputBuffer = "";
+        return Action::CANCEL;
+    }
+    if (pge->GetKey(olc::Key::BACK).bPressed && !m_inputBuffer.empty())
+        m_inputBuffer.pop_back();
+    if (pge->GetKey(olc::Key::NP_DIV).bPressed) m_inputBuffer += '/';
+    for (int32_t code : pge->GetKeyPressCache())
+        if (code >= 0x20 && code < 0x7F) m_inputBuffer += (char)code;
     return Action::NONE;
-}
-
-char InputHandler::keyToChar(olc::Key key, bool shift) {
-    int k  = static_cast<int>(key);
-    int kA = static_cast<int>(olc::Key::A);
-    int kZ = static_cast<int>(olc::Key::Z);
-    int k0 = static_cast<int>(olc::Key::K0);
-    int k9 = static_cast<int>(olc::Key::K9);
-    if (k >= kA && k <= kZ) { char c = 'a'+(k-kA); return shift?(char)(c-32):c; }
-    if (k >= k0 && k <= k9) return '0'+(k-k0);
-    switch (key) {
-        case olc::Key::PERIOD: return '.';
-        case olc::Key::OEM_2:  return '/';   // tasto '/' (layout US)
-        case olc::Key::MINUS:  return shift?'_':'-';
-        case olc::Key::SPACE:  return ' ';
-        default:               return 0;
-    }
 }

@@ -9,7 +9,8 @@ bool Visualizer::tripleUnderMouse(uint32_t& key) const {
     if (mx < CANVAS_X || mx >= CANVAS_X + CANVAS_W ||
         my < CANVAS_Y || my >= CANVAS_Y + CANVAS_H) return false;
     if (GetMouse(1).bHeld) return false;
-    if (GetMouse(0).bHeld &&
+    // Nel frame della pressione m_pressX e' ancora quella della volta prima
+    if (GetMouse(0).bHeld && !GetMouse(0).bPressed &&
         (std::abs(mx - m_pressX) > 2 || std::abs(my - m_pressY) > 2)) return false;
     key = m_renderer3d.keyAt(mx, my);
     return key != CloudFrame::NO_KEY;
@@ -81,6 +82,9 @@ void Visualizer::handle3DInput(float fElapsedTime) {
     }
 
     // --- WASD + QE: movimento camera FPS ---
+    // Se la finestra perde il focus con un tasto premuto il rilascio non
+    // arriva mai, e la camera continuerebbe ad andare da sola
+    if (!IsFocused()) return;
     float fwd  = 0.0f, right = 0.0f, up = 0.0f;
     float speed = 30.0f;
     if (GetKey(olc::Key::W).bHeld) fwd   += speed * fElapsedTime;
@@ -93,6 +97,6 @@ void Visualizer::handle3DInput(float fElapsedTime) {
         m_renderer3d.moveCamera(fwd, right, up);
 
     // --- Rotella: zoom ---
-    if (GetMouseWheel() > 0) m_renderer3d.zoom(+1.0f);
-    if (GetMouseWheel() < 0) m_renderer3d.zoom(-1.0f);
+    if (inCanvas && GetMouseWheel() > 0) m_renderer3d.zoom(+1.0f);
+    if (inCanvas && GetMouseWheel() < 0) m_renderer3d.zoom(-1.0f);
 }

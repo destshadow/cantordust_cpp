@@ -172,7 +172,9 @@ Layout obiettivo:
   maggioranza). Fotogramma 30 ms in movimento, 97 ms completo.
 - 3D: la sezione "prevalente" e' esatta solo se una sezione ha piu' di meta'
   delle occorrenze; le triple a cavallo di due sezioni non vengono contate.
-- `S` non salva la vista 3D.
+- `S` non salva la vista 3D (nel 3D e' il tasto per indietreggiare).
+- La scelta di un punto nel 3D (primo click, punto giusto con molti punti) non
+  ha un test automatico: dipende dalla finestra, va provata nell'app.
 - `FileNavigator::moveForward/moveBackward` restano solo per le frecce
   commentate e per i test.
 - Per ThreadSanitizer su questo kernel: `setarch x86_64 -R ./programma`.

@@ -74,12 +74,17 @@ uint32_t Renderer3D::keyAt(int x, int y) const {
     return m_frame.keyNear(x - m_vp.x, y - m_vp.y, PICK_RADIUS);
 }
 
+// Un tasto premuto senza muovere il mouse non e' un movimento: passerebbe al
+// fotogramma campionato, e il click sceglierebbe un punto diverso da quello
+// sotto il mouse
 void Renderer3D::rotate(float dx, float dy) {
+    if (dx == 0.0f && dy == 0.0f) return;
     m_cam.orbit(dx, dy);
     m_moved = true;
 }
 
 void Renderer3D::pan(float dx, float dy) {
+    if (dx == 0.0f && dy == 0.0f) return;
     m_cam.panX += dx * 0.8f;
     m_cam.panY += dy * 0.8f;
     m_moved = true;

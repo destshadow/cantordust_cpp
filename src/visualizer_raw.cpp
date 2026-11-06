@@ -80,11 +80,16 @@ void Visualizer::handleRawInput() {
     }
 
     // Tastiera: , .  = larghezza ±1   Ctrl+, .  = offset ±1   Shift = ×10
-    int step = GetKey(olc::Key::SHIFT).bHeld ? 10 : 1;
+    // Con lo Shift il motore vede il carattere: < > sulle tastiere americane,
+    // ; : su quelle italiane
     bool ctrl = GetKey(olc::Key::CTRL).bHeld;
     int delta = 0;
-    if (GetKey(olc::Key::COMMA).bPressed)  delta -= step;
-    if (GetKey(olc::Key::PERIOD).bPressed) delta += step;
+    for (int32_t code : GetKeyPressCache()) {
+        if (code == ',')                 delta -= 1;
+        if (code == '.')                 delta += 1;
+        if (code == '<' || code == ';')  delta -= 10;
+        if (code == '>' || code == ':')  delta += 10;
+    }
     if (delta != 0) {
         if (ctrl) m_rawOffset = std::max(0, m_rawOffset + delta);
         else      m_rawWidth  = std::clamp(m_rawWidth + delta,

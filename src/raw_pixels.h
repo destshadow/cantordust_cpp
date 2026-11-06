@@ -45,8 +45,9 @@ public:
     int     getHeight()  const { return m_height; }
     size_t  getRowStep() const { return m_rowStep; }
 
-    // Offset (relativo all'inizio della finestra) del pixel (x, y),
-    // oppure SIZE_MAX se fuori immagine
+    // Offset (relativo all'inizio della finestra) del pixel (x, y), oppure
+    // SIZE_MAX se fuori immagine o se il pixel non ha byte (in fondo
+    // all'ultima riga, dove i dati sono finiti)
     size_t byteOffsetAt(int x, int y) const;
 
     static size_t bytesPerPixel(BppMode m);
@@ -62,4 +63,5 @@ private:
     int                  m_height  = 0;
     size_t               m_rowStep = 1;
     size_t               m_offset  = 0;
+    size_t               m_len     = 0;   // byte disponibili dopo l'offset
 };

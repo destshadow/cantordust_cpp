@@ -38,10 +38,8 @@ void Visualizer::inspectPoint(PanelWriter& pw, size_t point) {
 void Visualizer::inspectRange(PanelWriter& pw, int cx, int cy) {
     const auto& bytes = m_reader.getBytes();
     const InspectWindow w = inspectWindow();
-    // Le due viste mettono la posizione i in colonna i*255/len
-    size_t a = w.start + (size_t)((double)cx * w.len / 255.0);
-    size_t b = w.start + (size_t)((double)(cx + 1) * w.len / 255.0);
-    b = std::min(std::max(b, a + 1), w.end);
+    size_t a = std::min(w.start + columnStart(cx, w.len), w.end - 1);
+    size_t b = std::min(std::max(w.start + columnStart(cx + 1, w.len), a + 1), w.end);
     pw.field("TRATTO", "0x" + hex(a, 8) + "-0x" + hex(b, 8), COL_ACCENT());
     pw.field("LUNGH.", sizeStr(b - a));
     writeSectionField(pw, a);

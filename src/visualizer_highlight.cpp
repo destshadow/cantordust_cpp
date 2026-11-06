@@ -74,8 +74,8 @@ void Visualizer::highlightByPosition(olc::Sprite* spr) {
                 a = ws + (size_t)y * len / rows;
                 b = ws + (size_t)(y + 1) * len / rows;
             } else {                                     // colonna = tratto
-                a = ws + (size_t)((double)x * len / 255.0);
-                b = ws + (size_t)((double)(x + 1) * len / 255.0);
+                a = ws + columnStart(x, len);
+                b = ws + columnStart(x + 1, len);
             }
             if (b < m_hlStart || a >= m_hlEnd) dim(px[(size_t)y * w + x]);
         }

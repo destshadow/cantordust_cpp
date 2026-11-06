@@ -59,8 +59,10 @@ std::vector<uint8_t> Entropy::toRGB() const {
     // Mappa i valori di entropia sull'asse X (256 colonne)
     size_t n = m_values.size();
     for (size_t i = 0; i < n; i++) {
-        // X = posizione normalizzata in [0, 255]
-        int x = static_cast<int>((i * 255) / n);
+        // X = posizione: con pochi blocchi ognuno occupa piu' colonne,
+        // altrimenti il grafico sarebbe fatto di righe separate
+        int x0 = static_cast<int>((i * 256) / n);
+        int x1 = std::max(x0 + 1, static_cast<int>(((i + 1) * 256) / n));
 
         // Y = entropia normalizzata invertita (0 in alto = alta entropia)
         // entropia 1.0 (massima) → y = 0 (in cima)
@@ -70,14 +72,15 @@ std::vector<uint8_t> Entropy::toRGB() const {
 
         // Disegna la colonna verticale dal punto y fino in fondo
         // Effetto "riempimento" come un grafico a barre
-        for (int py = y; py < 256; py++) {
-            int idx = (py * 256 + x) * 3;
-            // Colore: caldo (rosso) per alta entropia, freddo (blu) per bassa
-            float e = m_values[i];
-            rgb[idx]     = static_cast<uint8_t>(e * 255);         // R
-            rgb[idx + 1] = static_cast<uint8_t>((1.0f-e) * 128); // G
-            rgb[idx + 2] = static_cast<uint8_t>((1.0f-e) * 255); // B
-        }
+        // Colore: caldo (rosso) per alta entropia, freddo (blu) per bassa
+        const float e = m_values[i];
+        for (int x = x0; x < x1; x++)
+            for (int py = y; py < 256; py++) {
+                int idx = (py * 256 + x) * 3;
+                rgb[idx]     = static_cast<uint8_t>(e * 255);         // R
+                rgb[idx + 1] = static_cast<uint8_t>((1.0f-e) * 128); // G
+                rgb[idx + 2] = static_cast<uint8_t>((1.0f-e) * 255); // B
+            }
     }
     return rgb;
 }
