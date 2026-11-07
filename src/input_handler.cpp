@@ -14,8 +14,8 @@ Action InputHandler::update(olc::PixelGameEngine* pge,
 Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     // --- Click sulle tab ---
     if (pge->GetMouse(0).bPressed && pge->GetMouseY() < TOPBAR_H) {
-        int tabIdx = pge->GetMouseX() / TAB_W;
-        if (tabIdx >= 0 && tabIdx < VIEW_TAB_COUNT) {
+        int tabIdx = tabAt(pge->GetMouseX());
+        if (tabIdx >= 0) {
             m_requestedView   = VIEW_TABS[tabIdx].mode;
             m_lastClickWasTab = true;
             return Action::SWITCH_VIEW;
@@ -26,9 +26,9 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     if (!pge->GetMouse(0).bPressed)
         m_lastClickWasTab = false;
 
-    // --- Tasti 1-9 ---
+    // --- Tasti 1-9, poi 0 ---
     for (int i = 0; i < VIEW_TAB_COUNT; i++)
-        if (pge->GetKey((olc::Key)((int)olc::Key::K1 + i)).bPressed) {
+        if (pge->GetKey((olc::Key)((int)olc::Key::K0 + (i + 1) % 10)).bPressed) {
             m_requestedView = VIEW_TABS[i].mode;
             return Action::SWITCH_VIEW;
         }

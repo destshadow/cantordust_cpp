@@ -1,6 +1,18 @@
 #include "tests.h"
 
 void testNavigation() {
+    // --- Tab: larghe quanto il testo, senza buchi ne' sovrapposizioni ---
+    {
+        for (int i = 0; i < VIEW_TAB_COUNT; i++) {
+            assert(tabAt(tabX(i)) == i);
+            assert(tabAt(tabX(i) + tabWidth(i) - 1) == i);
+        }
+        assert(tabAt(-1) == -1);
+        const int end = tabX(VIEW_TAB_COUNT - 1) + tabWidth(VIEW_TAB_COUNT - 1);
+        assert(tabAt(end) == -1);
+        assert(end <= 1280 - 70);              // a destra restano gli fps
+    }
+
     // --- RangeSel: la selezione delle barre resta sempre valida ---
     {
         RangeSel s;

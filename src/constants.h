@@ -25,7 +25,6 @@ static constexpr int PADDING       = 8;    // padding generico
 static constexpr int NAV_W         = 214;  // sezioni + barre FILE e ZONA
 static constexpr int INSPECTOR_W   = 328;  // pannello informazioni (39 char utili)
 static constexpr int SCROLLBAR_V_W = 12;   // scrollbar verticale canvas
-static constexpr int TAB_W         = 135;  // 9 tab; a destra restano gli fps
 
 // --- Area canvas (la vista) ---
 static constexpr int LEGEND_Y      = TOPBAR_H;

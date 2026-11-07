@@ -35,15 +35,15 @@ void UIRenderer::drawTopBar(olc::PixelGameEngine* pge,
 
     const int textY = (TOPBAR_H - 8) / 2;
     for (int i = 0; i < VIEW_TAB_COUNT; i++) {
-        const int  tx     = i * TAB_W;
+        const int  tx     = tabX(i);
+        const int  tw     = tabWidth(i);
         const bool active = state.currentView == VIEW_TABS[i].mode;
-        const bool hover  = state.mouseY < TOPBAR_H &&
-                            state.mouseX >= tx && state.mouseX < tx + TAB_W;
+        const bool hover  = state.mouseY < TOPBAR_H && tabAt(state.mouseX) == i;
         if (active) {
-            pge->FillRect(tx, 0, TAB_W, TOPBAR_H - 1, COL_BG_LIGHT());
-            pge->FillRect(tx, TOPBAR_H - 2, TAB_W, 2, COL_ACCENT());
+            pge->FillRect(tx, 0, tw, TOPBAR_H - 1, COL_BG_LIGHT());
+            pge->FillRect(tx, TOPBAR_H - 2, tw, 2, COL_ACCENT());
         }
-        pge->DrawString(tx + 10, textY, VIEW_TABS[i].label,
+        pge->DrawString(tx + TAB_PAD, textY, VIEW_TABS[i].label,
                         active ? COL_ACCENT() : hover ? COL_TEXT() : COL_DIM());
     }
 

@@ -11,6 +11,11 @@ Il progetto resta **semplice e "batterie incluse"**: solo
 olcPixelGameEngine + stb (single header), nessuna dipendenza nuova.
 Quello che manca ce lo scriviamo noi (kit di widget in `ui_widgets.h`).
 
+**Direzione (decisa il 2026-11-07): resta un esploratore universale di file.**
+La sicurezza e' un caso d'uso, non l'obiettivo. Regola per ogni funzione nuova:
+aiuta a scoprire struttura o contenuto in qualunque sequenza di byte; la
+conoscenza di un formato puo' arricchire il risultato, mai essere necessaria.
+
 ## Principi di design (decisi il 2026-11-03)
 
 1. **Ogni vista dice cosa mostra**: una riga di legenda in alto
@@ -206,6 +211,82 @@ serve l'attribuzione richiesta dalla licenza.
              la dimensione delle tabelle di simboli e rilocazioni
 4. [ ] *(bassa priorità)* **Forma d'onda**: byte come campioni audio con
        segno (8/16 bit), per riconoscere il PCM.
+
+### Piano del 2026-11-07
+
+Spunti dal Visual Microphone e dalla tesi di Abe Davis, *Visual Vibration
+Analysis*: non la tecnica sui video, ma il modo di leggere un segnale.
+<https://people.csail.mit.edu/mrub/VisualMic/>,
+<https://abedavis.com/files/papers/thesis.pdf>
+
+In ordine:
+1. [x] **Tab larghe quanto il testo** (`view_tabs.h`); la decima vista usa il
+       tasto `0`. Niente barra scorrevole: nasconde le viste.
+2. [ ] **Stringhe** (tab): ASCII e UTF-16, lunghezza minima, pochi tag (URL, IP,
+       percorsi), con click per arrivarci. Costo medio.
+       - [ ] lista scorrevole, il primo widget di questo tipo
+       - [ ] `goToOffset()` generico, senza passare da `Occur::Walker`; copre
+             anche "portare la vista sull'occorrenza scelta". Da provare cosa
+             fa con un offset fuori dalla finestra (idea: spostare la finestra)
+       - [ ] tenere offset e lunghezza, non una `std::string` per stringa: in
+             un file grande possono essere milioni
+3. [ ] **Firme** (segni sulle barre, non una tab): cerca marcatori noti (PNG,
+       JPEG, ZIP, PDF, MP4...) e trova i file dentro altri file. Riconosce solo
+       l'inizio di un formato ("inizio rilevato"), non lo legge.
+4. [ ] **Spettrogramma** (tab): X = posizione nel file, Y = periodo in byte,
+       luce = forza del periodo. Mostra dove cambia la struttura. FFT scritta
+       da noi, in un file piccolo. Provarla su un WAV e su record noti.
+       - [ ] picchi: i periodi piu' forti del file, cliccabili
+       - [ ] click su un periodo: dove compare, con i segni sulle barre
+             (l'"immagine modale" della tesi, cap. 3)
+       - [ ] togliere lo spettro medio, per far risaltare le zone diverse
+5. [ ] **Panoramica** (tab; "indicatori", non "triage"): X = posizione nel file,
+       ogni riga un indicatore (entropia, salti di entropia, testo, zeri,
+       periodicita', firme, dati fuori dalle sezioni). Click: seleziona il
+       tratto sulle barre.
+6. [ ] **Profilo record** (tab): dato un periodo, mostra colonna per colonna i
+       campi fissi, i contatori e quelli casuali. Conteggio di valori per
+       posizione nel record.
+
+Quando le tab non ci stanno piu' (circa 12): voce **"Altro ▾"** in fondo, con le
+viste usate meno. Le altre restano sempre visibili.
+
+Annotazioni, a parte dall'ordine:
+- [ ] Overlay nell'Inspector: dati dopo la fine dichiarata di un ELF o PE.
+- [ ] Parser ELF: leggere anche i program header. Oggi un ELF senza tabella
+      delle sezioni risulta senza sezioni. Con test su file troncati, offset
+      ostili e fuzzing, come ogni estensione del parser.
+
+Da valutare dopo:
+- [ ] Un tipo comune per stringhe e firme, solo quando ci sono entrambe e si
+      vede cosa hanno in comune. Vale per i risultati discreti: entropia e
+      periodicita' sono curve, non elenchi.
+- [ ] **Impronta spettrale**: lo spettro di una zona, per trovare i confini tra
+      tipi di dati senza conoscere il formato (tesi, cap. 5).
+- [ ] Nel Raw, isolare un solo periodo e nascondere il resto ("Seeing Sound").
+
+Fuori dal progetto: import e capacita', protezioni (hardening), regole e IOC,
+tabella delle sezioni sospette. Spostano l'idea da "guarda cosa c'e' nei byte"
+a "interpreta questo eseguibile"; esistono gia' capa, checksec, Detect It Easy
+e YARA.
+
+Scartato dai lavori del Visual Microphone: piramide steerable, rolling shutter,
+motion magnification e Interactive Dynamic Video (cap. 6) servono per i video
+ripresi, non per i byte.
+
+### File video: cosa aspettarsi
+
+Previsioni dai formati, ancora da provare su file veri:
+- non compresso (`.yuv`, `.y4m`, certi AVI): fotogrammi in fila, con periodo
+  pari alla dimensione del fotogramma; si vedono in Raw e nello Spettrogramma
+- MJPEG: tanti JPEG in fila, utile per le Firme
+- MPEG-TS (`.ts`): pacchetti da 188 byte che iniziano con `0x47`, periodo netto
+  anche se il contenuto e' compresso
+- MP4 normale: quasi tutto rumore, tabelle di indici leggibili all'inizio o
+  alla fine; i fotogrammi hanno dimensioni diverse, quindi nessun periodo
+
+Limite: il file viene caricato tutto in memoria, quindi un video da diversi GB
+e' un problema. Il test piu' grande finora e' da 100 MB.
 
 Scartate per ora (appesantirebbero il progetto): digraph a strati in 3D,
 diff tra due file, disassembler o parsing dei formati, port su HTML,
