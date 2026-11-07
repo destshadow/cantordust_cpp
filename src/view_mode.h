@@ -17,5 +17,6 @@ enum class ViewMode {
     RAWPIXELS  = 5,
     METRICMAP  = 6,
     BYTECLOUD  = 7,
-    ONETUPLE   = 8
+    ONETUPLE   = 8,
+    STRINGS    = 9
 };

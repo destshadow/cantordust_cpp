@@ -44,6 +44,10 @@ SRC = src/main.cpp \
       src/ngram_model.cpp \
       src/classifier_model.cpp \
       src/byte_cloud.cpp \
+      src/string_scan.cpp \
+      src/string_tag.cpp \
+      src/visualizer_strings.cpp \
+      src/visualizer_inspector_string.cpp \
       src/one_tuple.cpp \
       src/nav_bars.cpp \
       src/autocorr.cpp \
@@ -91,7 +95,8 @@ TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
            src/binary_format_pe.cpp src/binary_reader.cpp \
            src/dotplot.cpp src/entropy.cpp src/metric_map.cpp src/metric_map_color.cpp src/hilbert.cpp src/wavelength_rgb.cpp \
            src/autocorr.cpp src/autocorr_period.cpp src/raw_pixels.cpp src/occurrences.cpp \
-           src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp src/byte_cloud.cpp
+           src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp src/byte_cloud.cpp \
+           src/string_scan.cpp src/string_tag.cpp
 
 .PHONY: all clean run test
 test:

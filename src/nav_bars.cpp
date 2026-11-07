@@ -37,6 +37,12 @@ size_t NavBars::valueAtY(int bar, int my) const {
     return s.min + (size_t)(t * (double)(s.max - s.min));
 }
 
+void NavBars::goTo(size_t offset) {
+    m_macro.reveal(offset);
+    m_micro.setBounds(m_macro.lo, m_macro.hi);
+    m_micro.reveal(offset);
+}
+
 int NavBars::yOf(int bar, size_t value) const {
     const RangeSel& s = sel(bar);
     if (s.max <= s.min) return TRACK_Y;

@@ -27,6 +27,7 @@
 #include "byte_info.h"
 #include "view_results.h"
 #include "occurrences.h"
+#include "list_view.h"
 #include <array>
 #include <functional>
 
@@ -86,6 +87,19 @@ private:
     void writeHexDump(PanelWriter& pw, size_t center, size_t mark, int rows);
     ByteInfo::Stats zoneStats(size_t a, size_t b) const;
     void syncNavigator();                  // barre -> finestra
+    void goToOffset(size_t offset);
+    // Vista Stringhe (visualizer_strings.cpp, visualizer_inspector_string.cpp)
+    bool isStringsView() const;
+    bool hasCanvas() const;                // false: 3D e Stringhe
+    void rebuildStringRows();
+    const StringScan::Hit* stringAtRow(size_t row) const;
+    void setStringFilter(int minChars, StringScan::Tag tag);
+    void handleStringsInput();
+    void handleStringKeys();
+    void drawStrings();
+    void drawStringOptions(bool clickable);
+    std::string stringsLegend() const;
+    void inspectString(PanelWriter& pw, const StringScan::Hit& s);
     void saveView();
     // Vista -> file (visualizer_links.cpp)
     bool   isValueView() const;
@@ -137,6 +151,12 @@ private:
     MetricMap        m_metricmap;
     ByteCloud        m_bytecloud;
     OneTuple         m_onetuple;
+    StringScan       m_strings;
+    size_t           m_stringBase = 0;   // dove inizia la finestra di m_strings
+    std::vector<uint32_t> m_stringRows;  // le righe dopo i filtri
+    ListView         m_stringList;
+    int              m_stringMin = 6;
+    StringScan::Tag  m_stringTag = StringScan::Tag::NONE;
     ClassifierModel  m_classifier;
 
     // Canvas (256x256) e canvas raw pixel (dimensione variabile)
@@ -205,6 +225,7 @@ private:
     std::vector<uint8_t> m_markWanted, m_marked;
     static constexpr float MARK_WAIT = 0.08f;   // secondi col mouse fermo
     float  m_markWait = 0.0f;
+    size_t m_cursorOffset = SIZE_MAX;    // goToOffset: resta finche' non si annulla
     size_t m_markLo = 0, m_markHi = 0;
     bool   m_pressed = false;
     int    m_pressX = 0, m_pressY = 0;

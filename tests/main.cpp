@@ -5,6 +5,7 @@ int main() {
     testRaw();
     testAutocorr();
     testBytes();
+    testStrings();
     testMetricMap();
     testNavigation();
     testParser();

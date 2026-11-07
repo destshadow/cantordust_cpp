@@ -22,7 +22,7 @@ AREE DELLA FINESTRA (1280x800)
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
-  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9.
+  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9 e 0.
 
   NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
 
@@ -93,6 +93,9 @@ VISTE
   8  Byte Cloud   griglia 16x16 dei valori, grandezza = frequenza
   9  One Tuple    X = valore del byte, Y = tratto del file (la finestra
                   divisa in 256 righe): quali valori usa ogni tratto
+  0  Stringhe     il testo nella finestra (ASCII e UTF-16), con click per
+                   vedere dove sta nel file. L = lunghezza minima, T = tipo
+                   (URL, IP, percorsi), frecce e PagSu/PagGiu = scorre, Esc = annulla
 
 
 TASTI GENERALI

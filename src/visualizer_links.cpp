@@ -55,7 +55,11 @@ void Visualizer::updateLinks(float dt) {
                             m_pick.lo != m_navigator.getStart() ||
                             m_pick.hi != m_navigator.getEnd()))
         m_pick.clear();
-    if (GetKey(olc::Key::ESCAPE).bPressed) m_pick.clear();
+    if (GetKey(olc::Key::ESCAPE).bPressed) {
+        m_pick.clear();
+        m_cursorOffset = SIZE_MAX;
+        m_stringList.state.selected = ListState::NONE;
+    }
 
     uint8_t pat[3] = {0, 0, 0};
     const size_t n = valueUnderMouse(pat);
@@ -73,7 +77,7 @@ void Visualizer::updateLinks(float dt) {
             m_pick.step(m_reader.getBytes(), m_navigator.getStart(),
                         m_navigator.getEnd(), pat, n);
     }
-    m_bars.setCursor(m_pick.active() ? m_pick.target : SIZE_MAX);
+    m_bars.setCursor(m_pick.active() ? m_pick.target : m_cursorOffset);
 
     // Segni: il valore sotto il mouse, altrimenti quello scelto.
     // Si aspetta un istante: su file grandi cercare a ogni pixel attraversato

@@ -16,6 +16,7 @@ void Visualizer::recomputeWindow() {
         params.rawWidth  = m_rawWidth;
         params.rawOffset = (size_t)m_rawOffset;
         params.rawFilter = m_rawFilter;
+        params.windowStart = m_computedStart;
         if (m_mode == ViewMode::TRIGRAPH3D) params.sections = sectionRanges();
 
         m_computing = true;
@@ -59,9 +60,12 @@ void Visualizer::applyResults() {
     m_metricmap    = std::move(r->metricmap);
     m_bytecloud    = std::move(r->bytecloud);
     m_onetuple     = std::move(r->onetuple);
+    m_strings      = std::move(r->strings);
+    m_stringBase   = r->windowStart;
     m_autocorr     = std::move(r->autocorr);
     m_suggestWidth = r->suggestWidth;
     m_windowHist   = r->windowHist;
+    rebuildStringRows();
     repaintCloud();
     if (m_mode == ViewMode::TRIGRAPH3D && m_tripleMaskOn) buildTripleMask();
     updateCanvas();
@@ -102,6 +106,9 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_hlStart = m_hlEnd = 0;
     m_tripleMaskOn = false;
     m_pick.clear();
+    m_strings.clear();
+    rebuildStringRows();
+    m_cursorOffset = SIZE_MAX;
     m_marked.clear();
     m_markWanted.clear();
     m_bars.clearMarks();

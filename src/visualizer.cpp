@@ -40,6 +40,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     if (!typing && !busy) updateLinks(fElapsedTime);
     if (!typing) {
         if (m_mode == ViewMode::TRIGRAPH3D) handle3DInput(fElapsedTime);
+        else if (!busy && isStringsView())  handleStringsInput();
         else if (!busy)                     handle2DInput();
     }
 
@@ -129,6 +130,8 @@ void Visualizer::drawFrame(float fElapsedTime, bool busy) {
 
     if (m_mode == ViewMode::TRIGRAPH3D) {
         draw3D(fElapsedTime);
+    } else if (isStringsView()) {
+        drawStrings();
     } else {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna
@@ -145,6 +148,14 @@ void Visualizer::drawFrame(float fElapsedTime, bool busy) {
 // Le barre decidono la finestra; le viste si aggiornano nel ciclo principale
 void Visualizer::syncNavigator() {
     m_navigator.selectRange(m_bars.start(), m_bars.end() - m_bars.start());
+}
+
+// Porta le barre su un punto del file e lo segna; la finestra si sposta solo
+// se quel punto ne e' fuori
+void Visualizer::goToOffset(size_t offset) {
+    m_cursorOffset = offset;
+    m_bars.goTo(offset);
+    syncNavigator();
 }
 
 Visualizer::~Visualizer() {

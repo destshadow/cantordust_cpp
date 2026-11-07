@@ -4,6 +4,7 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
                                           const ComputeParams& p,
                                           ClassifierModel& classifier) {
     auto r = std::make_unique<ViewResults>();
+    r->windowStart = p.windowStart;
 
     switch (p.mode) {
         case ViewMode::DIGRAPH:    r->digraph.compute(window);   break;
@@ -13,6 +14,7 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
         case ViewMode::TRIGRAPH3D: r->trigraph.compute(window, p.sections); break;
         case ViewMode::BYTECLOUD:  r->bytecloud.compute(window); break;
         case ViewMode::ONETUPLE:   r->onetuple.compute(window);  break;
+        case ViewMode::STRINGS:    r->strings.compute(window);   break;
         case ViewMode::RAWPIXELS:
             r->rawpixels.compute(window, p.bpp, p.rawWidth, p.rawOffset, p.rawFilter);
             r->autocorr.compute(window);

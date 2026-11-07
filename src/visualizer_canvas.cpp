@@ -7,7 +7,7 @@
 // Le viste classiche usano il canvas 256x256; la Byte Cloud ha un canvas piu'
 // grande e i raw pixel uno sprite proprio, ricreato quando cambia la dimensione.
 void Visualizer::updateCanvas() {
-    if (m_mode == ViewMode::TRIGRAPH3D) return;
+    if (!hasCanvas()) return;
 
     if (m_mode == ViewMode::RAWPIXELS) {
         int w = m_rawpixels.getWidth(), h = m_rawpixels.getHeight();
@@ -56,6 +56,7 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
         case ViewMode::ENTROPY:    return m_entropy.toRGB();
         case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
         case ViewMode::TRIGRAPH3D: return {};
+        case ViewMode::STRINGS:    return {};
         case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
         case ViewMode::METRICMAP:  return m_metricmap.getRGB();
         case ViewMode::BYTECLOUD:  return m_bytecloud.toRGB();
@@ -65,7 +66,7 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
 }
 
 void Visualizer::draw2DCanvas() {
-    if (m_mode == ViewMode::TRIGRAPH3D) return;
+    if (!hasCanvas()) return;
 
     olc::Decal* decal = m_mode == ViewMode::BYTECLOUD ? m_cloudDecal : m_decal;
     if (m_mode == ViewMode::RAWPIXELS) {
@@ -98,6 +99,7 @@ void Visualizer::draw2DCanvas() {
 // Salva la vista corrente come PNG, alla sua dimensione reale
 void Visualizer::saveView() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
+    if (m_mode == ViewMode::STRINGS) { m_status = "Questa vista non si salva come immagine"; return; }
     if (m_computing) { m_status = "Calcolo in corso: riprova tra un attimo"; return; }
     int w = 256, h = 256;
     contentSize(w, h);

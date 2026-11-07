@@ -27,6 +27,16 @@ void testNavigation() {
         s.slideTo(0);
         assert(s.lo == 0 && s.hi == 100);
 
+        s.set(100, 200);
+        s.reveal(150);                     // gia' dentro: non si muove
+        assert(s.lo == 100 && s.hi == 200);
+        s.reveal(700);                     // fuori: ci va, stessa dimensione
+        assert(s.lo == 650 && s.hi == 750);
+        s.reveal(0);
+        assert(s.lo == 0 && s.hi == 100);
+        s.reveal(999);
+        assert(s.lo == 900 && s.hi == 1000);
+
         s.set(400, 600);
         s.zoomAround(500, 0.5);            // il byte sotto il mouse resta fermo
         assert(s.lo == 450 && s.hi == 550);

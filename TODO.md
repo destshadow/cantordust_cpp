@@ -222,14 +222,14 @@ Analysis*: non la tecnica sui video, ma il modo di leggere un segnale.
 In ordine:
 1. [x] **Tab larghe quanto il testo** (`view_tabs.h`); la decima vista usa il
        tasto `0`. Niente barra scorrevole: nasconde le viste.
-2. [ ] **Stringhe** (tab): ASCII e UTF-16, lunghezza minima, pochi tag (URL, IP,
+2. [x] **Stringhe** (tab): ASCII e UTF-16, lunghezza minima, pochi tag (URL, IP,
        percorsi), con click per arrivarci. Costo medio.
-       - [ ] lista scorrevole, il primo widget di questo tipo
-       - [ ] `goToOffset()` generico, senza passare da `Occur::Walker`; copre
-             anche "portare la vista sull'occorrenza scelta". Da provare cosa
-             fa con un offset fuori dalla finestra (idea: spostare la finestra)
-       - [ ] tenere offset e lunghezza, non una `std::string` per stringa: in
-             un file grande possono essere milioni
+       - [x] lista scorrevole (`list_state.h`, `list_view.h`)
+       - [x] `goToOffset()` generico, senza passare da `Occur::Walker`: con un
+             offset fuori dalla finestra la sposta (`RangeSel::reveal`)
+       - [x] offset e lunghezza, non una `std::string` per stringa
+       - [ ] portare anche la vista scelta su quel punto (oggi solo cursore
+             sulle barre e dettagli nell'Inspector)
 3. [ ] **Firme** (segni sulle barre, non una tab): cerca marcatori noti (PNG,
        JPEG, ZIP, PDF, MP4...) e trova i file dentro altri file. Riconosce solo
        l'inizio di un formato ("inizio rilevato"), non lo legge.

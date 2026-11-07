@@ -20,6 +20,8 @@ static const char* legendFor(ViewMode m) {
             return "METRIC MAP  curva: byte vicini nel file = pixel vicini   colore: C   curva: V";
         case ViewMode::BYTECLOUD:
             return "BYTE CLOUD  griglia 16x16 = valori 0x00-0xFF   grandezza = frequenza   00 e FF fuori scala";
+        case ViewMode::STRINGS:
+            return "";          // dipende dai risultati: stringsLegend()
         case ViewMode::ONETUPLE:
             return "ONE TUPLE  X = valore del byte   Y = tratto del file (256 righe)   luminosita' = frequenza nella riga";
     }
@@ -33,6 +35,7 @@ void Visualizer::drawLegend() {
     std::string s = legendFor(m_mode);
     if (m_mode == ViewMode::METRICMAP && m_colorMode == ColorMode::BYTE_CLASS)
         s = "METRIC MAP  grigio=zero  verde=controllo  blu=testo  rosso=alti  bianco=0xFF";
+    if (m_mode == ViewMode::STRINGS) s = stringsLegend();
     int room = (CANVAS_W + SCROLLBAR_V_W - 12) / 8;
     DrawString(CANVAS_X + 6, LEGEND_Y + 4, s.substr(0, room), COL_TEXT());
 }

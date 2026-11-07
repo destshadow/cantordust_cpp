@@ -3,6 +3,10 @@
 
 // Viste 2D: dove sta il contenuto sullo schermo, zoom e scorrimento.
 
+bool Visualizer::hasCanvas() const {
+    return m_mode != ViewMode::TRIGRAPH3D && m_mode != ViewMode::STRINGS;
+}
+
 void Visualizer::viewArea(int& x, int& y, int& w, int& h) const {
     x = CANVAS_X;  y = CANVAS_Y;  w = CANVAS_W;  h = CANVAS_H;
     if (m_mode == ViewMode::RAWPIXELS) h -= RAW_PANEL_H;
@@ -41,7 +45,7 @@ void Visualizer::canvasTransform(float& drawX, float& drawY,
 }
 
 void Visualizer::handle2DInput() {
-    if (m_mode == ViewMode::TRIGRAPH3D) return;
+    if (!hasCanvas()) return;
 
     int mx = GetMouseX();
     int my = GetMouseY();

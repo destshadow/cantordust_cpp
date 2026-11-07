@@ -37,6 +37,13 @@ struct RangeSel {
         hi = lo + s;
     }
 
+    // Se v e' fuori dalla selezione la porta li' attorno, tenendo la dimensione
+    void reveal(size_t v) {
+        if (v >= lo && v < hi) return;
+        const size_t half = size() / 2;
+        slideTo(v > half ? v - half : 0);
+    }
+
     // Allarga o restringe tenendo fermo il byte `center`
     void zoomAround(size_t center, double factor) {
         size_t oldSize = size();

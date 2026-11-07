@@ -9,7 +9,8 @@
 // il motore ha in coda per quel frame. Si applica all'inizio del frame dopo.
 
 bool Visualizer::hasOptions() const {
-    return m_mode == ViewMode::RAWPIXELS || m_mode == ViewMode::METRICMAP;
+    return m_mode == ViewMode::RAWPIXELS || m_mode == ViewMode::METRICMAP ||
+           m_mode == ViewMode::STRINGS;
 }
 
 void Visualizer::setBpp(BppMode m) {
@@ -54,6 +55,7 @@ void Visualizer::handleOptionKeys() {
         if (GetKey(olc::Key::OEM_4).bPressed) setBpp((BppMode)(((int)m_bppMode + 4) % 5));
         if (GetKey(olc::Key::OEM_6).bPressed) setBpp((BppMode)(((int)m_bppMode + 1) % 5));
     }
+    if (m_mode == ViewMode::STRINGS) handleStringKeys();
     if (m_mode == ViewMode::METRICMAP) {
         if (GetKey(olc::Key::C).bPressed)
             setColorMode(MetricMap::nextColorMode(m_colorMode, m_classifier.isReady()));
@@ -113,4 +115,5 @@ void Visualizer::drawMetricOptions(bool clickable) {
 void Visualizer::drawOptions(bool clickable) {
     if (m_mode == ViewMode::RAWPIXELS)      drawRawOptions(clickable);
     else if (m_mode == ViewMode::METRICMAP) drawMetricOptions(clickable);
+    else if (m_mode == ViewMode::STRINGS)   drawStringOptions(clickable);
 }

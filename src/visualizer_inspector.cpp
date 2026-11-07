@@ -32,6 +32,12 @@ void Visualizer::drawInspector() {
     size_t point = pointUnderMouse(over, cx, cy);
     if (point < m_reader.getSize()) { inspectPoint(pw, point); return; }
 
+    if (isStringsView()) {
+        const size_t hover = m_stringList.hover;
+        const size_t row = hover != ListState::NONE ? hover : m_stringList.state.selected;
+        if (const StringScan::Hit* s = stringAtRow(row)) { inspectString(pw, *s); return; }
+    }
+
     if (over && w.len > 0 &&
         (m_mode == ViewMode::DOTPLOT || m_mode == ViewMode::ENTROPY)) {
         inspectRange(pw, cx, cy);
@@ -73,7 +79,7 @@ Visualizer::InspectWindow Visualizer::inspectWindow() const {
 
 // Coordinate (pixel del contenuto) sotto il mouse; false se fuori
 bool Visualizer::mouseToContent(int mx, int my, int& cx, int& cy) const {
-    if (m_mode == ViewMode::TRIGRAPH3D) return false;
+    if (!hasCanvas()) return false;
     int ax, ay, aw, ah, cw, ch;
     viewArea(ax, ay, aw, ah);
     contentSize(cw, ch);

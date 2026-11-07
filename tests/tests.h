@@ -21,6 +21,8 @@
 #include "line_clip.h"
 #include "view_tabs.h"
 #include "byte_cloud.h"
+#include "string_scan.h"
+#include "list_state.h"
 #include <string>
 #include <cmath>
 #include <algorithm>
@@ -39,6 +41,7 @@ void testParser();
 void testRaw();
 void testAutocorr();
 void testBytes();
+void testStrings();
 void testMetricMap();
 void testNavigation();
 void test3D();

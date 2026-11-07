@@ -38,6 +38,7 @@ public:
     void setMarks(std::vector<bool> fileRows, std::vector<bool> zoneRows);
     void clearMarks();
     void setCursor(size_t offset) { m_cursor = offset; }   // SIZE_MAX = nessuno
+    void goTo(size_t offset);    // sposta le selezioni solo se e' fuori
 
     int  hoveredSection() const { return m_hoverSec; }   // -1 = nessuna
     // Byte sotto il mouse, se e' sopra una delle due barre
