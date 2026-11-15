@@ -16,16 +16,14 @@ inline uint32_t sampleHash(uint32_t key) { return (key * 2654435761u) >> 16; }
 
 void Renderer3D::rasterize(const std::vector<Point3D>& points, uint32_t sample,
                            const std::vector<bool>* highlight, olc::Pixel tint) {
-    float coord[256];
-    for (int i = 0; i < 256; i++) coord[i] = Camera3D::coord(i);
-
     const Mat3 mat = m_cam.rotation();
     const Camera3D::Viewport view{0, 0, m_vp.w, m_vp.h};   // coordinate del fotogramma
     m_frame.clear();
 
     for (const Point3D& p : points) {
         if (sampleHash(p.key) >= sample) continue;
-        Camera3D::Vec v = m_cam.toCamera(mat, coord[p.b0()], coord[p.b1()], coord[p.b2()]);
+        const Camera3D::Vec w = m_map.at(m_coords, p.b0(), p.b1(), p.b2());
+        Camera3D::Vec v = m_cam.toCamera(mat, w.x, w.y, w.z);
         float sx, sy;
         if (!m_cam.toScreen(v, view, sx, sy)) continue;
         if (sx < 0.0f || sy < 0.0f || sx >= (float)m_vp.w || sy >= (float)m_vp.h) continue;

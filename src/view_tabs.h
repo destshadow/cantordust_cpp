@@ -2,25 +2,28 @@
 #include "view_mode.h"
 #include <cstring>
 
-// Le tab, nell'ordine dei tasti 1-9, poi 0
+// Le tab, ognuna con il suo tasto: una cifra o una lettera maiuscola.
+// Un carattere e non un olc::Key, cosi' questo file non dipende dal motore.
 struct ViewTab {
     const char* label;
     ViewMode    mode;
+    char        key;
 };
 
 inline constexpr ViewTab VIEW_TABS[] = {
-    {"1 Digraph",     ViewMode::DIGRAPH   },
-    {"2 Dot Plot",    ViewMode::DOTPLOT   },
-    {"3 Entropia",    ViewMode::ENTROPY   },
-    {"4 Istogramma",  ViewMode::HISTOGRAM },
-    {"5 3D",          ViewMode::TRIGRAPH3D},
-    {"6 Raw",         ViewMode::RAWPIXELS },
-    {"7 Metric Map",  ViewMode::METRICMAP },
-    {"8 Byte Cloud",  ViewMode::BYTECLOUD },
-    {"9 One Tuple",   ViewMode::ONETUPLE  },
-    {"0 Stringhe",    ViewMode::STRINGS   },
+    {"1 Digraph",     ViewMode::DIGRAPH,    '1'},
+    {"2 Dot Plot",    ViewMode::DOTPLOT,    '2'},
+    {"3 Entropia",    ViewMode::ENTROPY,    '3'},
+    {"4 Istogramma",  ViewMode::HISTOGRAM,  '4'},
+    {"5 3D",          ViewMode::TRIGRAPH3D, '5'},
+    {"6 Raw",         ViewMode::RAWPIXELS,  '6'},
+    {"7 Metric Map",  ViewMode::METRICMAP,  '7'},
+    {"8 Byte Cloud",  ViewMode::BYTECLOUD,  '8'},
+    {"9 One Tuple",   ViewMode::ONETUPLE,   '9'},
+    {"0 Stringhe",    ViewMode::STRINGS,    '0'},
+    {"H Hex",         ViewMode::HEX,        'H'},
 };
-inline constexpr int VIEW_TAB_COUNT = 10;
+inline constexpr int VIEW_TAB_COUNT = 11;
 
 // Ogni tab e' larga quanto il suo testo, cosi' ci stanno piu' viste
 inline constexpr int TAB_PAD = 10;     // pixel ai lati del testo

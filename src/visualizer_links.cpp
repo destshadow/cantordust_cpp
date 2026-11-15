@@ -59,6 +59,7 @@ void Visualizer::updateLinks(float dt) {
         m_pick.clear();
         m_cursorOffset = SIZE_MAX;
         m_stringList.state.selected = ListState::NONE;
+        m_hexList.state.selected = ListState::NONE;
     }
 
     uint8_t pat[3] = {0, 0, 0};

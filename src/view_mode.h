@@ -18,5 +18,6 @@ enum class ViewMode {
     METRICMAP  = 6,
     BYTECLOUD  = 7,
     ONETUPLE   = 8,
-    STRINGS    = 9
+    STRINGS    = 9,
+    HEX        = 10
 };

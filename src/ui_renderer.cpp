@@ -121,7 +121,8 @@ void UIRenderer::draw3DOverlay(olc::PixelGameEngine* pge) {
     row("Tasto dx: sposta");
     row("WASD: muovi  QE: su/giu'");
     row("Rotella: zoom  R: reset");
-    row("C: colore  Click: dove");
+    row("C: colore  F: forma");
+    row("Click: dove compare");
 }
 
 void UIRenderer::drawInputOverlay(olc::PixelGameEngine* pge,

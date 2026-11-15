@@ -51,8 +51,10 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
   viste all'inizio del frame. Il thread non tocca mai cio' che si disegna. Si
   calcola solo la vista attiva.
 - **Viste**: 1 Digraph, 2 Dot Plot, 3 Entropia, 4 Istogramma, 5 3D, 6 Raw,
-  7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe. Le tab sono in
-  `view_tabs.h`, larghe quanto il testo.
+  7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex. Le tab sono in
+  `view_tabs.h`, larghe quanto il testo, ognuna con il suo tasto.
+- **3D**: i punti si dispongono a cubo, cilindro o sfera (`coord_system.h`,
+  tasto `F`); cambia solo la posizione, non i dati.
 - **Inspector** (`visualizer_inspector*.cpp`): spiega cio' che sta sotto il
   mouse; senza nulla sotto mostra il riassunto, con l'elenco delle firme.
 - **Collegamenti**: sezione → vista (`visualizer_highlight.cpp`), valore → file
@@ -77,8 +79,9 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
 6. `Makefile`: il `.cpp` in `SRC` e, se serve ai test, in `TEST_SRC`.
 7. `COMANDI.txt`, `TODO.md`.
 
-I tasti 1-9 e 0 sono finiti: la prossima tab non avra' un numero. Oltre le 12
-tab circa serve la voce "Altro ▾" decisa con l'utente (vedi TODO).
+Le cifre sono finite: le tab nuove usano una lettera (Hex = `H`). Le tab
+arrivano a x=1020 su 1210 disponibili: ce ne stanno ancora una o due, poi
+serve la voce "Altro ▾" decisa con l'utente (vedi TODO).
 
 ## Trappole gia' incontrate
 
@@ -97,8 +100,11 @@ tab circa serve la voce "Altro ▾" decisa con l'utente (vedi TODO).
 - **Offset relativi**: i risultati di una vista sono relativi alla finestra su
   cui sono stati calcolati. `ViewResults::windowStart` li accompagna; non
   usare `m_navigator.getStart()` per interpretarli, puo' essere gia' cambiato.
-- **Tasti liberi**: occupati O S B Home Esc N, 1-9 0, e per vista A F C V L T
-  `[ ] , .`, nel 3D W A S D Q E R C. Controllare prima di assegnarne uno.
+- **Tasti**: occupati O S B H N Home Esc, 1-9 0, e per vista A F C V L T
+  `[ ] , .`, nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
+  una lettera usata dal 3D (W A S D Q E R C F) non puo' diventare globale.
+- **`view_tabs.h` non deve includere olcPGE**: lo usano i test, che non
+  collegano il motore. Per questo il tasto di una tab e' un `char`.
 
 ## Come si verifica (da fare prima di dire "funziona")
 
@@ -135,34 +141,81 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 
 ## Stato al 2026-11-15
 
-Ultimo commit su `origin/main`: `f8d384c` (vista Stringhe). **Non committato**,
-provato (test, ASan/UBSan su 6 file, prove a mano) ma non ancora visto
-dall'utente:
-
-- Firme: `signatures.*`, `signature_checks.*`, `visualizer_signatures.cpp`,
-  `tests/test_signatures.cpp`, tacche in `nav_bars_draw.cpp`.
-- Cursore visibile in Raw e Metric Map: `visualizer_cursor.cpp`,
-  `RawPixels::pixelOf`, `MetricMap::pixelOf`; un'occorrenza scelta resta come
-  cursore quando si cambia vista.
-- `tools/` (xsend, shots, cmp), questo file, `.gitignore` (zip e 7z),
-  `TODO.md`, `COMANDI.txt`.
+Tutto cio' che segue e' su `origin/main`: Stringhe, Firme, cursore in Raw e
+Metric Map, vista Hex, 3D a cubo/cilindro/sfera, questo file, `tools/`.
+L'utente ha provato e approvato Hex e le forme del 3D. Controllare con
+`git status` se c'e' lavoro non committato.
 
 Nella radice c'e' `_cantor.dust_.7z.zip`: la demo originale del 2012
 (Windows, .NET/XNA, solo vista 3D, senza sorgenti). **Non va su git**; serve
 come spunto. Sul desktop Windows dell'utente c'e' il collegamento
 "CantorDust++ (WSL)" a questa cartella: la copia e' una sola, dentro WSL.
 
-## Prossimi passi concordati
+Ricerca sulle viste dell'originale che conosciamo solo di nome: non esiste
+documentazione pubblica (dettagli e ipotesi in `TODO.md`). Non inventarle
+spacciandole per fedeli all'originale.
+
+## Prossimi passi
 
 In ordine (dettagli in `TODO.md`, "Piano del 2026-11-07"):
 
-1. **Hex View** — nuova, dall'originale; riusa `list_view.h`.
-2. **3D in coordinate sferiche e cilindriche** — dall'originale (tasto `F`
-   la'; da noi `F` e' libero nel 3D).
-3. **Spettrogramma** — FFT scritta a mano; provarla su un WAV e su record noti.
-4. **Panoramica** — righe di indicatori lungo il file; usa entropia, testo,
+1. **Spettrogramma** — FFT scritta a mano; provarla su un WAV e su record noti.
+2. **Panoramica** — righe di indicatori lungo il file; usa entropia, testo,
    zeri, periodicita', firme.
-5. **Profilo record**.
+3. **Profilo record**.
+4. *(proposta, da confermare con l'utente)* **Somiglianza**: il vero dot plot.
+
+## Ricerca sul profilo di Christopher Domas (2026-11-15)
+
+Fonti primarie controllate:
+
+- <https://github.com/xoreaxeaxeax?tab=repositories>
+- <https://github.com/xoreaxeaxeax/..cantor.dust..>
+- <https://github.com/xoreaxeaxeax/hexcymatix>
+- <https://github.com/xoreaxeaxeax/hexcymatix/blob/main/hexcymatix.py>
+
+Fatti verificati:
+
+- Il repository storico `xoreaxeaxeax/..cantor.dust..` esiste, ma GitHub lo
+  dichiara vuoto: non contiene il sorgente originale.
+- Nel 2026 Domas ha pubblicato `hexcymatix`, ricerca esplorativa per trovare
+  struttura e relazioni attraverso sottostringhe di byte ripetute, senza
+  conoscere il formato.
+- `hexcymatix` confronta il file con copie traslate di se stesso. Per ogni
+  distanza positiva `shift` calcola, concettualmente,
+  `diff[j] = data[j] - data[j + shift]`: le corse di zeri sono frammenti
+  identici in due offset. Esamina quindi le diagonali di una matrice di
+  autosomiglianza senza costruire la meta' simmetrica.
+- Conserva ripetizioni superiori a 8 byte, fonde risultati sovrapposti e
+  collega le coppie di intervalli con corde e archi, in layout lineare o
+  circolare.
+- L'algoritmo pubblicato e' quadratico. Lo stesso autore dice che il caso
+  d'uso si e' rivelato stretto e non e' diventato uno strumento realmente
+  usabile: e' una fonte concettuale, non codice da trasporre alla lettera.
+- L'avatar GitHub e' una nuvola Cantor.Dust in coordinate sferiche. I punti
+  occupano il volume interno, con strutture radiali e guide circolari: e'
+  coerente con `byte1/byte2 = angoli`, `byte3 = raggio`, non con punti tutti
+  sulla superficie. Non fornisce formule e non chiarisce Moire/Adjacency.
+
+Conseguenza proposta, ancora da discutere con l'utente:
+
+- La futura vista **Somiglianza** ha ora un precedente diretto dello stesso
+  autore. Potrebbe avere due rappresentazioni complementari:
+  1. matrice posizione x posizione campionata, per il quadro generale; le
+     diagonali parallele mostrano ripetizioni;
+  2. esploratore di frammenti esatti, limitato alla finestra selezionata, con
+     archi fra le occorrenze.
+- Per CantorDust++ non usare la scansione O(n^2) ingenua su file grandi. Una
+  possibile versione scalabile usa n-gram da 8/16 byte come semi, hash degli
+  offset, esclusione dei semi troppo comuni, estensione dei match, fusione e
+  un tetto ai risultati migliori.
+- Non e' provato che `hexcymatix` corrisponda alla vecchia **Residue Contact
+  Map**. Rafforza l'idea di autosomiglianza, ma non va presentato come
+  ricostruzione fedele.
+- Nessuna nuova evidenza per le altre viste misteriose. Restano inferenze:
+  Adjacency Graph = grafo pesato delle transizioni; Adjacency Bin = matrice
+  delle transizioni; Sliding Histogram = molto vicino a One Tuple; Moire =
+  ignoto.
 
 ## Punti deboli noti e come affrontarli
 

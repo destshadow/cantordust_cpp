@@ -41,6 +41,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     if (!typing) {
         if (m_mode == ViewMode::TRIGRAPH3D) handle3DInput(fElapsedTime);
         else if (!busy && isStringsView())  handleStringsInput();
+        else if (!busy && isHexView())      handleHexInput();
         else if (!busy)                     handle2DInput();
     }
 
@@ -58,6 +59,7 @@ void Visualizer::handleAction(Action action) {
             m_mode     = m_input.getRequestedView();
             // L'occorrenza scelta resta come cursore nella vista nuova
             if (m_pick.active()) m_cursorOffset = m_pick.target;
+            m_hexStart = m_hexEnd = SIZE_MAX;   // rientrando, il cursore torna in vista
             m_pick.clear();     // ogni vista ha i suoi valori
             m_dragging = false;
             m_panning  = false;
@@ -135,6 +137,8 @@ void Visualizer::drawFrame(float fElapsedTime, bool busy) {
         draw3D(fElapsedTime);
     } else if (isStringsView()) {
         drawStrings();
+    } else if (isHexView()) {
+        drawHex();
     } else {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna

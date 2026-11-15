@@ -11,6 +11,12 @@ Action InputHandler::update(olc::PixelGameEngine* pge,
         return handleNormalKeys(pge);
 }
 
+// Il tasto di una tab: una cifra o una lettera maiuscola
+static olc::Key tabKey(char c) {
+    if (c >= '0' && c <= '9') return (olc::Key)((int)olc::Key::K0 + (c - '0'));
+    return (olc::Key)((int)olc::Key::A + (c - 'A'));
+}
+
 Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     // --- Click sulle tab ---
     if (pge->GetMouse(0).bPressed && pge->GetMouseY() < TOPBAR_H) {
@@ -26,9 +32,9 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     if (!pge->GetMouse(0).bPressed)
         m_lastClickWasTab = false;
 
-    // --- Tasti 1-9, poi 0 ---
+    // --- Il tasto di ogni tab ---
     for (int i = 0; i < VIEW_TAB_COUNT; i++)
-        if (pge->GetKey((olc::Key)((int)olc::Key::K0 + (i + 1) % 10)).bPressed) {
+        if (pge->GetKey(tabKey(VIEW_TABS[i].key)).bPressed) {
             m_requestedView = VIEW_TABS[i].mode;
             return Action::SWITCH_VIEW;
         }

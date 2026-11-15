@@ -110,6 +110,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_strings.clear();
     rebuildStringRows();
     m_cursorOffset = SIZE_MAX;
+    m_hexStart = m_hexEnd = SIZE_MAX;
     m_marked.clear();
     m_markWanted.clear();
     m_bars.clearMarks();

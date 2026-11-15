@@ -10,7 +10,7 @@
 
 bool Visualizer::hasOptions() const {
     return m_mode == ViewMode::RAWPIXELS || m_mode == ViewMode::METRICMAP ||
-           m_mode == ViewMode::STRINGS;
+           m_mode == ViewMode::STRINGS || m_mode == ViewMode::TRIGRAPH3D;
 }
 
 void Visualizer::setBpp(BppMode m) {
@@ -40,6 +40,21 @@ void Visualizer::setColorMode(ColorMode m) {
 void Visualizer::setCurveMode(CurveMode m) {
     m_curveMode = m;
     recomputeWindow();
+}
+
+void Visualizer::setCoordSystem(CoordSystem s) {
+    m_renderer3d.setCoords(s);
+    m_status = std::string("Forma: ") + coordSystemName(s);
+}
+
+void Visualizer::draw3DOptions(bool clickable) {
+    OptionBar bar(this, 6, CMD_STATUS_Y + 1, clickable);
+    bar.title("Forma [F]:");
+    for (int i = 0; i < 3; i++) {
+        const CoordSystem s = (CoordSystem)i;
+        if (bar.option(coordSystemName(s), m_renderer3d.coords() == s))
+            m_pendingOption = [this, s] { setCoordSystem(s); };
+    }
 }
 
 void Visualizer::applyPendingOption() {
@@ -116,4 +131,5 @@ void Visualizer::drawOptions(bool clickable) {
     if (m_mode == ViewMode::RAWPIXELS)      drawRawOptions(clickable);
     else if (m_mode == ViewMode::METRICMAP) drawMetricOptions(clickable);
     else if (m_mode == ViewMode::STRINGS)   drawStringOptions(clickable);
+    else if (m_mode == ViewMode::TRIGRAPH3D) draw3DOptions(clickable);
 }

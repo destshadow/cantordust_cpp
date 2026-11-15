@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include "camera3d.h"
+#include "coord_system.h"
 #include "cloud_frame.h"
 #include "trigraph.h"
 #include <olcPixelGameEngine.h>
@@ -20,8 +21,13 @@ public:
     // Da chiamare quando cambiano i punti, i colori o l'evidenziazione
     void invalidate() { m_dirty = true; }
 
-    // Cubo, assi e nomi (renderer3d_cube.cpp), sopra la nuvola
+    // Cubo, assi e nomi (renderer3d_cube.cpp), sopra la nuvola; con le altre
+    // forme, le loro guide (renderer3d_guides.cpp)
     void drawCube(olc::PixelGameEngine* pge) const;
+
+    // La forma in cui si dispongono i punti
+    CoordSystem coords() const { return m_coords; }
+    void setCoords(CoordSystem s) { m_coords = s; m_dirty = true; }
     // Cerchio attorno a una tripla; se e' fuori vista non disegna nulla
     void drawMarker(olc::PixelGameEngine* pge, uint32_t key,
                     int radius, olc::Pixel col) const;
@@ -40,6 +46,10 @@ private:
     void rasterize(const std::vector<Point3D>& points, uint32_t sample,
                    const std::vector<bool>* highlight, olc::Pixel tint);
 
+    void drawGuides(olc::PixelGameEngine* pge) const;
+
+    CoordSystem        m_coords = CoordSystem::CUBE;
+    CoordMap           m_map;
     Camera3D           m_cam;
     Camera3D::Viewport m_vp{0, 0, 0, 0};
     CloudFrame         m_frame;

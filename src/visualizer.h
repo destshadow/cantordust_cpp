@@ -92,6 +92,12 @@ private:
     void goToOffset(size_t offset);
     bool cursorPixel(int& cx, int& cy) const;
     void drawCursorMarker();
+    // Vista Hex (visualizer_hex.cpp)
+    bool   isHexView() const;
+    void   syncHexList();
+    size_t hexOffsetUnderMouse() const;
+    void   handleHexInput();
+    void   drawHex();
     // Firme (visualizer_signatures.cpp)
     void scanSignatures();
     void handleSignatureKeys();
@@ -137,6 +143,8 @@ private:
     void drawOptions(bool clickable);
     void drawRawOptions(bool clickable);
     void drawMetricOptions(bool clickable);
+    void draw3DOptions(bool clickable);
+    void setCoordSystem(CoordSystem s);
     void setBpp(BppMode m);
     void setRawFilter(RawFilter f);
     void applySuggestedWidth();
@@ -163,6 +171,8 @@ private:
     size_t           m_stringBase = 0;   // dove inizia la finestra di m_strings
     std::vector<uint32_t> m_stringRows;  // le righe dopo i filtri
     ListView         m_stringList;
+    ListView         m_hexList;          // vista Hex: una riga = 16 byte
+    size_t           m_hexStart = SIZE_MAX, m_hexEnd = SIZE_MAX;
     int              m_stringMin = 6;
     StringScan::Tag  m_stringTag = StringScan::Tag::NONE;
     ClassifierModel  m_classifier;

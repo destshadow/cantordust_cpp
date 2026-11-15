@@ -20,6 +20,7 @@ SRC = src/main.cpp \
       src/trigraph.cpp \
       src/renderer3d.cpp \
       src/renderer3d_cube.cpp \
+      src/renderer3d_guides.cpp \
       src/cloud_frame.cpp \
       src/cloud_color.cpp \
       src/visualizer_3d_draw.cpp \
@@ -49,6 +50,7 @@ SRC = src/main.cpp \
       src/signature_checks.cpp \
       src/visualizer_signatures.cpp \
       src/visualizer_cursor.cpp \
+      src/visualizer_hex.cpp \
       src/string_tag.cpp \
       src/visualizer_strings.cpp \
       src/visualizer_inspector_string.cpp \

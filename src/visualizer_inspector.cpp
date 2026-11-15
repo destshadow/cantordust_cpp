@@ -59,6 +59,11 @@ size_t Visualizer::pointUnderMouse(bool over, int cx, int cy) const {
     size_t barOff = 0;
     if (m_bars.hoverOffset(GetMouseX(), GetMouseY(), barOff))
         return barOff;     // mouse su una barra: il byte sotto il mouse
+    if (isHexView()) {
+        const size_t off = hexOffsetUnderMouse();
+        if (off != SIZE_MAX) return off;
+        if (m_cursorOffset >= w.start && m_cursorOffset < w.end) return m_cursorOffset;
+    }
     if (over && m_mode == ViewMode::RAWPIXELS) {
         size_t rel = m_rawpixels.byteOffsetAt(cx, cy);
         if (rel != SIZE_MAX) return w.start + rel;

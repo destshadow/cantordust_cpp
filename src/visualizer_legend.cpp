@@ -13,13 +13,15 @@ static const char* legendFor(ViewMode m) {
         case ViewMode::HISTOGRAM:
             return "ISTOGRAMMA  X = valore del byte 0x00-0xFF   altezza = frequenza (log)";
         case ViewMode::TRIGRAPH3D:
-            return "3D  punto = 3 byte consecutivi   luce = densita'   C = colore   click = dove compare";
+            return "3D  punto = 3 byte consecutivi   luce = densita'   click = dove compare";
         case ViewMode::RAWPIXELS:
             return "RAW  i byte come pixel, riga per riga   bpp: [ ]   larghezza: , .   filtro: F";
         case ViewMode::METRICMAP:
             return "METRIC MAP  curva: byte vicini nel file = pixel vicini   colore: C   curva: V";
         case ViewMode::BYTECLOUD:
             return "BYTE CLOUD  griglia 16x16 = valori 0x00-0xFF   grandezza = frequenza   00 e FF fuori scala";
+        case ViewMode::HEX:
+            return "HEX  16 byte per riga   colore = tipo di byte   click = cursore   frecce, PagSu/PagGiu";
         case ViewMode::STRINGS:
             return "";          // dipende dai risultati: stringsLegend()
         case ViewMode::ONETUPLE:

@@ -271,11 +271,27 @@ Annotazioni, a parte dall'ordine:
 Dalla demo originale del 2012 (`_cantor.dust_.7z.zip`, non su git; il suo file
 di prova e' in `dataset/visual_re.example`). Viste dell'originale che ci
 mancano, dai nomi trovati nel programma:
-- [ ] **Hex View**: costa poco, `list_view.h` esiste gia'.
-- [ ] **3D in coordinate sferiche e cilindriche** (tasto `F` nell'originale):
-      cambia solo dove finisce ogni punto.
-- [ ] Solo il nome, aspetto ignoto: Adjacency Graph, Adjacency Bin, Moire,
-      Sliding Histogram, Residue Contact Map, Locality Translation.
+- [x] **Hex View** (tasto `H`; `hex_layout.h`, `visualizer_hex.cpp`).
+- [x] **3D a cubo, cilindro e sfera** (tasto `F`, come nell'originale;
+      `coord_system.h`, `renderer3d_guides.cpp`). Formule da Veles
+      (codilime/veles, `trigram/coords.glsl`); le slide di Domas (REcon 2013)
+      confermano "Tuple systems / Coordinate Systems" ma non danno formule.
+- Ricerca del 2026-11-15 sulle altre viste dell'originale (Adjacency Graph,
+  Adjacency Bin, Moire, Sliding Histogram, Residue Contact Map, Locality
+  Translation): **nessuna descrizione pubblica**. Il sorgente del 2012 non e'
+  mai uscito, le slide non le nominano, il plugin Ghidra di Battelle ha solo
+  le viste che abbiamo gia'. Cio' che segue sono ipotesi dal nome:
+  - Locality Translation = la curva di Hilbert (c'e' gia', Metric Map)
+  - Sliding Histogram = istogramma per tratto (c'e' gia', One Tuple)
+  - Residue Contact Map = matrice di somiglianza del file con se stesso
+  - Adjacency Graph = grafo "byte seguito da byte" (l'immagine di esempio
+    `example_arbitrary_instruction_sets.png` sembra un grafo a molle)
+  - Moire: ignoto
+- [ ] *(proposta)* **Somiglianza** (il vero "dot plot" di Conti e Kaminsky):
+      pixel (i, j) acceso se il tratto i del file somiglia al tratto j. Le
+      diagonali sono ripetizioni, i quadrati zone omogenee. Documentato in
+      Conti & Dean, Black Hat 2008. Nota: il nostro "2 Dot Plot" e' un'altra
+      cosa (X = posizione, Y = valore).
 
 Da valutare dopo:
 - [ ] Un tipo comune per stringhe e firme, solo quando ci sono entrambe e si

@@ -22,7 +22,7 @@ AREE DELLA FINESTRA (1280x800)
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
-  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9 e 0.
+  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0 e H.
 
   NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
 
@@ -96,6 +96,10 @@ VISTE
   0  Stringhe     il testo nella finestra (ASCII e UTF-16), con click per
                    vedere dove sta nel file. L = lunghezza minima, T = tipo
                    (URL, IP, percorsi), frecce e PagSu/PagGiu = scorre, Esc = annulla
+
+  H  Hex          i byte della finestra, 16 per riga, colorati per tipo.
+                  Click = cursore, frecce e PagSu/PagGiu = scorre. Il cursore
+                  scelto in un'altra vista qui e' gia' in vista.
 
 FIRME (file dentro al file)
   Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,

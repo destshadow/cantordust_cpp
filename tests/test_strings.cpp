@@ -94,6 +94,42 @@ void testStrings() {
         assert(Scan::classify("") == Tag::NONE);
     }
 
+    // --- HexLayout: dal pixel al byte, parte hex e parte testo ---
+    {
+        using namespace HexLayout;
+        assert(rowCount(0) == 0 && rowCount(1) == 1 && rowCount(16) == 1 && rowCount(17) == 2);
+        for (int i = 0; i < PER_ROW; i++) {
+            assert(byteAtX(hexCol(i) * CHAR_W) == i);
+            assert(byteAtX(hexCol(i) * CHAR_W + 2 * CHAR_W - 1) == i);
+            assert(byteAtX(textCol(i) * CHAR_W + 3) == i);
+        }
+        assert(byteAtX(-5) == -1);
+        assert(byteAtX(0) == -1);                          // sull'offset
+        assert(byteAtX((hexCol(0) + 2) * CHAR_W) == -1);   // lo spazio tra due byte
+        assert(byteAtX(COLS * CHAR_W) == -1);              // oltre il testo
+    }
+
+    // --- Forme del 3D: i punti restano dentro la guida ---
+    {
+        CoordMap map;
+        for (int b0 : {0, 77, 255})
+            for (int b1 : {0, 128, 255})
+                for (int b2 : {0, 31, 255}) {
+                    const auto c = map.at(CoordSystem::CUBE, b0, b1, b2);
+                    assert(c.x == Camera3D::coord(b0) && c.z == Camera3D::coord(b2));
+                    const auto y = map.at(CoordSystem::CYLINDER, b0, b1, b2);
+                    assert(y.x * y.x + y.y * y.y <= 1.0001f && std::fabs(y.z) <= 1.0f);
+                    const auto s = map.at(CoordSystem::SPHERE, b0, b1, b2);
+                    assert(s.x * s.x + s.y * s.y + s.z * s.z <= 1.0001f);
+                }
+        // Nel cilindro byte 2 e' la distanza dall'asse, byte 3 l'altezza
+        const auto a = map.at(CoordSystem::CYLINDER, 0, 255, 0);
+        assert(a.x * a.x + a.y * a.y > 0.99f && a.z == -1.0f);
+        // Nella sfera byte 3 e' la distanza dal centro
+        const auto n = map.at(CoordSystem::SPHERE, 10, 100, 0);
+        assert(n.x * n.x + n.y * n.y + n.z * n.z < 0.001f);
+    }
+
     // --- ListState: scelta e scorrimento restano sempre validi ---
     {
         ListState l;

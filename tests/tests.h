@@ -15,6 +15,7 @@
 #include "cloud_frame.h"
 #include "cloud_color.h"
 #include "camera3d.h"
+#include "coord_system.h"
 #include "dotplot.h"
 #include "entropy.h"
 #include "view_mode.h"
@@ -23,6 +24,7 @@
 #include "byte_cloud.h"
 #include "string_scan.h"
 #include "list_state.h"
+#include "hex_layout.h"
 #include "signatures.h"
 #include <string>
 #include <cmath>

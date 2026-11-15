@@ -26,6 +26,10 @@ void Visualizer::handle3DInput(float fElapsedTime) {
         m_status = std::string("Colore: ") + CloudColor::name(m_cloudColor);
     }
 
+    // F: cubo, cilindro, sfera (come nell'originale)
+    if (GetKey(olc::Key::F).bPressed)
+        setCoordSystem((CoordSystem)(((int)m_renderer3d.coords() + 1) % 3));
+
     // R: reset tutto
     if (GetKey(olc::Key::R).bPressed) {
         m_renderer3d.resetRotation();
