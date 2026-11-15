@@ -23,8 +23,23 @@ struct RangeSel {
             lo = hi - ms;
         }
     }
-    // I byte restano gli stessi: si limita solo ai nuovi confini
-    void setBounds(size_t a, size_t b) { min = a; max = b; clamp(); }
+    // I byte restano gli stessi: si limita solo ai nuovi confini. Se dentro i
+    // nuovi confini non ne resta nessuno, si prende tutto: tagliando si
+    // finirebbe su 16 byte in un angolo.
+    void setBounds(size_t a, size_t b) {
+        const bool apart = hi <= a || lo >= b;
+        min = a;  max = b;
+        if (apart) { lo = a; hi = b; }
+        clamp();
+    }
+    // I confini si sono spostati di `delta` byte: la selezione li segue,
+    // cosi' resta allo stesso punto dentro di loro
+    void follow(size_t a, size_t b, long long delta) {
+        min = a;  max = b;
+        lo = (size_t)((long long)lo + delta);
+        hi = (size_t)((long long)hi + delta);
+        clamp();
+    }
     void set(size_t a, size_t b)       { lo = a; hi = b; clamp(); }
 
     void setLo(size_t v) { lo = std::clamp(v, min, hi - std::min(minSize(), hi - min)); }
@@ -48,7 +63,10 @@ struct RangeSel {
     void zoomAround(size_t center, double factor) {
         size_t oldSize = size();
         if (oldSize == 0) return;
-        double t = (double)(std::clamp(center, lo, hi) - lo) / (double)oldSize;
+        // Col mouse fuori dalla selezione si usa il bordo piu' vicino:
+        // altrimenti la selezione salterebbe sotto il mouse
+        center = std::clamp(center, lo, hi);
+        double t = (double)(center - lo) / (double)oldSize;
         double want = std::clamp((double)oldSize * factor,
                                  (double)minSize(), (double)(max - min));
         size_t s = (size_t)want;

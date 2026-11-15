@@ -37,6 +37,29 @@ void testNavigation() {
         s.reveal(999);
         assert(s.lo == 900 && s.hi == 1000);
 
+        // I confini si spostano: dentro resta cio' che c'era, ma se non
+        // resta nulla si prende tutto (non 16 byte in un angolo)
+        s.set(100, 200);
+        s.setBounds(150, 400);
+        assert(s.lo == 150 && s.hi == 200);
+        s.setBounds(600, 800);
+        assert(s.lo == 600 && s.hi == 800);
+        s.setBounds(0, 1000);
+        // I confini scorrono: la selezione li segue
+        s.set(100, 200);
+        s.follow(300, 1300, 300);
+        assert(s.lo == 400 && s.hi == 500);
+        s.follow(0, 1000, -300);
+        assert(s.lo == 100 && s.hi == 200);
+
+        // Rotella col mouse fuori dalla selezione: non salta sotto il mouse
+        s.set(400, 600);
+        s.zoomAround(900, 0.5);
+        assert(s.hi == 600 && s.lo == 500);
+        s.set(400, 600);
+        s.zoomAround(0, 0.5);
+        assert(s.lo == 400 && s.hi == 500);
+
         s.set(400, 600);
         s.zoomAround(500, 0.5);            // il byte sotto il mouse resta fermo
         assert(s.lo == 450 && s.hi == 550);
@@ -48,8 +71,37 @@ void testNavigation() {
         s.set(100, 200);                   // ZONA dentro FILE: stessi byte...
         s.setBounds(150, 800);
         assert(s.lo == 150 && s.hi == 200);
-        s.setBounds(500, 800);             // ...e mai fuori dai confini
-        assert(s.lo == 500 && s.hi == 516);
+        s.setBounds(500, 800);             // ...ma se non ne resta nessuno, tutta
+        assert(s.lo == 500 && s.hi == 800);
+
+        // Qualunque sequenza di mosse lascia la selezione valida
+        std::mt19937_64 gen(3);
+        for (size_t total : {size_t(1), size_t(17), size_t(1000), size_t(1) << 40}) {
+            RangeSel macro, micro;
+            macro.min = 0; macro.max = total; macro.set(0, total);
+            micro.min = 0; micro.max = total; micro.set(0, total);
+            for (int step = 0; step < 20000; step++) {
+                const size_t v = gen() % (total + 1), oldLo = macro.lo, oldSize = macro.size();
+                RangeSel& t = gen() % 2 ? macro : micro;
+                switch (gen() % 6) {
+                    case 0: t.setLo(v); break;
+                    case 1: t.setHi(v); break;
+                    case 2: t.slideTo(v); break;
+                    case 3: t.zoomAround(v, gen() % 2 ? 0.8 : 1.25); break;
+                    case 4: t.reveal(v); break;
+                    case 5: t.set(v, gen() % (total + 1)); break;
+                }
+                if (macro.lo != oldLo && macro.size() == oldSize)
+                    micro.follow(macro.lo, macro.hi, (long long)macro.lo - (long long)oldLo);
+                else
+                    micro.setBounds(macro.lo, macro.hi);
+                for (const RangeSel* r : {&macro, &micro}) {
+                    assert(r->min <= r->lo && r->lo <= r->hi && r->hi <= r->max);
+                    assert(r->size() >= r->minSize());
+                }
+                assert(macro.max == total && micro.min == macro.lo && micro.max == macro.hi);
+            }
+        }
 
         for (size_t tiny : {0, 1, 5, 16}) {   // file piu' piccoli della selezione
             RangeSel t;

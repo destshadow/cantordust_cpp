@@ -122,7 +122,12 @@ make -j8 && make run FILE=...  # l'app
   `ASAN_OPTIONS=detect_leaks=0`.
 - **Thread**: `-fsanitize=thread`, avviato con `setarch x86_64 -R ./programma`
   (su questo kernel WSL altrimenti non parte).
-- **Tasti e click simulati**: `tools/xsend.c` (XTest). Compilarlo fuori dal
+- **Attenzione ai test con la finestra**: se i tasti simulati non arrivano
+  (la finestra non ha il focus) le schermate restano sulla vista 1 e il
+  confronto pixel da' differenze enormi e false. Prima di credere a una
+  regressione, guardare una schermata.
+- **Tasti e click simulati**: `tools/xsend.c` (XTest; anche `down x y` e `up`
+  per i trascinamenti). Compilarlo fuori dal
   repo: `gcc tools/xsend.c -o /tmp/xsend -lX11 -lXtst`. Uso:
   `xsend <id finestra> key 6 sleep 900 click 600 300 move 1100 700 wheel 4`.
   L'id si prende con `xwininfo -root -tree | grep -i cantordust`; la
@@ -144,12 +149,16 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 Su `origin/main` fino a `275c613`: Stringhe, Firme, cursore in Raw e Metric
 Map, vista Hex, 3D a cubo/cilindro/sfera, questo file, `tools/`.
 
-**Non committato**, provato (test, 0 warning, ASan/UBSan su 8 file, confronto
-pixel) ma non ancora visto dall'utente:
+**Non committato** rispetto a `19a34cc` (Somiglianza, `A` con i byte per
+pixel), provato ma non ancora visto dall'utente:
 
-- Somiglianza: `similarity.*`, `visualizer_inspector_similarity.cpp`; e' un
-  modo della vista 2 Dot Plot (`m_dotSimilarity`, tasto `T`), non una tab.
-- `A` nel Raw sceglie anche i byte per pixel: `pixel_guess.*`.
+- Barre: ZONA segue FILE quando la si trascina (`RangeSel::follow`), rotella
+  ancorata al bordo, `goTo` che tiene la dimensione, scrollbar della vista
+  con trascinamento vero (`m_scrollDrag`).
+- Cursore anche in Dot Plot, Entropia, One Tuple (linea); click nella
+  Somiglianza = cursore sul tratto Y.
+- `TODO.md` riscritto: viste di oggi, cose da fare in ordine, limiti, ricerca,
+  storico.
 
 Controllare con `git status` cosa e' ancora da committare.
 
@@ -164,12 +173,13 @@ spacciandole per fedeli all'originale.
 
 ## Prossimi passi
 
-In ordine (dettagli in `TODO.md`, "Piano del 2026-11-07"):
+In ordine (dettagli in `TODO.md`, "Da fare, in ordine"):
 
-1. **Spettrogramma** — FFT scritta a mano; provarla su un WAV e su record noti.
-2. **Panoramica** — righe di indicatori lungo il file; usa entropia, testo,
+1. **Panoramica** — righe di indicatori lungo il file; usa entropia, testo,
    zeri, periodicita', firme.
+2. **Spettrogramma** — FFT scritta a mano; provarla su un WAV e su record noti.
 3. **Profilo record**.
+4. **Versione nativa per Windows**.
 
 Proposte ancora da confermare con l'utente (vedi TODO, "L'ipotesi sono tutte
 operazioni su immagini"): filtro Raw "differenza con spostamento", test

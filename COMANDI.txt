@@ -101,6 +101,9 @@ VISTE
                   Click = cursore, frecce e PagSu/PagGiu = scorre. Il cursore
                   scelto in un'altra vista qui e' gia' in vista.
 
+HOME
+  File intero, zoom e scorrimento azzerati, camera del 3D al punto di partenza.
+
 SOMIGLIANZA (vista 2, tasto T)
   Il file confrontato con se stesso: X e Y sono posizioni, un pixel acceso
   vuol dire che i due tratti hanno sequenze in comune.

@@ -118,13 +118,15 @@ void testStrings() {
                     const auto c = map.at(CoordSystem::CUBE, b0, b1, b2);
                     assert(c.x == Camera3D::coord(b0) && c.z == Camera3D::coord(b2));
                     const auto y = map.at(CoordSystem::CYLINDER, b0, b1, b2);
-                    assert(y.x * y.x + y.y * y.y <= 1.0001f && std::fabs(y.z) <= 1.0f);
+                    const float ky = coordScale(CoordSystem::CYLINDER);
+                    assert(y.x * y.x + y.y * y.y <= ky * ky * 1.0001f && std::fabs(y.z) <= ky);
                     const auto s = map.at(CoordSystem::SPHERE, b0, b1, b2);
-                    assert(s.x * s.x + s.y * s.y + s.z * s.z <= 1.0001f);
+                    const float ks = coordScale(CoordSystem::SPHERE);
+                    assert(s.x * s.x + s.y * s.y + s.z * s.z <= ks * ks * 1.0001f);
                 }
         // Nel cilindro byte 2 e' la distanza dall'asse, byte 3 l'altezza
         const auto a = map.at(CoordSystem::CYLINDER, 0, 255, 0);
-        assert(a.x * a.x + a.y * a.y > 0.99f && a.z == -1.0f);
+        assert(a.x * a.x + a.y * a.y > 0.99f && a.z < -0.99f);
         // Nella sfera byte 3 e' la distanza dal centro
         const auto n = map.at(CoordSystem::SPHERE, 10, 100, 0);
         assert(n.x * n.x + n.y * n.y + n.z * n.z < 0.001f);

@@ -37,9 +37,15 @@ size_t NavBars::valueAtY(int bar, int my) const {
     return s.min + (size_t)(t * (double)(s.max - s.min));
 }
 
+// Se serve sposta FILE e poi ZONA, tenendo le loro dimensioni
 void NavBars::goTo(size_t offset) {
     m_macro.reveal(offset);
+    const size_t size = std::min(m_micro.size(), m_macro.size());
+    const bool inside = offset >= m_micro.lo && offset < m_micro.hi &&
+                        m_micro.lo >= m_macro.lo && m_micro.hi <= m_macro.hi;
     m_micro.setBounds(m_macro.lo, m_macro.hi);
+    if (inside) return;
+    m_micro.set(m_macro.lo, m_macro.lo + size);
     m_micro.reveal(offset);
 }
 
@@ -87,6 +93,7 @@ bool NavBars::update(olc::PixelGameEngine* pge) {
     int mx = m_mouseX = pge->GetMouseX();
     int my = m_mouseY = pge->GetMouseY();
     const size_t oldLo = m_micro.lo, oldHi = m_micro.hi;
+    const size_t oldMacroLo = m_macro.lo, oldMacroHi = m_macro.hi;
     const auto& lmb = pge->GetMouse(0);
 
     m_hoverSec = (m_drag == Drag::NONE) ? sectionAtY(mx, my) : -1;
@@ -131,9 +138,15 @@ bool NavBars::update(olc::PixelGameEngine* pge) {
     }
     if (pge->GetMouse(1).bPressed && barAt(mx, my) >= 0) toggleStrip();
 
-    // La selezione di ZONA resta sugli stessi byte, limitata alla nuova
-    // zona (riproporzionarla la farebbe saltare altrove)
-    m_micro.setBounds(m_macro.lo, m_macro.hi);
+    // FILE spostata senza cambiare dimensione: ZONA la segue, altrimenti
+    // trascinando si accorcerebbe fino a sparire. FILE allargata o ristretta:
+    // ZONA resta sugli stessi byte, limitata alla nuova zona
+    // (riproporzionarla la farebbe saltare altrove).
+    const bool moved = m_macro.lo != oldMacroLo &&
+                       m_macro.hi - m_macro.lo == oldMacroHi - oldMacroLo;
+    if (moved) m_micro.follow(m_macro.lo, m_macro.hi,
+                              (long long)m_macro.lo - (long long)oldMacroLo);
+    else       m_micro.setBounds(m_macro.lo, m_macro.hi);
 
     return m_micro.lo != oldLo || m_micro.hi != oldHi;
 }

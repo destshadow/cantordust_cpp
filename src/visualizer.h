@@ -92,6 +92,7 @@ private:
     void goToOffset(size_t offset);
     bool cursorPixel(int& cx, int& cy) const;
     void drawCursorMarker();
+    void updateSimilarityClick();
     // Vista Hex (visualizer_hex.cpp)
     bool   isHexView() const;
     void   syncHexList();
@@ -242,6 +243,8 @@ private:
     float m_zoom2d  = 1.0f;
     float m_scrollH = 0.0f;
     float m_scrollV = 0.0f;
+    enum class ScrollDrag { NONE, H, V };
+    ScrollDrag m_scrollDrag = ScrollDrag::NONE;
 
     // Barre di navigazione
     NavBars m_bars;

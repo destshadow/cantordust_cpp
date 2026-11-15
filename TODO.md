@@ -24,16 +24,20 @@ conoscenza di un formato puo' arricchire il risultato, mai essere necessaria.
    sotto il mouse. Parte generica per qualunque file (offset, hex+ASCII,
    tipo di byte, entropia locale); la sezione ELF/PE solo se nota.
    Cosa mostra dipende dalla vista:
-   - RAW, MetricMap: un pixel = un punto del file → offset, byte, sezione
-   - DotPlot, Entropy: un pixel = un tratto del file → range, sezione
+   - RAW, MetricMap, Hex: un pixel = un punto del file → offset, byte, sezione
+   - DotPlot, Entropy, OneTuple: un pixel = un tratto del file → range, sezione
+   - Somiglianza: un pixel = due tratti → cosa hanno in comune
    - Digraph, 3D, Histogram, ByteCloud: un pixel = un valore →
      quante volte compare e **dove** compare nel file
+   - Stringhe: una riga = un testo trovato → offset, sezione, byte attorno
 3. **Evidenziazione collegata** (brushing & linking):
    - *selezione → vista*: selezionando un range (sezione o tratto sulle
      barre) ogni vista mostra il contributo di quel range e attenua il
      resto (nel 3D/digraph: punti del range colorati, gli altri grigi)
    - *vista → file*: hover su un valore (coppia, tripla) → sulla barra
      del file compaiono i segni dove quel valore compare
+   - *cursore*: un punto scelto (stringa, firma, occorrenza, byte) resta
+     segnato sulle barre e in ogni vista che ha una posizione nel file
 4. **Sezioni = annotazioni sulle barre**, come bande colorate con il nome;
    niente più linee che tagliano la vista (al massimo attivabili con un
    tasto).
@@ -46,30 +50,217 @@ conoscenza di un formato puo' arricchire il risultato, mai essere necessaria.
    un file cresce si divide; la logica sta separata dalla grafica, così si
    può testare da sola (es. `range_sel.h` e `nav_bars.cpp`).
 
-Layout obiettivo:
+Layout (com'e' oggi):
 
 ```
-┌─bar1─┬─bar2─┬────────── vista ──────────┬── INSPECTOR ──────┐
-│▓.text│      │ X=byte i  Y=byte i+1      │ OFF  0x0004D373   │
-│▓     │ ▲    │ luminosità=frequenza      │ SEZ  .text        │
-│░.roda│ sel  │                           │ 48 89 E5 41 57 41 │
-│░     │ ▼    │                           │ H..AWA            │
-│▒.data│      │                           │ tipo: codice      │
-│      │      │                           │ entropia: 6.1/8   │
-│      │      │                           │──── sezioni ──────│
-│      │      │                           │ ■ .text   45%     │
-├──────┴──────┴───────────────────────────┤ ■ .rodata 20%     │
-│ controlli della vista (slider, bpp...)  │──── viste ────────│
-│ 0x121A5C - 0x16E238                     │ [1][2][3][4][5].. │
-└─────────────────────────────────────────┴───────────────────┘
+┌ 1 Digraph  2 Dot Plot  3 Entropia ... 0 Stringhe  H Hex ──── fps ┐
+├─sezioni─┬─FILE─┬─ZONA─┬─ legenda della vista ──┬── INSPECTOR ────┤
+│▓ .text  │      │ ▲    │                        │ OFFSET 0x0004D3 │
+│▓        │ ▲    │ sel  │        vista           │ SEZIONE .text   │
+│░ .rodata│ sel  │ ▼    │                        │ 48 89 E5 41 57  │
+│▒ .data  │ ▼    │      │                        │ ...             │
+├─────────┴──────┴──────┴────────────────────────┴─────────────────┤
+│ file e messaggi                                                  │
+│ opzioni della vista (cliccabili)            O apri  S salva  ... │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-- **bar1**: tutti i byte del file in sequenza (verde = valore), con le
-  bande delle sezioni e una selezione trascinabile (maniglie ▲/▼).
-- **bar2**: solo il range selezionato in bar1, con una sua selezione che
-  decide cosa va nella vista. Sostituisce la navigazione con le frecce.
+- **FILE**: tutti i byte del file in sequenza (verde = valore), con le bande
+  delle sezioni e una selezione trascinabile (maniglie ▲/▼).
+- **ZONA**: solo il tratto selezionato in FILE, con una sua selezione che
+  decide cosa va nella vista.
 
-## Fatto
+## Le viste oggi
+
+| Tasto | Vista | File |
+|---|---|---|
+| 1 | Digraph: coppie di byte | `digraph.*` |
+| 2 | Dot Plot: posizione × valore; `T` = **Somiglianza** (il file con se stesso) | `dotplot.*`, `similarity.*` |
+| 3 | Entropia lungo il file | `entropy.*` |
+| 4 | Istogramma dei valori | `histogram.*` |
+| 5 | 3D: triple di byte; `F` = cubo, cilindro, sfera; `C` = colore | `trigraph.*`, `renderer3d*`, `coord_system.h` |
+| 6 | Raw: byte come pixel; bpp, larghezza, offset, filtri; `A` = automatico | `raw_pixels.*`, `autocorr*`, `pixel_guess.*` |
+| 7 | Metric Map: curva di Hilbert; `C` colore, `V` curva | `metric_map*` |
+| 8 | Byte Cloud: griglia dei 256 valori | `byte_cloud.*` |
+| 9 | One Tuple: valori usati da ogni tratto | `one_tuple.*` |
+| 0 | Stringhe: ASCII e UTF-16, tag, filtri | `string_scan.*`, `string_tag.cpp` |
+| H | Hex: 16 byte per riga | `hex_layout.h`, `visualizer_hex.cpp` |
+
+In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
+**cursore** (`visualizer_cursor.cpp`).
+
+## Da fare, in ordine
+
+1. [ ] **Panoramica** (tab; "indicatori", non "triage"): X = posizione nel file,
+       ogni riga un indicatore (entropia, salti di entropia, testo, zeri,
+       periodicita', firme, dati fuori dalle sezioni). Click: seleziona il
+       tratto sulle barre. Viene prima dello Spettrogramma perche' i confini
+       tra le zone li mostra gia' la Somiglianza.
+       - [ ] *(proposta)* riga "bit bassi": test chi-quadro di Westfeld e
+             Pfitzmann (2000), trova dati nascosti nei bit meno significativi
+2. [ ] **Spettrogramma** (tab): X = posizione nel file, Y = periodo in byte,
+       luce = forza del periodo. Mostra dove cambia il periodo. FFT scritta
+       da noi, in un file piccolo. Provarla su un WAV e su record noti.
+       - [ ] picchi: i periodi piu' forti del file, cliccabili
+       - [ ] click su un periodo: dove compare, con i segni sulle barre
+             (l'"immagine modale" della tesi di Davis, cap. 3)
+       - [ ] togliere lo spettro medio, per far risaltare le zone diverse
+3. [ ] **Profilo record** (tab): dato un periodo, mostra colonna per colonna i
+       campi fissi, i contatori e quelli casuali. Conteggio di valori per
+       posizione nel record.
+4. [ ] **Versione nativa per Windows** (l'utente lavora da Windows, oggi passa
+       da WSL): Makefile per MinGW o MSVC, prova della tastiera.
+
+Le tab sono 11 e arrivano a x=1020 su 1210: ce ne stanno ancora una o due.
+Poi serve la voce **"Altro ▾"** in fondo, con le viste usate meno; le altre
+restano sempre visibili. Niente barra scorrevole: nasconde le viste.
+
+### Robustezza
+
+- [ ] File da diversi GB: oggi il file va tutto in memoria (`BinaryReader`).
+      Strada: `mmap` in sola lettura dietro la stessa interfaccia. Il test
+      piu' grande finora e' da 100 MB.
+- [ ] Calcolo non interrompibile: su file grandi un cambio vista parte solo
+      quando finisce quello prima. Strada: un `std::atomic<bool>` di
+      annullamento controllato nei cicli lunghi di `computeViews`.
+- [ ] Parser ELF: leggere anche i program header. Oggi un ELF senza tabella
+      delle sezioni risulta senza sezioni. Con test su file troncati, offset
+      ostili e fuzzing, come ogni estensione del parser.
+- [ ] Overlay nell'Inspector: dati dopo la fine dichiarata di un ELF o PE.
+
+### Comodita'
+
+- [ ] Trascinare un file sulla finestra: il codice c'e' (`GetDroppedFiles` in
+      `visualizer.cpp`), ma il motore lo riceve **solo su Windows**. Mai
+      provato: serve la versione nativa per Windows. Su Linux andrebbe scritto
+      il protocollo XDND dentro il motore; sotto WSL trascinare da Esplora
+      file a una finestra Linux probabilmente non arriva comunque.
+- [ ] `S` non salva il 3D (li' e' il tasto per indietreggiare), ne' Stringhe
+      e Hex.
+- [ ] Stringhe: molte false sui dati casuali (164 mila su 100 MB con minimo
+      6). Idea: filtro per entropia del tratto.
+
+### Proposte da valutare
+
+- [ ] Filtro Raw "differenza con spostamento k": generalizza delta (k=1) e
+      delta riga (k=larghezza). Aggiunge poco.
+- [ ] **Impronta spettrale**: lo spettro di una zona, per trovare i confini tra
+      tipi di dati (tesi di Davis, cap. 5). Dopo lo Spettrogramma.
+- [ ] Nel Raw, isolare un solo periodo e nascondere il resto ("Seeing Sound").
+- [ ] *(bassa priorita')* **Forma d'onda**: byte come campioni audio con segno
+      (8/16 bit), per riconoscere il PCM.
+- [ ] Un tipo comune per stringhe e firme, solo se serve davvero. Vale per i
+      risultati discreti: entropia e periodicita' sono curve, non elenchi.
+- `ClassifierModel` e' collegato (cartella `templates/`, un `.bin` per classe)
+  ma i template non ci sono: senza, il colore Classifier viene saltato.
+  L'originale ne ha 22 (87 MB, Apache 2.0): da non mettere nel repo;
+  eventualmente uno script che li scarica.
+
+### Fuori dal progetto
+
+- Import e capacita', protezioni (hardening), regole e IOC, tabella delle
+  sezioni sospette: spostano l'idea da "guarda cosa c'e' nei byte" a
+  "interpreta questo eseguibile"; esistono gia' capa, checksec, Detect It
+  Easy e YARA.
+- Digraph a strati in 3D, diff tra due file, disassembler, port su HTML,
+  seconda finestra, librerie nuove.
+- Miniature delle viste al posto delle tab: rimandato dall'utente.
+- Dal Visual Microphone: piramide steerable, rolling shutter, motion
+  magnification, Interactive Dynamic Video. Servono per i video ripresi.
+
+## Limiti noti
+
+- 3D su dati casuali da 100 MB: 16,7 milioni di punti, 267 MB. Calcolo 1,4 s
+  senza sezioni, 3,9 s se le sezioni coprono tutto il file. Fotogramma 30 ms
+  in movimento, 97 ms completo.
+- 3D: la sezione "prevalente" e' esatta solo se una sezione ha piu' di meta'
+  delle occorrenze; le triple a cavallo di due sezioni non vengono contate.
+- La scelta di un punto nel 3D non ha un test automatico: dipende dalla
+  finestra, va provata nell'app.
+- Somiglianza: un file fatto di centinaia di copie mostra solo una fascia
+  attorno alla diagonale (ogni sequenza si confronta con le 32 occorrenze
+  dopo). Stringendo la finestra tornano le diagonali.
+- `A` nel Raw: a 3 byte per pixel non si puo' sapere da quale byte inizia il
+  pixel, quindi i colori possono restare scambiati (si corregge con OFFSET).
+- Firme: solo l'inizio di un formato, non la fine. Nessuna firma sui pezzi
+  senza intestazione. Non incluse perche' troppo corte: zlib, MP3, script.
+- Tag delle stringhe: indizi (`1.2.3.4` puo' essere una versione).
+- Tastiera provata solo su X11 (italiana e americana).
+- `FileNavigator::moveForward/moveBackward` restano solo per le frecce
+  commentate e per i test.
+
+## Ricerca e riferimenti
+
+**CantorDust originale.**
+- Plugin Ghidra di Battelle: <https://github.com/Battelle/cantordust> (Java,
+  Apache 2.0), letto il 2026-11-05. Idee da reimplementare; se copiamo dati o
+  codice serve l'attribuzione richiesta dalla licenza.
+- Demo del 2012: `_cantor.dust_.7z.zip` nella radice (non su git; Windows,
+  .NET/XNA, solo vista 3D, senza sorgenti). Il suo file di prova e' in
+  `dataset/visual_re.example`: pezzi di file diversi cuciti insieme.
+- Slide di Domas, REcon 2013: confermano "Tuple systems / Coordinate
+  Systems" e "Metric map", senza formule.
+- Viste dell'originale note solo di nome (Adjacency Graph, Adjacency Bin,
+  Moire, Sliding Histogram, Residue Contact Map, Locality Translation):
+  **nessuna descrizione pubblica** (ricerca del 2026-11-15). Ipotesi dal
+  nome, da non presentare come fedeli all'originale:
+  - Locality Translation = la curva di Hilbert (c'e': Metric Map)
+  - Sliding Histogram = istogramma per tratto (c'e': One Tuple)
+  - Residue Contact Map = somiglianza del file con se stesso (c'e':
+    Somiglianza, ma non e' provato che coincidano)
+  - Adjacency Graph = grafo "byte seguito da byte"; Adjacency Bin = la sua
+    matrice (sarebbe il Digraph)
+  - Moire: ignoto; vedi sotto
+- `hexcymatix` di Domas (2026) e l'avatar GitHub: note in `CLAUDE.md`.
+
+**Formule usate.**
+- 3D a cilindro e sfera: Veles, `trigram/coords.glsl` (codilime/veles).
+- Somiglianza: Church e Helfman, "Dotplot: A Program for Exploring
+  Self-Similarity in Millions of Lines of Text and Code" (1993). Gettoni di 4
+  byte, peso 1/frequenza, cella(i) = i*256/N. Nostre differenze: gettoni
+  campionati per contenuto (hash) e, per quelli comuni, confronto solo con le
+  32 occorrenze successive invece di scartarli.
+- Byte per pixel (`pixel_guess.*`): euristica nostra, nessuna letteratura
+  trovata. punteggio(p) = 1 - media(mad[p,2p,3p]) / media(mad alle altre
+  distanze), dove mad e' la differenza media dell'autocorrelazione.
+
+**L'ipotesi "sono tutte operazioni su immagini" (2026-11-15).**
+Dell'utente: Moire e le altre viste ignote sarebbero operazioni da immagini
+applicate al file. Ricerca fatta, esito:
+- Vero in parte. Tecniche da analisi forense di immagini che valgono su
+  qualunque sequenza di byte: piani di bit (fatto), residuo di rumore = filtro
+  passa-alto (i nostri delta), matrice di co-occorrenza (e' il Digraph),
+  spettro (Spettrogramma, in piano), test chi-quadro sui bit bassi (Westfeld e
+  Pfitzmann 2000; non fatto). Nataraj (2011) classifica malware trattando il
+  file come immagine in scala di grigi.
+- Falso per i nomi: "Residue Contact Map" viene dalla biologia (matrice 1 se
+  due elementi distano meno di una soglia: e' un recurrence plot), "Adjacency
+  Graph" dai grafi, "Sliding Histogram" dalla statistica. L'originale pescava
+  da piu' campi: il filo comune e' la sequenza, non l'immagine.
+- Limite: un file diventa immagine solo scelta la larghezza. Le operazioni che
+  guardano i vicini in 2D (bordi, sfocature) hanno senso solo nel Raw con la
+  larghezza giusta.
+- Moire, ipotesi non verificata: e' l'interferenza tra due periodi, con
+  frange di periodo p1*p2/|p1-p2|. Nel Raw si vede gia': con la larghezza
+  sbagliata le righe diventano bande oblique. Sovrapporre il file a una sua
+  copia spostata e' cio' che fa `hexcymatix` (differenza con spostamento).
+
+**Visual Microphone** e tesi di Abe Davis, *Visual Vibration Analysis*: non la
+tecnica sui video, ma il modo di leggere un segnale (spettrogramma, picchi,
+immagine modale). <https://people.csail.mit.edu/mrub/VisualMic/>,
+<https://abedavis.com/files/papers/thesis.pdf>
+
+**File video: cosa aspettarsi.**
+Previsioni dai formati, ancora da provare su file veri:
+- non compresso (`.yuv`, `.y4m`, certi AVI): fotogrammi in fila, con periodo
+  pari alla dimensione del fotogramma; si vedono in Raw e nello Spettrogramma
+- MJPEG: tanti JPEG in fila, utile per le Firme
+- MPEG-TS (`.ts`): pacchetti da 188 byte che iniziano con `0x47`, periodo netto
+  anche se il contenuto e' compresso
+- MP4 normale: quasi tutto rumore, tabelle di indici leggibili all'inizio o
+  alla fine; i fotogrammi hanno dimensioni diverse, quindi nessun periodo
+
+## Storico: cosa e' stato fatto
 
 **Bug (fase 1)** — parte nei commit di settembre (306371c), parte a novembre:
 
@@ -99,8 +290,7 @@ Layout obiettivo:
       esatta o ±1 px sulle immagini di prova, nessun falso positivo sul
       rumore. Verificato: `gatto.jpeg` grezzo nascosto nel rumore compare.
 
-## Prossimi passi (in ordine)
-
+**Interfaccia e viste (novembre 2026)**:
 
 1. [x] **Layout 1280×800 + Inspector + legenda per vista**
        - [x] Inspector diviso: `visualizer_inspector.cpp` sceglie il pannello,
@@ -142,9 +332,7 @@ Layout obiettivo:
              byte cloud: valori soprattutto nella sezione
        - [x] vista → file (`visualizer_links.cpp`, `occurrences.cpp`): segni
              viola sulle barre, click = scorre le occorrenze ("3 di 120")
-       - [ ] manca ancora: Dot Plot come valore (Y)
-       - [ ] idea: dall'occorrenza scelta, portare la vista in quel punto
-             (oggi si vede nell'Inspector e come riga bianca sulle barre)
+       - [x] dall'occorrenza scelta alla vista: e' il cursore (vedi sotto)
 4. [x] **Esplorazione 3D**
        - [x] cubo e assi etichettati (`renderer3d_cube.cpp`): byte 1/2/3,
              00 e FF; camera in `camera3d.h`, ritaglio in `line_clip.h`
@@ -156,9 +344,8 @@ Layout obiettivo:
              con legenda; sezione prevalente col voto di maggioranza
        - [x] costo: fotogramma ricalcolato solo se cambia qualcosa; oltre
              1,5 milioni di punti, in movimento se ne usa un campione
-5. [ ] **Miniature delle viste** a destra al posto delle tab,
-       **riassunto del file** (formato, architettura, entry point,
-       sezioni in %, entropia media), ritocchi grafici
+5. *(rimandato dall'utente, non riproporre)* Miniature delle viste a destra
+       al posto delle tab.
 
 6. [x] **Pulizia visiva**: palette con ruoli in `constants.h` (fondo neutro,
        testo, testo secondario, un solo accento per cio' che e' attivo; i
@@ -167,210 +354,24 @@ Layout obiettivo:
 7. [x] **Riga di opzioni** (`option_bar.h`, `visualizer_options.cpp`) al
        posto della barra di stato, nelle viste 6 e 7:
        tutte le scelte visibili e cliccabili, quella attiva evidenziata
+8. [x] **Viste e modi nuovi**: colore per tipo di byte nella Metric Map,
+       filtri del Raw (piani di bit, delta, delta riga), `A` che trova anche
+       la dimensione dei record (`autocorr_period.cpp`; negli ELF spesso 24)
+9. [x] **Tab larghe quanto il testo**, ognuna con il suo tasto (`view_tabs.h`)
+10. [x] **Stringhe**, con la lista scorrevole (`list_state.h`, `list_view.h`)
+11. [x] **Firme**: 32 marcatori; quelli corti passano solo con l'intestazione
+       plausibile. Su 100 MB casuali: 1 falso positivo, 0,4 s.
+12. [x] **Cursore**: `goToOffset()`; riquadro in Raw e Metric Map, linea in
+       Dot Plot, Entropia e One Tuple, byte evidenziato in Hex. Un click nella
+       Somiglianza lo porta al tratto Y.
+13. [x] **Hex**, **3D a cubo/cilindro/sfera**, **Somiglianza**, **`A` con i
+       byte per pixel**
+14. [x] **Barre, casi limite (2026-11-15)**: trascinando FILE la selezione di
+       ZONA la segue (prima si accorciava fino a 16 byte); rotella col mouse
+       fuori dalla selezione non la fa piu' saltare; `goToOffset` tiene la
+       dimensione della finestra; le scrollbar della vista si trascinano
+       anche uscendo dalla barra. Test a caso su 80.000 mosse.
 
-## Limiti noti (controllo del 2026-11-05)
-
-- Un calcolo in corso non si può interrompere: su file grandi un cambio
-  vista parte solo quando finisce quello prima.
-- 3D su dati casuali da 100 MB: 16,7 milioni di punti, 267 MB. Calcolo 1,4 s
-  senza sezioni, 3,9 s se le sezioni coprono tutto il file (voto di
-  maggioranza). Fotogramma 30 ms in movimento, 97 ms completo.
-- 3D: la sezione "prevalente" e' esatta solo se una sezione ha piu' di meta'
-  delle occorrenze; le triple a cavallo di due sezioni non vengono contate.
-- `S` non salva la vista 3D (nel 3D e' il tasto per indietreggiare).
-- La scelta di un punto nel 3D (primo click, punto giusto con molti punti) non
-  ha un test automatico: dipende dalla finestra, va provata nell'app.
-- `FileNavigator::moveForward/moveBackward` restano solo per le frecce
-  commentate e per i test.
-- Per ThreadSanitizer su questo kernel: `setarch x86_64 -R ./programma`.
-
-## Spunti dal CantorDust originale
-
-Sorgente letto il 2026-11-05: <https://github.com/Battelle/cantordust>
-(Java, Apache 2.0). Sono idee da reimplementare; se copiamo dati o codice
-serve l'attribuzione richiesta dalla licenza.
-
-- [x] **Barre**: `macro`/`micro`, maniglie, entropia nella striscia, e
-  selezione che resta sugli stessi byte quando cambia la zona.
-- [x] **Luminosità**: `density.h`, percentile p90 + curva logaritmica al
-  posto del massimo, per digraph e dot plot; digraph verde come la GIF.
-- [x] **Click**: ripetendo il click si passa all'occorrenza dopo.
-- [x] **Passo 4, 3D**: buffer grande come la vista con il punto più pesante
-  di ogni pixel (picking immediato), punti sommati per vedere la densità.
-- [x] **Metric Map**: colore Entropy come default (è il viola/magenta
-  della GIF) ed entropia locale su 32 byte come l'originale.
-
-## Viste e modalità nuove (dopo)
-
-1. [x] **Colorazione per tipo di byte** sulla Metric Map (`C`)
-2. [x] **Bit-plane** come filtro dei raw pixel (`F`, `raw_filter.h`)
-3. [x] **Delta** come filtro dei raw pixel: dal pixel prima e dalla riga
-       sopra (quest'ultimo per le tabelle di record)
-       - [x] `A` trova anche la dimensione dei record, non solo la riga di
-             un'immagine (`autocorr_period.cpp`); negli ELF trova spesso 24,
-             la dimensione delle tabelle di simboli e rilocazioni
-4. [ ] *(bassa priorità)* **Forma d'onda**: byte come campioni audio con
-       segno (8/16 bit), per riconoscere il PCM.
-
-### Piano del 2026-11-07
-
-Spunti dal Visual Microphone e dalla tesi di Abe Davis, *Visual Vibration
-Analysis*: non la tecnica sui video, ma il modo di leggere un segnale.
-<https://people.csail.mit.edu/mrub/VisualMic/>,
-<https://abedavis.com/files/papers/thesis.pdf>
-
-In ordine:
-1. [x] **Tab larghe quanto il testo** (`view_tabs.h`); la decima vista usa il
-       tasto `0`. Niente barra scorrevole: nasconde le viste.
-2. [x] **Stringhe** (tab): ASCII e UTF-16, lunghezza minima, pochi tag (URL, IP,
-       percorsi), con click per arrivarci. Costo medio.
-       - [x] lista scorrevole (`list_state.h`, `list_view.h`)
-       - [x] `goToOffset()` generico, senza passare da `Occur::Walker`: con un
-             offset fuori dalla finestra la sposta (`RangeSel::reveal`)
-       - [x] offset e lunghezza, non una `std::string` per stringa
-       - [ ] portare anche la vista scelta su quel punto (oggi solo cursore
-             sulle barre e dettagli nell'Inspector)
-3. [x] **Firme** (segni sulle barre, non una tab): cerca marcatori noti (PNG,
-       JPEG, ZIP, PDF, MP4...) e trova i file dentro altri file. Riconosce solo
-       l'inizio di un formato ("inizio rilevato"), non lo legge.
-       - [x] `signatures.*`, `signature_checks.*`: 32 marcatori; quelli corti
-             (MZ, BM, gzip, JPEG...) passano solo con l'intestazione plausibile.
-             Su 100 MB casuali: 1 falso positivo, 0,4 s.
-       - [x] tacche azzurre sulle barre, elenco nel riassunto dell'Inspector,
-             `N` / `Shift+N` = firma dopo / prima
-       - [x] il cursore (firma, stringa, occorrenza scelta) si vede anche nelle
-             viste Raw e Metric Map: riquadro bianco (`visualizer_cursor.cpp`)
-       - Limite visto su `dataset/visual_re.example`: i pezzi senza
-         intestazione non hanno firma (li' ne trova solo 2). Per i confini
-         servono Panoramica e Spettrogramma.
-       - Non incluse perche' troppo corte: zlib (2 byte), MP3, script `#!`.
-4. [ ] **Spettrogramma** (tab): X = posizione nel file, Y = periodo in byte,
-       luce = forza del periodo. Mostra dove cambia la struttura. FFT scritta
-       da noi, in un file piccolo. Provarla su un WAV e su record noti.
-       - [ ] picchi: i periodi piu' forti del file, cliccabili
-       - [ ] click su un periodo: dove compare, con i segni sulle barre
-             (l'"immagine modale" della tesi, cap. 3)
-       - [ ] togliere lo spettro medio, per far risaltare le zone diverse
-5. [ ] **Panoramica** (tab; "indicatori", non "triage"): X = posizione nel file,
-       ogni riga un indicatore (entropia, salti di entropia, testo, zeri,
-       periodicita', firme, dati fuori dalle sezioni). Click: seleziona il
-       tratto sulle barre.
-6. [ ] **Profilo record** (tab): dato un periodo, mostra colonna per colonna i
-       campi fissi, i contatori e quelli casuali. Conteggio di valori per
-       posizione nel record.
-
-Quando le tab non ci stanno piu' (circa 12): voce **"Altro ▾"** in fondo, con le
-viste usate meno. Le altre restano sempre visibili.
-
-Annotazioni, a parte dall'ordine:
-- [ ] Overlay nell'Inspector: dati dopo la fine dichiarata di un ELF o PE.
-- [ ] Parser ELF: leggere anche i program header. Oggi un ELF senza tabella
-      delle sezioni risulta senza sezioni. Con test su file troncati, offset
-      ostili e fuzzing, come ogni estensione del parser.
-
-Dalla demo originale del 2012 (`_cantor.dust_.7z.zip`, non su git; il suo file
-di prova e' in `dataset/visual_re.example`). Viste dell'originale che ci
-mancano, dai nomi trovati nel programma:
-- [x] **Hex View** (tasto `H`; `hex_layout.h`, `visualizer_hex.cpp`).
-- [x] **3D a cubo, cilindro e sfera** (tasto `F`, come nell'originale;
-      `coord_system.h`, `renderer3d_guides.cpp`). Formule da Veles
-      (codilime/veles, `trigram/coords.glsl`); le slide di Domas (REcon 2013)
-      confermano "Tuple systems / Coordinate Systems" ma non danno formule.
-- Ricerca del 2026-11-15 sulle altre viste dell'originale (Adjacency Graph,
-  Adjacency Bin, Moire, Sliding Histogram, Residue Contact Map, Locality
-  Translation): **nessuna descrizione pubblica**. Il sorgente del 2012 non e'
-  mai uscito, le slide non le nominano, il plugin Ghidra di Battelle ha solo
-  le viste che abbiamo gia'. Cio' che segue sono ipotesi dal nome:
-  - Locality Translation = la curva di Hilbert (c'e' gia', Metric Map)
-  - Sliding Histogram = istogramma per tratto (c'e' gia', One Tuple)
-  - Residue Contact Map = matrice di somiglianza del file con se stesso
-  - Adjacency Graph = grafo "byte seguito da byte" (l'immagine di esempio
-    `example_arbitrary_instruction_sets.png` sembra un grafo a molle)
-  - Moire: ignoto
-- [x] **Somiglianza** (vista 2 Dot Plot, tasto `T`; `similarity.*`): il file
-      confrontato con se stesso. Algoritmo di Church e Helfman (1993):
-      gettoni di 4 byte, peso 1/frequenza, 256 celle, cella(i) = i*256/N.
-      Su `dataset/visual_re.example` separa i pezzi e mostra quali sono dello
-      stesso tipo: e' la vista che trova i confini senza intestazioni.
-      100 MB in meno di mezzo secondo.
-      - Differenze dall'articolo: i gettoni si campionano per contenuto (hash)
-        e quelli troppo comuni si confrontano solo con le 32 occorrenze dopo.
-        Quindi un file fatto di centinaia di copie mostra una fascia attorno
-        alla diagonale, non tutta la griglia: stringere la finestra.
-      - [ ] idea: click su un pixel = porta il cursore al tratto Y
-- [x] **`A` nel Raw suggerisce anche i byte per pixel** (`pixel_guess.*`),
-      dalla GIF di riferimento (8 bit coi fantasmi -> 24 bit -> colori giusti).
-      punteggio(p) = 1 - media(mad[p,2p,3p]) / media(mad alle altre distanze).
-      A 4 byte per pixel trova anche da dove iniziano (il byte fisso). A 3
-      byte non si puo' sapere: i colori possono restare scambiati, si corregge
-      con l'offset. Nessuna letteratura trovata: e' una nostra euristica.
-
-### L'ipotesi "sono tutte operazioni su immagini" (2026-11-15)
-
-Dell'utente: Moire e le altre viste ignote sarebbero operazioni da immagini
-applicate al file. Ricerca fatta, esito:
-- Vero in parte. Tecniche da analisi forense di immagini che valgono su
-  qualunque sequenza di byte: piani di bit (fatto), residuo di rumore = filtro
-  passa-alto (i nostri delta), matrice di co-occorrenza (e' il Digraph),
-  spettro (Spettrogramma, in piano), test chi-quadro sui bit bassi (Westfeld e
-  Pfitzmann 2000; non fatto). Nataraj (2011) classifica malware trattando il
-  file come immagine in scala di grigi.
-- Falso per i nomi: "Residue Contact Map" viene dalla biologia (matrice 1 se
-  due elementi distano meno di una soglia: e' un recurrence plot), "Adjacency
-  Graph" dai grafi, "Sliding Histogram" dalla statistica. L'originale pescava
-  da piu' campi: il filo comune e' la sequenza, non l'immagine.
-- Limite: un file diventa immagine solo scelta la larghezza. Le operazioni che
-  guardano i vicini in 2D (bordi, sfocature) hanno senso solo nel Raw con la
-  larghezza giusta.
-- Moire, ipotesi non verificata: e' l'interferenza tra due periodi, con
-  frange di periodo p1*p2/|p1-p2|. Nel Raw si vede gia': con la larghezza
-  sbagliata le righe diventano bande oblique. Sovrapporre il file a una sua
-  copia spostata e' cio' che fa `hexcymatix` (differenza con spostamento).
-- [ ] *(proposta)* Filtro Raw "differenza con spostamento k": generalizza
-      delta (k=1) e delta riga (k=larghezza).
-- [ ] *(proposta)* Test chi-quadro sui bit bassi come riga della Panoramica:
-      trova dati nascosti nei bit meno significativi.
-
-Da valutare dopo:
-- [ ] Un tipo comune per stringhe e firme, solo quando ci sono entrambe e si
-      vede cosa hanno in comune. Vale per i risultati discreti: entropia e
-      periodicita' sono curve, non elenchi.
-- [ ] **Impronta spettrale**: lo spettro di una zona, per trovare i confini tra
-      tipi di dati senza conoscere il formato (tesi, cap. 5).
-- [ ] Nel Raw, isolare un solo periodo e nascondere il resto ("Seeing Sound").
-
-Fuori dal progetto: import e capacita', protezioni (hardening), regole e IOC,
-tabella delle sezioni sospette. Spostano l'idea da "guarda cosa c'e' nei byte"
-a "interpreta questo eseguibile"; esistono gia' capa, checksec, Detect It Easy
-e YARA.
-
-Scartato dai lavori del Visual Microphone: piramide steerable, rolling shutter,
-motion magnification e Interactive Dynamic Video (cap. 6) servono per i video
-ripresi, non per i byte.
-
-### File video: cosa aspettarsi
-
-Previsioni dai formati, ancora da provare su file veri:
-- non compresso (`.yuv`, `.y4m`, certi AVI): fotogrammi in fila, con periodo
-  pari alla dimensione del fotogramma; si vedono in Raw e nello Spettrogramma
-- MJPEG: tanti JPEG in fila, utile per le Firme
-- MPEG-TS (`.ts`): pacchetti da 188 byte che iniziano con `0x47`, periodo netto
-  anche se il contenuto e' compresso
-- MP4 normale: quasi tutto rumore, tabelle di indici leggibili all'inizio o
-  alla fine; i fotogrammi hanno dimensioni diverse, quindi nessun periodo
-
-Limite: il file viene caricato tutto in memoria, quindi un video da diversi GB
-e' un problema. Il test piu' grande finora e' da 100 MB.
-
-Scartate per ora (appesantirebbero il progetto): digraph a strati in 3D,
-diff tra due file, disassembler o parsing dei formati, port su HTML,
-seconda finestra.
-
-## Da decidere più avanti
-
-- `ClassifierModel` è collegato (cartella `templates/`, un `.bin` per
-  classe) ma i template non ci sono: senza, la modalità Classifier viene
-  saltata. L'originale ne ha 22 (87 MB, Apache 2.0): rimandato, da non
-  mettere nel repo; eventualmente uno script che li scarica. Con quelli
-  l'Inspector potrebbe dire "probabile codice x86 / ARM / testo".
-- Cartelle `python/` e `dataset/` vuote (rete neurale WIP).
+Dal CantorDust originale sono venuti: barre `macro`/`micro` con maniglie ed
+entropia, luminosita' col 90esimo percentile (`density.h`), click ripetuto per
+l'occorrenza dopo, picking del 3D, colore Entropy della Metric Map.

@@ -23,6 +23,10 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     applyPendingOption();
     bool busy = m_computing.load();
 
+    // Un file trascinato sulla finestra. Il motore lo riceve solo su Windows:
+    // su Linux l'elenco resta vuoto.
+    if (!GetDroppedFiles().empty()) loadFile(GetDroppedFiles().front());
+
     // Nella finestra "Apri file" i tasti servono solo per scrivere
     const bool typing = m_input.isInputMode();
     handleAction(m_input.update(this, fElapsedTime));
@@ -37,7 +41,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         recomputeWindow();
 
     busy = m_computing.load();
-    if (!typing && !busy) updateLinks(fElapsedTime);
+    if (!typing && !busy) { updateLinks(fElapsedTime); updateSimilarityClick(); }
     if (!typing) {
         if (m_mode == ViewMode::TRIGRAPH3D) handle3DInput(fElapsedTime);
         else if (!busy && isStringsView())  handleStringsInput();
@@ -63,6 +67,7 @@ void Visualizer::handleAction(Action action) {
             m_pick.clear();     // ogni vista ha i suoi valori
             m_dragging = false;
             m_panning  = false;
+            m_scrollDrag = ScrollDrag::NONE;
             m_recomputeNeeded = true;
             if (m_mode == ViewMode::TRIGRAPH3D) buildTripleMask();
             m_status = "";
@@ -111,6 +116,8 @@ void Visualizer::handleCommandKeys() {
         m_zoom2d  = 1.0f;
         m_scrollH = 0.0f;
         m_scrollV = 0.0f;
+        m_renderer3d.resetCamera();
+        m_dragging = m_panning = false;
         m_status  = "Reset: file intero";
     }
 }

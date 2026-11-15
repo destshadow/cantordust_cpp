@@ -94,16 +94,22 @@ void Visualizer::handle2DInput() {
         m_lastMouseY = my;
     }
 
-    // Scrollbar H canvas
-    if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
-        my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H &&
-        mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W)
-        m_scrollH = std::clamp((float)(mx-CANVAS_X)/(float)CANVAS_W,
-                                0.0f, 1.0f);
+    // Scrollbar: il trascinamento inizia sulla barra e continua finche' si
+    // tiene premuto, anche uscendo; il cursore resta sotto il mouse
+    const bool onH = my >= SCROLLBAR_H_Y && my < SCROLLBAR_H_Y + SCROLLBAR_H &&
+                     mx >= CANVAS_X && mx < CANVAS_X + CANVAS_W;
+    const bool onV = mx >= SCROLLBAR_V_X && mx < SCROLLBAR_V_X + SCROLLBAR_V_W &&
+                     my >= CANVAS_Y && my < CANVAS_Y + CANVAS_H;
+    if (GetMouse(0).bPressed && m_zoom2d > 1.0f)
+        m_scrollDrag = onH ? ScrollDrag::H : onV ? ScrollDrag::V : ScrollDrag::NONE;
+    if (!GetMouse(0).bHeld || m_zoom2d <= 1.0f) m_scrollDrag = ScrollDrag::NONE;
 
-    // Scrollbar V canvas
-    if (m_zoom2d > 1.0f && GetMouse(0).bHeld &&
-        mx >= SCROLLBAR_V_X && mx < SCROLLBAR_V_X + SCROLLBAR_V_W &&
-        my >= ay && my < ay + ah)
-        m_scrollV = std::clamp((float)(my-ay)/(float)ah, 0.0f, 1.0f);
+    // Stessa geometria del disegno (ui_renderer.cpp)
+    auto fromBar = [&](int pos, int start, int len) {
+        const float thumb = std::max(20.0f, len / m_zoom2d);
+        const float room  = std::max(1.0f, len - thumb);
+        return std::clamp((pos - start - thumb * 0.5f) / room, 0.0f, 1.0f);
+    };
+    if (m_scrollDrag == ScrollDrag::H) m_scrollH = fromBar(mx, CANVAS_X, CANVAS_W);
+    if (m_scrollDrag == ScrollDrag::V) m_scrollV = fromBar(my, CANVAS_Y, CANVAS_H);
 }

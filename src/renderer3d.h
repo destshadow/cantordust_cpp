@@ -39,7 +39,8 @@ public:
     void pan(float dx, float dy);        // mouse destro
     // WASD + QE: forward/right/up in unita' mondo
     void moveCamera(float forward, float right, float up);
-    void resetRotation();
+    void resetRotation();                // R: la camera, non lo zoom
+    void resetCamera();                  // Home: tutto, anche lo zoom
     void zoom(float delta);
 
 private:

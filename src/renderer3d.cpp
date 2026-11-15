@@ -108,6 +108,11 @@ void Renderer3D::resetRotation() {
     m_moved = true;
 }
 
+void Renderer3D::resetCamera() {
+    m_cam = Camera3D{};
+    m_moved = true;
+}
+
 void Renderer3D::zoom(float delta) {
     m_cam.zoom = std::clamp(m_cam.zoom + delta * 0.1f, 0.3f, 3.0f);
     m_moved = true;

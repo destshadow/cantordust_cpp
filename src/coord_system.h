@@ -24,6 +24,16 @@ inline const char* coordSystemName(CoordSystem s) {
     }
 }
 
+// Cilindro e sfera stanno dentro il cubo e a parita' di camera sembrerebbero
+// piu' piccoli: si ingrandiscono per riempire la vista quanto lui
+inline float coordScale(CoordSystem s) {
+    switch (s) {
+        case CoordSystem::CYLINDER: return 1.25f;
+        case CoordSystem::SPHERE:   return 1.5f;
+        default:                    return 1.0f;
+    }
+}
+
 // Le funzioni trigonometriche si calcolano una volta per valore di byte:
 // in un fotogramma ci sono milioni di punti
 class CoordMap {
@@ -42,12 +52,15 @@ public:
     }
 
     Camera3D::Vec at(CoordSystem s, uint8_t b0, uint8_t b1, uint8_t b2) const {
+        const float k = coordScale(s);
         switch (s) {
-            case CoordSystem::CYLINDER:
-                return {m_cosTurn[b0] * m_unit[b1], m_sinTurn[b0] * m_unit[b1], m_line[b2]};
+            case CoordSystem::CYLINDER: {
+                const float r = m_unit[b1] * k;
+                return {m_cosTurn[b0] * r, m_sinTurn[b0] * r, m_line[b2] * k};
+            }
             case CoordSystem::SPHERE: {
-                const float r = m_unit[b2] * m_sinHalf[b1];
-                return {m_cosTurn[b0] * r, m_sinTurn[b0] * r, m_cosHalf[b1] * m_unit[b2]};
+                const float r = m_unit[b2] * m_sinHalf[b1] * k;
+                return {m_cosTurn[b0] * r, m_sinTurn[b0] * r, m_cosHalf[b1] * m_unit[b2] * k};
             }
             default:
                 return {m_line[b0], m_line[b1], m_line[b2]};

@@ -30,6 +30,7 @@ void Visualizer::inspectSimilarity(PanelWriter& pw, int cx, int cy) {
     pw.separator("inizio del tratto Y");
     writeHexDump(pw, ya, ya, 3);
     pw.gap();
+    pw.text("click = cursore sul tratto Y (poi H)", COL_DIM());
     pw.text("diagonale = contenuto ripetuto", COL_DIM());
     pw.text("quadrato = zona omogenea", COL_DIM());
 }
