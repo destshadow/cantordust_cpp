@@ -50,6 +50,10 @@ public:
     // all'ultima riga, dove i dati sono finiti)
     size_t byteOffsetAt(int x, int y) const;
 
+    // L'inverso: il pixel che mostra quell'offset. Se le righe sono
+    // campionate, la riga mostrata piu' vicina. false se non e' nell'immagine.
+    bool pixelOf(size_t offset, int& x, int& y) const;
+
     static size_t bytesPerPixel(BppMode m);
     static const char* modeName(BppMode m);
 

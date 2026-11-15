@@ -115,6 +115,14 @@ size_t RawPixels::byteOffsetAt(int x, int y) const {
     return i + bpp <= m_len ? m_offset + i : SIZE_MAX;
 }
 
+bool RawPixels::pixelOf(size_t offset, int& x, int& y) const {
+    if (m_width <= 0 || offset < m_offset || offset - m_offset >= m_len) return false;
+    const size_t pixel = (offset - m_offset) / bytesPerPixel(m_mode);
+    x = (int)(pixel % m_width);
+    y = (int)(pixel / m_width / m_rowStep);
+    return y < m_height;
+}
+
 const char* RawPixels::modeName(BppMode m) {
     switch (m) {
         case BppMode::BPP_8:  return "8bpp";

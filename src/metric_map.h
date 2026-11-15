@@ -47,6 +47,9 @@ public:
     // Indice file per coordinate pixel; SIZE_MAX se il pixel non corrisponde
     // a nessun byte (file piu' piccolo della mappa)
     size_t fileIndexAt(int x, int y) const;
+    // L'inverso: il pixel che contiene quell'indice (ogni pixel copre i byte
+    // fino all'indice del pixel dopo). false se la mappa e' vuota.
+    bool pixelOf(size_t index, int& x, int& y) const;
 
     static const char* colorModeName(ColorMode m);
     // Il modo dopo, saltando il classifier se non ci sono i template

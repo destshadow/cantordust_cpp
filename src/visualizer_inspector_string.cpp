@@ -25,4 +25,8 @@ void Visualizer::inspectString(PanelWriter& pw, const StringScan::Hit& s) {
 
     pw.separator("nel file");
     writeHexDump(pw, off, off, 5);
+    if (m_cursorOffset == off) {
+        pw.gap();
+        pw.text("6 o 7 = vedi dove sta (Raw, Metric Map)", COL_DIM());
+    }
 }

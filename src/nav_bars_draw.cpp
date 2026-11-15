@@ -69,8 +69,17 @@ void NavBars::drawMarks(olc::PixelGameEngine* pge, int bar) {
     for (int y = 0; y < (int)m.size() && y < TRACK_H; y++)
         if (m[y]) pge->DrawLine(x + BAR_W - 12, TRACK_Y + y, x + BAR_W - 1, TRACK_Y + y, mark);
 
-    if (m_cursor == SIZE_MAX) return;
+    // Firme: tacche azzurre sul lato sinistro
     const RangeSel& s = sel(bar);
+    const olc::Pixel sig(90, 220, 255);
+    for (size_t off : m_sigs) {
+        if (off < s.min) continue;
+        if (off >= s.max) break;
+        const int y = std::min(yOf(bar, off), TRACK_Y + TRACK_H - 2);
+        pge->FillRect(x, y, 8, 2, sig);
+    }
+
+    if (m_cursor == SIZE_MAX) return;
     if (m_cursor < s.min || m_cursor >= s.max) return;
     int y = yOf(bar, m_cursor);
     pge->DrawLine(x, y, x + BAR_W - 1, y, olc::WHITE);

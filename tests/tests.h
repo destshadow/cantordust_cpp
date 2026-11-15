@@ -23,6 +23,7 @@
 #include "byte_cloud.h"
 #include "string_scan.h"
 #include "list_state.h"
+#include "signatures.h"
 #include <string>
 #include <cmath>
 #include <algorithm>
@@ -42,6 +43,7 @@ void testRaw();
 void testAutocorr();
 void testBytes();
 void testStrings();
+void testSignatures();
 void testMetricMap();
 void testNavigation();
 void test3D();

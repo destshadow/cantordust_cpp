@@ -16,6 +16,8 @@ python/nn/__pycache__/
 
 # Dataset e output
 dataset/
+*.zip
+*.7z
 *.npz
 export_*.png
 test_*.png

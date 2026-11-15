@@ -97,6 +97,16 @@ VISTE
                    vedere dove sta nel file. L = lunghezza minima, T = tipo
                    (URL, IP, percorsi), frecce e PagSu/PagGiu = scorre, Esc = annulla
 
+FIRME (file dentro al file)
+  Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,
+  ELF, PDF...). L'elenco e' nell'Inspector, quando il mouse non e' su nulla.
+  N / Shift+N     firma dopo / prima. Si riconosce solo l'inizio.
+
+CURSORE
+  Il punto scelto (una firma, una stringa, un'occorrenza) e' la riga bianca
+  sulle barre e, nelle viste 6 Raw e 7 Metric Map, un riquadro bianco.
+  Esc = toglie il cursore.
+
 
 TASTI GENERALI
 --------------

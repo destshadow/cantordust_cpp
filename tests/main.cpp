@@ -6,6 +6,7 @@ int main() {
     testAutocorr();
     testBytes();
     testStrings();
+    testSignatures();
     testMetricMap();
     testNavigation();
     testParser();

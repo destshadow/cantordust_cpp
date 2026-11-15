@@ -230,9 +230,20 @@ In ordine:
        - [x] offset e lunghezza, non una `std::string` per stringa
        - [ ] portare anche la vista scelta su quel punto (oggi solo cursore
              sulle barre e dettagli nell'Inspector)
-3. [ ] **Firme** (segni sulle barre, non una tab): cerca marcatori noti (PNG,
+3. [x] **Firme** (segni sulle barre, non una tab): cerca marcatori noti (PNG,
        JPEG, ZIP, PDF, MP4...) e trova i file dentro altri file. Riconosce solo
        l'inizio di un formato ("inizio rilevato"), non lo legge.
+       - [x] `signatures.*`, `signature_checks.*`: 32 marcatori; quelli corti
+             (MZ, BM, gzip, JPEG...) passano solo con l'intestazione plausibile.
+             Su 100 MB casuali: 1 falso positivo, 0,4 s.
+       - [x] tacche azzurre sulle barre, elenco nel riassunto dell'Inspector,
+             `N` / `Shift+N` = firma dopo / prima
+       - [x] il cursore (firma, stringa, occorrenza scelta) si vede anche nelle
+             viste Raw e Metric Map: riquadro bianco (`visualizer_cursor.cpp`)
+       - Limite visto su `dataset/visual_re.example`: i pezzi senza
+         intestazione non hanno firma (li' ne trova solo 2). Per i confini
+         servono Panoramica e Spettrogramma.
+       - Non incluse perche' troppo corte: zlib (2 byte), MP3, script `#!`.
 4. [ ] **Spettrogramma** (tab): X = posizione nel file, Y = periodo in byte,
        luce = forza del periodo. Mostra dove cambia la struttura. FFT scritta
        da noi, in un file piccolo. Provarla su un WAV e su record noti.
@@ -256,6 +267,15 @@ Annotazioni, a parte dall'ordine:
 - [ ] Parser ELF: leggere anche i program header. Oggi un ELF senza tabella
       delle sezioni risulta senza sezioni. Con test su file troncati, offset
       ostili e fuzzing, come ogni estensione del parser.
+
+Dalla demo originale del 2012 (`_cantor.dust_.7z.zip`, non su git; il suo file
+di prova e' in `dataset/visual_re.example`). Viste dell'originale che ci
+mancano, dai nomi trovati nel programma:
+- [ ] **Hex View**: costa poco, `list_view.h` esiste gia'.
+- [ ] **3D in coordinate sferiche e cilindriche** (tasto `F` nell'originale):
+      cambia solo dove finisce ogni punto.
+- [ ] Solo il nome, aspetto ignoto: Adjacency Graph, Adjacency Bin, Moire,
+      Sliding Histogram, Residue Contact Map, Locality Translation.
 
 Da valutare dopo:
 - [ ] Un tipo comune per stringhe e firme, solo quando ci sono entrambe e si

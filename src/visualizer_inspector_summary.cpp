@@ -23,6 +23,8 @@ void Visualizer::inspectSummary(PanelWriter& pw) {
     pw.field("LUNGH.", sizeStr(w.len));
     writeStats(pw, ByteInfo::statsFromHist(m_windowHist));
 
+    writeSignatures(pw);
+
     if (m_parser.hasSections()) {
         pw.separator("sezioni piu' grandi");
         std::vector<int> idx(m_parser.getSections().size());

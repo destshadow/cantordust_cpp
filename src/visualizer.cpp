@@ -56,6 +56,8 @@ void Visualizer::handleAction(Action action) {
     switch (action) {
         case Action::SWITCH_VIEW:
             m_mode     = m_input.getRequestedView();
+            // L'occorrenza scelta resta come cursore nella vista nuova
+            if (m_pick.active()) m_cursorOffset = m_pick.target;
             m_pick.clear();     // ogni vista ha i suoi valori
             m_dragging = false;
             m_panning  = false;
@@ -99,6 +101,7 @@ void Visualizer::handleCommandKeys() {
     // }
 
     if (GetKey(olc::Key::B).bPressed) m_bars.toggleStrip();
+    if (!m_computing) handleSignatureKeys();
 
     if (!m_computing && GetKey(olc::Key::HOME).bPressed) {
         m_bars.reset();
@@ -135,7 +138,7 @@ void Visualizer::drawFrame(float fElapsedTime, bool busy) {
     } else {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna
-        if (!m_input.isInputMode()) draw2DCanvas();
+        if (!m_input.isInputMode()) { draw2DCanvas(); drawCursorMarker(); }
         if (m_mode == ViewMode::RAWPIXELS) drawRawPanel();
     }
     drawLegend();
@@ -148,14 +151,6 @@ void Visualizer::drawFrame(float fElapsedTime, bool busy) {
 // Le barre decidono la finestra; le viste si aggiornano nel ciclo principale
 void Visualizer::syncNavigator() {
     m_navigator.selectRange(m_bars.start(), m_bars.end() - m_bars.start());
-}
-
-// Porta le barre su un punto del file e lo segna; la finestra si sposta solo
-// se quel punto ne e' fuori
-void Visualizer::goToOffset(size_t offset) {
-    m_cursorOffset = offset;
-    m_bars.goTo(offset);
-    syncNavigator();
 }
 
 Visualizer::~Visualizer() {

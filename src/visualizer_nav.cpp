@@ -92,6 +92,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_navigator.setData(bytes, 0);
     m_parser.parse(bytes);
     m_bars.setFile(&bytes, &m_parser.getSections());
+    scanSignatures();
 
     m_zoom2d = 1.0f;
     m_scrollH = m_scrollV = 0.0f;

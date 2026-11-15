@@ -38,6 +38,7 @@ public:
     void setMarks(std::vector<bool> fileRows, std::vector<bool> zoneRows);
     void clearMarks();
     void setCursor(size_t offset) { m_cursor = offset; }   // SIZE_MAX = nessuno
+    void setSignatures(std::vector<size_t> offsets) { m_sigs = std::move(offsets); }
     void goTo(size_t offset);    // sposta le selezioni solo se e' fuori
 
     int  hoveredSection() const { return m_hoverSec; }   // -1 = nessuna
@@ -78,4 +79,5 @@ private:
 
     std::vector<bool> m_marks[2];
     size_t m_cursor = SIZE_MAX;
+    std::vector<size_t> m_sigs;  // firme: offset in ordine
 };

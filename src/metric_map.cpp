@@ -108,6 +108,19 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
     }
 }
 
+bool MetricMap::pixelOf(size_t index, int& x, int& y) const {
+    size_t best = SIZE_MAX, bestAt = 0;
+    for (size_t i = 0; i < m_indexMap.size(); i++) {
+        const size_t v = m_indexMap[i];
+        if (v == SIZE_MAX || v > index) continue;
+        if (best == SIZE_MAX || v > best) { best = v; bestAt = i; }
+    }
+    if (best == SIZE_MAX) return false;
+    x = (int)(bestAt % m_size);
+    y = (int)(bestAt / m_size);
+    return true;
+}
+
 size_t MetricMap::fileIndexAt(int x, int y) const {
     if (m_indexMap.empty() || x < 0 || x >= m_size || y < 0 || y >= m_size)
         return SIZE_MAX;

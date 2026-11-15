@@ -28,6 +28,7 @@
 #include "view_results.h"
 #include "occurrences.h"
 #include "list_view.h"
+#include "signatures.h"
 #include <array>
 #include <functional>
 
@@ -87,7 +88,14 @@ private:
     void writeHexDump(PanelWriter& pw, size_t center, size_t mark, int rows);
     ByteInfo::Stats zoneStats(size_t a, size_t b) const;
     void syncNavigator();                  // barre -> finestra
+    // Cursore (visualizer_cursor.cpp)
     void goToOffset(size_t offset);
+    bool cursorPixel(int& cx, int& cy) const;
+    void drawCursorMarker();
+    // Firme (visualizer_signatures.cpp)
+    void scanSignatures();
+    void handleSignatureKeys();
+    void writeSignatures(PanelWriter& pw);
     // Vista Stringhe (visualizer_strings.cpp, visualizer_inspector_string.cpp)
     bool isStringsView() const;
     bool hasCanvas() const;                // false: 3D e Stringhe
@@ -225,6 +233,7 @@ private:
     std::vector<uint8_t> m_markWanted, m_marked;
     static constexpr float MARK_WAIT = 0.08f;   // secondi col mouse fermo
     float  m_markWait = 0.0f;
+    std::vector<Signatures::Hit> m_signatures;   // di tutto il file
     size_t m_cursorOffset = SIZE_MAX;    // goToOffset: resta finche' non si annulla
     size_t m_markLo = 0, m_markHi = 0;
     bool   m_pressed = false;
