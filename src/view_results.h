@@ -14,6 +14,7 @@
 #include "trigraph.h"
 #include "view_mode.h"
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -51,10 +52,13 @@ struct ViewResults {
     int       suggestWidth = 0;
     size_t    suggestBpp   = 1;                // byte per pixel, 1 = nessun indizio
     size_t    windowStart  = 0;
+    ViewMode  mode         = ViewMode::DIGRAPH;   // la vista calcolata
     std::array<uint32_t, 256> windowHist{};
 };
 
-// Calcola solo la vista richiesta (piu' l'istogramma, che serve sempre)
+// Calcola solo la vista richiesta (piu' l'istogramma, che serve sempre).
+// Se `cancel` viene alzata durante il calcolo restituisce nullptr appena puo'.
 std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
                                           const ComputeParams& params,
-                                          ClassifierModel& classifier);
+                                          ClassifierModel& classifier,
+                                          const std::atomic<bool>* cancel = nullptr);

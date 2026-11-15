@@ -106,7 +106,8 @@ TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
            src/autocorr.cpp src/autocorr_period.cpp src/raw_pixels.cpp src/occurrences.cpp \
            src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp src/byte_cloud.cpp \
            src/string_scan.cpp src/string_tag.cpp \
-           src/signatures.cpp src/signature_checks.cpp src/pixel_guess.cpp
+           src/signatures.cpp src/signature_checks.cpp src/pixel_guess.cpp \
+           src/view_results.cpp src/digraph.cpp src/histogram.cpp src/one_tuple.cpp
 
 .PHONY: all clean run test
 test:

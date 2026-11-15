@@ -120,9 +120,12 @@ restano sempre visibili. Niente barra scorrevole: nasconde le viste.
 - [ ] File da diversi GB: oggi il file va tutto in memoria (`BinaryReader`).
       Strada: `mmap` in sola lettura dietro la stessa interfaccia. Il test
       piu' grande finora e' da 100 MB.
-- [ ] Calcolo non interrompibile: su file grandi un cambio vista parte solo
-      quando finisce quello prima. Strada: un `std::atomic<bool>` di
-      annullamento controllato nei cicli lunghi di `computeViews`.
+- [x] Calcolo interrompibile (`cancel.h`): cambiando vista o aprendo un altro
+      file, il calcolo in corso smette entro 64 KB di byte. (Le opzioni di una
+      vista si possono cambiare solo a calcolo finito, come prima.)
+      Su 100 MB, dal 3D a un'altra vista: da 3,5 s a 0,5 s. Se cambia solo la
+      finestra il calcolo finisce: cosi' trascinando le barre la vista si
+      aggiorna man mano.
 - [ ] Parser ELF: leggere anche i program header. Oggi un ELF senza tabella
       delle sezioni risulta senza sezioni. Con test su file troncati, offset
       ostili e fuzzing, come ogni estensione del parser.

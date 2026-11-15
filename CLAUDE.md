@@ -50,6 +50,15 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
   (`std::async`) e riempie un `ViewResults`; `applyResults` lo sposta nelle
   viste all'inizio del frame. Il thread non tocca mai cio' che si disegna. Si
   calcola solo la vista attiva.
+- **Annullamento** (`cancel.h`): `m_cancel` si alza quando cambia vista
+  durante un calcolo o si apre un file; `computeViews` restituisce `nullptr`.
+  Un ciclo lungo nuovo sui byte deve controllare la bandierina, altrimenti
+  quella vista torna a bloccare: `Cancel::every(i)` se l'indice avanza di 1,
+  `Cancel::Poll` se salta (con `every` un ciclo a salti non si ferma quasi
+  mai: errore gia' fatto una volta in Stringhe e Somiglianza). Un risultato
+  calcolato per una vista diversa da quella mostrata viene scartato
+  (`ViewResults::mode`). Solo il 3D supera il secondo su
+  100 MB; le altre stanno sotto 0,5 s.
 - **Viste**: 1 Digraph, 2 Dot Plot, 3 Entropia, 4 Istogramma, 5 3D, 6 Raw,
   7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex. Le tab sono in
   `view_tabs.h`, larghe quanto il testo, ognuna con il suo tasto.
@@ -146,19 +155,10 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 
 ## Stato al 2026-11-15
 
-Su `origin/main` fino a `275c613`: Stringhe, Firme, cursore in Raw e Metric
-Map, vista Hex, 3D a cubo/cilindro/sfera, questo file, `tools/`.
-
-**Non committato** rispetto a `19a34cc` (Somiglianza, `A` con i byte per
-pixel), provato ma non ancora visto dall'utente:
-
-- Barre: ZONA segue FILE quando la si trascina (`RangeSel::follow`), rotella
-  ancorata al bordo, `goTo` che tiene la dimensione, scrollbar della vista
-  con trascinamento vero (`m_scrollDrag`).
-- Cursore anche in Dot Plot, Entropia, One Tuple (linea); click nella
-  Somiglianza = cursore sul tratto Y.
-- `TODO.md` riscritto: viste di oggi, cose da fare in ordine, limiti, ricerca,
-  storico.
+Tutto committato, compreso il calcolo interrompibile (`cancel.h`). I test
+ora durano circa 20 secondi: quelli sull'annullamento lavorano su 64 MB.
+`Cancel::polls` conta i controlli della bandierina: serve ai test per
+verificare senza cronometro che ogni calcolo lungo la guardi.
 
 Controllare con `git status` cosa e' ancora da committare.
 
@@ -242,7 +242,6 @@ Conseguenza proposta, ancora da discutere con l'utente:
 | Problema | Strada proposta |
 |---|---|
 | Tutto il file in memoria (`BinaryReader`), file da GB | `mmap` in sola lettura dietro la stessa interfaccia; poi campionare nelle viste che oggi leggono tutta la finestra |
-| Calcolo non interrompibile | un `std::atomic<bool>` di annullamento passato a `computeViews` e controllato nei cicli lunghi |
 | ELF senza tabella delle sezioni = nessuna sezione | leggere i program header in `binary_format_elf.cpp`; con test su file troncati e fuzzing |
 | Mai provato su Windows nativo e macOS | olcPGE li supporta; serve un Makefile per MinGW/MSVC e una prova della tastiera |
 | "Apri file" richiede di scrivere il percorso | argomento da riga di comando gia' c'e'; valutare il trascinamento del file |

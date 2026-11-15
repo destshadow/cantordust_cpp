@@ -1,4 +1,5 @@
 #include "string_scan.h"
+#include "cancel.h"
 #include <algorithm>
 
 namespace {
@@ -36,8 +37,10 @@ void StringScan::compute(const std::vector<uint8_t>& w) {
         m_hits.push_back(h);
     };
 
+    Cancel::Poll poll;        // i salta di una stringa alla volta
     for (size_t i = 0; i < w.size(); ) {
         if (m_hits.size() >= MAX_HITS) { m_truncated = true; return; }
+        if (poll.at(i)) return;
         if (!printable(w[i])) { i++; continue; }
 
         const size_t a = asciiRun(w, i);

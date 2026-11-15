@@ -19,6 +19,12 @@
 #include "coord_system.h"
 #include "dotplot.h"
 #include "similarity.h"
+#include "view_results.h"
+#include "cancel.h"
+#include <cstring>
+#include <thread>
+#include <chrono>
+#include <future>
 #include "entropy.h"
 #include "view_mode.h"
 #include "line_clip.h"

@@ -1,6 +1,137 @@
 #include "tests.h"
 
 void testCore() {
+    // --- Un calcolo si puo' annullare: esce subito e non da' un risultato ---
+    {
+        using Clock = std::chrono::steady_clock;
+        auto seconds = [](Clock::time_point from) {
+            return std::chrono::duration<double>(Clock::now() - from).count();
+        };
+        std::mt19937_64 g(9);
+        std::vector<uint8_t> noise(64 << 20), lines, copies;
+        for (size_t k = 0; k + 8 <= noise.size(); k += 8) {
+            const uint64_t v = g();
+            std::memcpy(&noise[k], &v, 8);
+        }
+        // Righe di testo di lunghezza varia: nella ricerca delle stringhe
+        // l'indice salta di una riga alla volta
+        while (lines.size() < (32u << 20)) {
+            lines.insert(lines.end(), 5 + g() % 60, (uint8_t)('a' + g() % 26));
+            lines.push_back('\n');
+        }
+        // Pochi blocchi ripetuti moltissimo: nella Somiglianza i gruppi sono grandi
+        for (int k = 0; k < 6000; k++) copies.insert(copies.end(), noise.begin(), noise.begin() + 4096);
+
+        ClassifierModel model;
+        struct Case { ViewMode mode; const std::vector<uint8_t>* data; };
+        const Case cases[] = {
+            {ViewMode::TRIGRAPH3D, &noise}, {ViewMode::ENTROPY, &noise},
+            {ViewMode::DIGRAPH, &noise},    {ViewMode::DOTPLOT, &noise},
+            {ViewMode::STRINGS, &noise},    {ViewMode::STRINGS, &lines},
+            {ViewMode::DOTPLOT, &copies},   {ViewMode::DOTPLOT, &lines},
+        };
+        for (const Case& c : cases) {
+            ComputeParams p;
+            p.mode = c.mode;
+            p.similarity = c.data != &noise;         // sul rumore il dot plot dei valori
+            if (c.mode == ViewMode::TRIGRAPH3D) p.sections = {{0, c.data->size(), 0}};
+
+            // Il calcolo intero, per sapere quanto dura su questa macchina
+            auto t0 = Clock::now();
+            const auto full = computeViews(*c.data, p, model);
+            const double whole = seconds(t0);
+            assert(full && full->mode == c.mode);
+
+            // Bandierina gia' alzata: nessun risultato, e in una frazione del tempo
+            std::atomic<bool> cancel{true};
+            t0 = Clock::now();
+            assert(computeViews(*c.data, p, model, &cancel) == nullptr);
+            const double stopped = seconds(t0);
+            assert(stopped < 0.05 || stopped < whole / 4);
+
+            // Alzata a meta' da un altro thread: torna poco dopo, mai bloccato
+            for (int delayMs : {0, 1, 5, 30}) {
+                cancel = false;
+                auto run = std::async(std::launch::async,
+                                      [&] { return computeViews(*c.data, p, model, &cancel); });
+                std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
+                cancel = true;
+                t0 = Clock::now();
+                const auto r = run.get();
+                const double after = seconds(t0);
+                assert(after < 0.05 || after < whole / 4);
+                assert(!r || r->mode == c.mode);     // finito prima, o annullato
+            }
+        }
+
+        // Dentro le classi: annullate lasciano il lavoro a meta', non dati sbagliati
+        {
+            std::atomic<bool> cancel{true};
+            const Cancel::Scope scope(&cancel);
+            TriGraph tri;
+            tri.compute(noise, {{0, noise.size(), 0}});
+            assert(tri.getPointCount() == 0);
+            StringScan strings;
+            strings.compute(lines);
+            assert(strings.hits().empty());
+            Similarity sim;
+            sim.compute(copies);
+            assert(sim.at(0, 100) == 0.0f);
+        }
+        assert(Cancel::flag == nullptr);             // lo Scope si e' chiuso
+
+        // Senza cronometro: ogni calcolo lungo guarda la bandierina almeno una
+        // volta ogni 128 KB di dati, anche quando l'indice del ciclo salta
+        {
+            // Testo in tratti da 100003 caratteri: il ciclo delle stringhe
+            // avanza di un tratto alla volta e non cade mai su un multiplo di 64 KB
+            std::vector<uint8_t> runs;
+            while (runs.size() < (16u << 20)) {
+                runs.insert(runs.end(), 100003, (uint8_t)'x');
+                runs.push_back(0);
+            }
+            std::atomic<bool> never{false};
+            const Cancel::Scope scope(&never);
+            auto polled = [&](size_t bytes, auto&& work) {
+                Cancel::polls = 0;
+                work();
+                return Cancel::polls >= bytes / (128 << 10);
+            };
+            StringScan strings;
+            assert(polled(runs.size(), [&] { strings.compute(runs); }));
+            assert(strings.hits().size() == runs.size() / 100004);   // e il risultato e' intero
+            assert(polled(lines.size(), [&] { strings.compute(lines); }));
+            Similarity sim;
+            assert(polled(copies.size(), [&] { sim.compute(copies); }));
+            TriGraph tri;
+            assert(polled(noise.size(), [&] { tri.compute(noise, {{0, noise.size(), 0}}); }));
+            DotPlot dots;
+            assert(polled(noise.size(), [&] { dots.compute(noise); }));
+            Entropy entropy;
+            assert(polled(noise.size(), [&] { entropy.compute(noise); }));
+        }
+
+        // Poll controlla ogni 64 KB percorsi, qualunque sia il passo
+        {
+            std::atomic<bool> cancel{false};
+            const Cancel::Scope scope(&cancel);
+            Cancel::Poll poll;
+            assert(!poll.at(0));
+            cancel = true;
+            assert(!poll.at(1000) && !poll.at(65535));   // troppo presto
+            assert(poll.at(65537));                      // un passo che scavalca il multiplo
+            assert(!Cancel::every(65537) && Cancel::every(65536 * 3));
+        }
+
+        // Senza bandierina, o mai alzata, il risultato c'e'
+        std::vector<uint8_t> small(4096, 7);
+        std::atomic<bool> never{false};
+        ComputeParams p;
+        assert(computeViews(small, p, model) != nullptr);
+        assert(computeViews(small, p, model, &never) != nullptr);
+        assert(Cancel::flag == nullptr);             // lo Scope si e' chiuso
+    }
+
     for (size_t size : {0, 1, 10, 255, 256, 1024, 10000}) {
         std::vector<uint8_t> bytes(size, 42);
         FileNavigator nav;

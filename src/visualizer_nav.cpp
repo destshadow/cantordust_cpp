@@ -1,8 +1,18 @@
 #include "visualizer.h"
 #include <filesystem>
 
+// Ferma il calcolo in corso e ne butta il risultato
+void Visualizer::cancelCompute() {
+    m_cancel = true;
+    if (m_future.valid()) m_future.wait();
+    std::lock_guard<std::mutex> lk(m_dataMutex);
+    m_ready.reset();
+}
+
 void Visualizer::recomputeWindow() {
-    if (m_computing.load()) return;
+    // Gia' al lavoro: la richiesta non si perde, il ciclo principale annulla
+    // il calcolo in corso e riparte
+    if (m_computing.load()) { m_recomputeNeeded = true; return; }
     m_recomputeNeeded = false;
     m_computedStart   = m_navigator.getStart();
     m_computedEnd     = m_navigator.getEnd();
@@ -20,13 +30,14 @@ void Visualizer::recomputeWindow() {
         params.windowStart = m_computedStart;
         if (m_mode == ViewMode::TRIGRAPH3D) params.sections = sectionRanges();
 
+        m_cancel    = false;
         m_computing = true;
         m_future = std::async(std::launch::async,
             [this, window = std::move(window), params]() {
                 try {
-                    auto results = computeViews(window, params, m_classifier);
+                    auto results = computeViews(window, params, m_classifier, &m_cancel);
                     std::lock_guard<std::mutex> lk(m_dataMutex);
-                    m_ready = std::move(results);
+                    if (results) m_ready = std::move(results);   // nullptr = annullato
                 } catch (const std::exception& e) {
                     std::lock_guard<std::mutex> lk(m_dataMutex);
                     m_computeError = std::string("Errore calcolo: ") + e.what();
@@ -51,6 +62,10 @@ void Visualizer::applyResults() {
         r = std::move(m_ready);
     }
     if (!r) return;
+    // Calcolato per una vista che non e' piu' quella mostrata (finito un
+    // attimo prima di accorgersi dell'annullamento): contiene solo quella
+    // vista, applicarlo svuoterebbe le altre. Il ricalcolo e' gia' richiesto.
+    if (r->mode != m_mode) return;
 
     m_digraph      = std::move(r->digraph);
     m_dotplot      = std::move(r->dotplot);
@@ -85,11 +100,7 @@ void Visualizer::loadFile(const std::string& filepath) {
         return;
     }
 
-    if (m_future.valid()) m_future.wait();
-    {   // un risultato del file precedente non serve piu'
-        std::lock_guard<std::mutex> lk(m_dataMutex);
-        m_ready.reset();
-    }
+    cancelCompute();      // un risultato del file precedente non serve piu'
 
     const auto& bytes = m_reader.getBytes();
     m_navigator.setData(bytes, 0);

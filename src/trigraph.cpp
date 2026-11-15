@@ -1,5 +1,6 @@
 #include "trigraph.h"
 #include "density.h"
+#include "cancel.h"
 #include <algorithm>
 
 namespace {
@@ -17,6 +18,7 @@ std::vector<int16_t> sectionVotes(const std::vector<uint8_t>& bytes,
     for (const auto& r : ranges) {
         const size_t end = std::min(r.end, bytes.size());
         for (size_t i = r.start; i + 2 < end; i++) {
+            if (Cancel::every(i)) return winner;
             uint32_t key = tripleAt(bytes, i);
             if (votes[key] == 0)            { winner[key] = r.section; votes[key] = 1; }
             else if (winner[key] == r.section) votes[key]++;
@@ -45,10 +47,14 @@ void TriGraph::compute(const std::vector<uint8_t>& bytes,
     // Le triple possibili sono 2^24: un array e' molto piu' veloce di una
     // mappa (su 100 MB casuali: 1,6 s invece di 11).
     std::vector<uint32_t> freq((size_t)1 << 24, 0);
-    for (size_t i = 0; i + 2 < bytes.size(); i++) freq[tripleAt(bytes, i)]++;
+    for (size_t i = 0; i + 2 < bytes.size(); i++) {
+        if (Cancel::every(i)) return;
+        freq[tripleAt(bytes, i)]++;
+    }
 
     const std::vector<int16_t> winner =
         sections.empty() ? std::vector<int16_t>() : sectionVotes(bytes, sections);
+    if (Cancel::requested()) return;
     const float ref = Density::reference(freq.data(), freq.size());
 
     size_t present = 0;
@@ -56,6 +62,7 @@ void TriGraph::compute(const std::vector<uint8_t>& bytes,
     m_points.reserve(present);
 
     for (uint32_t key = 0; key < (uint32_t)1 << 24; key++) {
+        if (Cancel::every(key)) { m_points.clear(); return; }
         if (freq[key] == 0) continue;
         Point3D p{};
         p.key     = key;

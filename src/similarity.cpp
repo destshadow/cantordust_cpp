@@ -1,5 +1,6 @@
 #include "similarity.h"
 #include "density.h"
+#include "cancel.h"
 #include <algorithm>
 #include <cstring>
 
@@ -28,6 +29,7 @@ void Similarity::compute(const std::vector<uint8_t>& b) {
     tokens.reserve(std::min(n, cap));
     uint32_t prev = 0;
     for (size_t i = 0; i < n; i++) {
+        if (Cancel::every(i)) return;
         uint32_t gram;
         std::memcpy(&gram, &b[i], GRAM);
         // Una fila di byte uguali da' sempre lo stesso gettone: basta il primo
@@ -45,14 +47,17 @@ void Similarity::compute(const std::vector<uint8_t>& b) {
             if (tokens.size() >= cap) break;      // tutti lo stesso gettone
         }
     }
+    if (Cancel::requested()) return;
     // Stesso gettone vicino, e dentro il gruppo in ordine di posizione
     std::stable_sort(tokens.begin(), tokens.end(),
                      [](const Token& a, const Token& c) { return a.hash < c.hash; });
 
+    Cancel::Poll poll;        // lo salta di un gruppo alla volta
     for (size_t lo = 0; lo < tokens.size(); ) {
         size_t hi = lo;
         while (hi < tokens.size() && tokens[hi].hash == tokens[lo].hash) hi++;
         const size_t freq = hi - lo;
+        if (poll.at(lo)) return;
         if (freq > 1) {
             // L'approssimazione di Church e Helfman scarta i gettoni troppo
             // comuni. Qui si confrontano solo con le MAX_FREQ occorrenze dopo:

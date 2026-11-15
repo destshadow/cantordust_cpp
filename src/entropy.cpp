@@ -1,4 +1,5 @@
 #include "entropy.h"
+#include "cancel.h"
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -37,6 +38,7 @@ void Entropy::compute(const std::vector<uint8_t>& bytes, size_t window_size) {
     // Scorri il file a finestre non sovrapposte
     // Ogni finestra produce un valore di entropia
     for (size_t i = 0; i < bytes.size(); i += window_size) {
+        if (Cancel::requested()) return;
         size_t len = std::min(window_size, bytes.size() - i);
         m_values.push_back(shannonEntropy(bytes, i, len));
     }

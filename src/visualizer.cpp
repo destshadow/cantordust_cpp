@@ -34,6 +34,11 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     if (!busy && !typing) handleCommandKeys();
     if (!typing) updateBars();
 
+    // Vista o opzione cambiata durante un calcolo: quello in corso non serve
+    // piu'. (Se cambia solo la finestra lo si lascia finire: trascinando le
+    // barre la vista si aggiorna a ogni calcolo, invece di restare ferma.)
+    if (m_computing && m_recomputeNeeded) m_cancel = true;
+
     // Finestra cambiata e nessun calcolo in corso: aggiorna le viste
     if (!m_computing && (m_recomputeNeeded ||
                          m_navigator.getStart() != m_computedStart ||
@@ -165,11 +170,11 @@ void Visualizer::syncNavigator() {
 }
 
 Visualizer::~Visualizer() {
-    if (m_future.valid()) m_future.wait();
+    cancelCompute();
 }
 
 bool Visualizer::OnUserDestroy() {
-    if (m_future.valid()) m_future.wait();
+    cancelCompute();
     delete m_rawDecal;
     m_rawDecal = nullptr;
     delete m_rawSprite;

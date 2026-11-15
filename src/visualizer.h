@@ -228,6 +228,8 @@ private:
     // Threading
     std::future<void>  m_future;
     std::atomic<bool>  m_computing{false};
+    std::atomic<bool>  m_cancel{false};   // chiede al calcolo in corso di smettere
+    void cancelCompute();                 // e aspetta che abbia smesso
     std::mutex         m_dataMutex;       // protegge solo m_ready e m_computeError
     std::unique_ptr<ViewResults> m_ready; // risultati pronti da prendere
     bool               m_recomputeNeeded = false;

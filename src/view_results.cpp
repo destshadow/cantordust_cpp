@@ -1,11 +1,15 @@
 #include "view_results.h"
 #include "pixel_guess.h"
+#include "cancel.h"
 
 std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
                                           const ComputeParams& p,
-                                          ClassifierModel& classifier) {
+                                          ClassifierModel& classifier,
+                                          const std::atomic<bool>* cancel) {
+    const Cancel::Scope scope(cancel);
     auto r = std::make_unique<ViewResults>();
     r->windowStart = p.windowStart;
+    r->mode        = p.mode;
 
     switch (p.mode) {
         case ViewMode::DIGRAPH:    r->digraph.compute(window);   break;
@@ -37,6 +41,10 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
         }
     }
 
-    for (uint8_t b : window) r->windowHist[b]++;
+    for (size_t i = 0; i < window.size(); i++) {
+        if (Cancel::every(i)) break;
+        r->windowHist[window[i]]++;
+    }
+    if (Cancel::requested()) return nullptr;     // risultato a meta': si butta
     return r;
 }

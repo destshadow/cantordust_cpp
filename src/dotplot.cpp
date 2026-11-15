@@ -1,4 +1,5 @@
 #include "dotplot.h"
+#include "cancel.h"
 #include "density.h"
 #include <cmath>
 #include <array>
@@ -16,6 +17,7 @@ void DotPlot::compute(const std::vector<uint8_t>& bytes) {
     size_t total = bytes.size();
 
     for (size_t i = 0; i < total; i++) {
+        if (Cancel::every(i)) return;
         // X = posizione nel file, sulle 256 colonne
         uint8_t x = static_cast<uint8_t>((i * 256) / total);
 
