@@ -1,6 +1,46 @@
 #include "tests.h"
 
 void testMetricMap() {
+    // --- Somiglianza: una copia da' una diagonale, il rumore niente ---
+    {
+        std::mt19937 g(5);
+        std::vector<uint8_t> b(256 * 64);
+        for (auto& x : b) x = uint8_t(g());
+        Similarity s;
+        s.compute(b);
+        float total = 0;
+        for (int y = 0; y < 256; y++)
+            for (int x = 0; x < 256; x++) total += s.at(x, y);
+        assert(total < 4.0f);                       // rumore: quasi nessuna coincidenza
+
+        // I tratti 10..29 copiati nei tratti 100..119
+        std::copy(b.begin() + 10 * 64, b.begin() + 30 * 64, b.begin() + 100 * 64);
+        s.compute(b);
+        for (int k = 0; k < 20; k++) {
+            assert(s.at(10 + k, 100 + k) > 5.0f);   // la diagonale spostata
+            assert(s.at(100 + k, 10 + k) > 5.0f);   // simmetrica
+        }
+        assert(s.at(10, 60) == 0.0f && s.at(200, 100) == 0.0f);
+
+        // Una fila di byte uguali non dice nulla (e non costa tempo)
+        std::vector<uint8_t> zeros(100000, 0);
+        s.compute(zeros);
+        assert(s.at(3, 200) == 0.0f);
+
+        // Cento copie dello stesso blocco: non resta nero
+        std::vector<uint8_t> copies;
+        for (int c = 0; c < 100; c++) copies.insert(copies.end(), b.begin(), b.begin() + 2048);
+        s.compute(copies);
+        float lit = 0;
+        for (int y = 0; y < 256; y++)
+            for (int x = 0; x < 256; x++) lit += s.at(x, y) > 0;
+        assert(lit > 256 * 20);
+
+        s.compute({});                               // file minuscoli
+        s.compute({1, 2, 3});
+        assert(s.toRGB().size() == 256 * 256 * 3);
+    }
+
     // Dot Plot ed Entropy: tutte le 256 colonne, anche con pochi dati
     {
         auto litColumns = [](const std::vector<uint8_t>& rgb) {

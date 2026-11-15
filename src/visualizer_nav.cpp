@@ -16,6 +16,7 @@ void Visualizer::recomputeWindow() {
         params.rawWidth  = m_rawWidth;
         params.rawOffset = (size_t)m_rawOffset;
         params.rawFilter = m_rawFilter;
+        params.similarity = m_dotSimilarity;
         params.windowStart = m_computedStart;
         if (m_mode == ViewMode::TRIGRAPH3D) params.sections = sectionRanges();
 
@@ -53,6 +54,7 @@ void Visualizer::applyResults() {
 
     m_digraph      = std::move(r->digraph);
     m_dotplot      = std::move(r->dotplot);
+    m_similarity   = std::move(r->similarity);
     m_entropy      = std::move(r->entropy);
     m_histogram    = std::move(r->histogram);
     m_trigraph     = std::move(r->trigraph);
@@ -64,6 +66,7 @@ void Visualizer::applyResults() {
     m_stringBase   = r->windowStart;
     m_autocorr     = std::move(r->autocorr);
     m_suggestWidth = r->suggestWidth;
+    m_suggestBpp   = r->suggestBpp;
     m_windowHist   = r->windowHist;
     rebuildStringRows();
     repaintCloud();
@@ -103,6 +106,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_rawOffset = 0;
     m_rawFilter = RawFilter{};
     m_suggestWidth = 0;
+    m_suggestBpp   = 1;
     m_occKey.clear();     // la cache vale per il file precedente
     m_hlStart = m_hlEnd = 0;
     m_tripleMaskOn = false;

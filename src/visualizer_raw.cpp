@@ -99,8 +99,9 @@ void Visualizer::handleRawInput() {
     }
 
     // A = applica la larghezza suggerita dall'autocorrelazione
-    if (GetKey(olc::Key::A).bPressed && m_suggestWidth > 0) {
+    if (GetKey(olc::Key::A).bPressed && hasSuggestion()) {
         applySuggestedWidth();
+        return;             // ha gia' ricalcolato
     }
 
     // F = filtro successivo, Shift+F = precedente
@@ -138,7 +139,10 @@ void Visualizer::drawRawPanel() {
 
     // --- Titolo ---
     std::string title = "AUTOCORR  ";
-    if (m_suggestWidth > 0)
+    BppMode suggested;
+    if (suggestsBpp(suggested))        // la larghezza si sapra' con quei bpp
+        title += std::string("suggeriti ") + RawPixels::modeName(suggested) + " [A]";
+    else if (m_suggestWidth > 0)
         title += "suggerita W=" + std::to_string(m_suggestWidth) + " [A]";
     else
         title += "nessuna larghezza evidente";

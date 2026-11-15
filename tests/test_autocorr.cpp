@@ -1,6 +1,52 @@
 #include "tests.h"
 
 void testAutocorr() {
+    // --- PixelGuess: quanti byte fa un pixel, e da dove iniziano ---
+    {
+        std::mt19937 g(11);
+        auto guess = [](const std::vector<uint8_t>& b) {
+            Autocorr a;
+            a.compute(b);
+            return PixelGuess::bytesPerPixel(a.differences());
+        };
+        // Immagine liscia a n canali molto diversi tra loro, larga 100 pixel
+        auto image = [&](size_t channels, bool flatLast) {
+            std::vector<uint8_t> b;
+            for (int y = 0; y < 300; y++)
+                for (int x = 0; x < 100; x++)
+                    for (size_t c = 0; c < channels; c++) {
+                        int v = (int)(c * 70) + (x + y) / 4 + (int)(g() % 5);
+                        b.push_back(flatLast && c == channels - 1 ? 0xFF : (uint8_t)v);
+                    }
+            return b;
+        };
+        assert(guess(image(1, false)) == 1);
+        assert(guess(image(3, false)) == 3);
+        assert(guess(image(4, true)) == 4);
+
+        std::vector<uint8_t> samples;                 // audio a 16 bit
+        for (int i = 0; i < 60000; i++) {
+            const int v = (int)(9000 * std::sin(i / 37.0));
+            samples.push_back((uint8_t)v);
+            samples.push_back((uint8_t)(v >> 8));
+        }
+        assert(guess(samples) == 2);
+
+        std::vector<uint8_t> noise(200000);           // nessun passo
+        for (auto& x : noise) x = uint8_t(g());
+        assert(guess(noise) == 1);
+        assert(guess({}) == 1);
+
+        // Il byte fisso dice dove inizia il pixel, anche se si parte a meta'
+        std::vector<uint8_t> rgba = image(4, true);
+        assert(PixelGuess::phase(rgba, 0, rgba.size(), 4) == 0);
+        for (size_t shift = 1; shift < 4; shift++)
+            assert(PixelGuess::phase(rgba, shift, rgba.size(), 4) == 4 - shift);
+        assert(PixelGuess::phase(noise, 0, noise.size(), 4) == 0);   // nessun byte fisso
+        assert(PixelGuess::phase(rgba, 0, rgba.size(), 3) == 0);     // a 3 non si sa
+        assert(PixelGuess::phase(rgba, 0, 10, 4) == 0);              // troppo corto
+    }
+
     // --- Autocorr: trova la larghezza di un'immagine nascosta nel rumore ---
     {
         std::mt19937 noise(7);

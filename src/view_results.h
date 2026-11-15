@@ -9,6 +9,7 @@
 #include "metric_map.h"
 #include "one_tuple.h"
 #include "raw_pixels.h"
+#include "similarity.h"
 #include "string_scan.h"
 #include "trigraph.h"
 #include "view_mode.h"
@@ -25,6 +26,7 @@ struct ComputeParams {
     CurveMode curveMode = CurveMode::HILBERT;
     int       rawWidth  = 256;
     size_t    rawOffset = 0;
+    bool      similarity = false;            // Dot Plot: il file con se stesso
     size_t    windowStart = 0;               // Stringhe: per gli offset nel file
     RawFilter rawFilter;
     std::vector<TriGraph::Range> sections;   // 3D: relative alla finestra
@@ -36,6 +38,7 @@ struct ComputeParams {
 struct ViewResults {
     DiGraph   digraph;
     DotPlot   dotplot;
+    Similarity similarity;
     Entropy   entropy;
     Histogram histogram;
     TriGraph  trigraph;
@@ -46,6 +49,7 @@ struct ViewResults {
     StringScan strings;
     Autocorr  autocorr;
     int       suggestWidth = 0;
+    size_t    suggestBpp   = 1;                // byte per pixel, 1 = nessun indizio
     size_t    windowStart  = 0;
     std::array<uint32_t, 256> windowHist{};
 };

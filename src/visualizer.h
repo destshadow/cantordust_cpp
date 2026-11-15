@@ -144,10 +144,15 @@ private:
     void drawRawOptions(bool clickable);
     void drawMetricOptions(bool clickable);
     void draw3DOptions(bool clickable);
+    void drawDotOptions(bool clickable);
+    void setDotSimilarity(bool on);
+    void inspectSimilarity(PanelWriter& pw, int cx, int cy);
     void setCoordSystem(CoordSystem s);
     void setBpp(BppMode m);
     void setRawFilter(RawFilter f);
     void applySuggestedWidth();
+    bool suggestsBpp(BppMode& mode) const;
+    bool hasSuggestion() const;
     void setColorMode(ColorMode m);
     void setCurveMode(CurveMode m);
     std::vector<uint8_t> getCurrentRGB() const;
@@ -157,6 +162,8 @@ private:
     BinaryReader  m_reader;
     DiGraph       m_digraph;
     DotPlot       m_dotplot;
+    Similarity    m_similarity;
+    bool          m_dotSimilarity = false;   // vista 2: valori o somiglianza
     Entropy       m_entropy;
     Histogram     m_histogram;
     TriGraph      m_trigraph;
@@ -200,6 +207,7 @@ private:
     std::function<void()> m_pendingOption;   // click sulla riga di opzioni
     Autocorr      m_autocorr;
     int           m_suggestWidth = 0;   // 0 = nessuna larghezza trovata
+    size_t        m_suggestBpp   = 1;   // byte per pixel suggeriti, 1 = nessun indizio
     Slider        m_widthSlider;
     Slider        m_offsetSlider;
 

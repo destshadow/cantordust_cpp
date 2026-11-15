@@ -23,6 +23,8 @@ public:
     // L'indice 0 non e' usato. Vuoto se non c'erano abbastanza byte.
     const std::vector<float>& similarity() const { return m_sim; }
     int maxLag() const { return (int)m_sim.size() - 1; }
+    // Differenza media assoluta per distanza, non normalizzata
+    const std::vector<float>& differences() const { return m_mad; }
 
     // Larghezza (in pixel da `bpp` byte) piu' promettente: la riga di
     // un'immagine, preferendo la fondamentale ai suoi multipli, oppure la

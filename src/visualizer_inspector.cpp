@@ -38,6 +38,10 @@ void Visualizer::drawInspector() {
         if (const StringScan::Hit* s = stringAtRow(row)) { inspectString(pw, *s); return; }
     }
 
+    if (over && w.len > 0 && m_mode == ViewMode::DOTPLOT && m_dotSimilarity) {
+        inspectSimilarity(pw, cx, cy);
+        return;
+    }
     if (over && w.len > 0 &&
         (m_mode == ViewMode::DOTPLOT || m_mode == ViewMode::ENTROPY)) {
         inspectRange(pw, cx, cy);

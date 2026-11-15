@@ -1,4 +1,5 @@
 #include "view_results.h"
+#include "pixel_guess.h"
 
 std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
                                           const ComputeParams& p,
@@ -8,7 +9,10 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
 
     switch (p.mode) {
         case ViewMode::DIGRAPH:    r->digraph.compute(window);   break;
-        case ViewMode::DOTPLOT:    r->dotplot.compute(window);   break;
+        case ViewMode::DOTPLOT:
+            if (p.similarity) r->similarity.compute(window);
+            else              r->dotplot.compute(window);
+            break;
         case ViewMode::ENTROPY:    r->entropy.compute(window);   break;
         case ViewMode::HISTOGRAM:  r->histogram.compute(window); break;
         case ViewMode::TRIGRAPH3D: r->trigraph.compute(window, p.sections); break;
@@ -20,6 +24,7 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
             r->rawpixels.compute(window, p.bpp, p.rawWidth, p.rawOffset, p.rawFilter);
             r->autocorr.compute(window);
             r->suggestWidth = r->autocorr.bestWidth(RawPixels::bytesPerPixel(p.bpp));
+            r->suggestBpp   = PixelGuess::bytesPerPixel(r->autocorr.differences());
             break;
         case ViewMode::METRICMAP: {
             ClassifierData cd;

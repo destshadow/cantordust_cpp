@@ -1,5 +1,6 @@
 #include "visualizer.h"
 #include "option_bar.h"
+#include "pixel_guess.h"
 
 // Le opzioni delle viste, da tastiera e dalla riga in basso: le due strade
 // passano dalle stesse funzioni.
@@ -10,7 +11,8 @@
 
 bool Visualizer::hasOptions() const {
     return m_mode == ViewMode::RAWPIXELS || m_mode == ViewMode::METRICMAP ||
-           m_mode == ViewMode::STRINGS || m_mode == ViewMode::TRIGRAPH3D;
+           m_mode == ViewMode::STRINGS || m_mode == ViewMode::TRIGRAPH3D ||
+           m_mode == ViewMode::DOTPLOT;
 }
 
 void Visualizer::setBpp(BppMode m) {
@@ -25,9 +27,34 @@ void Visualizer::setRawFilter(RawFilter f) {
     recomputeRawPixels();
 }
 
+// I byte per pixel suggeriti, se diversi da quelli in uso
+bool Visualizer::suggestsBpp(BppMode& mode) const {
+    switch (m_suggestBpp) {
+        case 2: mode = BppMode::BPP_16; break;
+        case 3: mode = BppMode::BPP_24; break;
+        case 4: mode = BppMode::BPP_32; break;
+        case 8: mode = BppMode::BPP_64; break;
+        default: return false;
+    }
+    return mode != m_bppMode;
+}
+
+bool Visualizer::hasSuggestion() const {
+    BppMode mode;
+    return m_suggestWidth > 0 || suggestsBpp(mode);
+}
+
+// Tasto A: prima i byte per pixel (e da quale byte iniziano), poi la
+// larghezza, che dipende da quelli
 void Visualizer::applySuggestedWidth() {
-    if (m_suggestWidth <= 0) return;
-    m_rawWidth = m_suggestWidth;
+    BppMode mode;
+    if (suggestsBpp(mode)) {
+        m_bppMode = mode;
+        m_suggestWidth = m_autocorr.bestWidth(RawPixels::bytesPerPixel(mode));
+        m_rawOffset = (int)PixelGuess::phase(m_reader.getBytes(), m_navigator.getStart(),
+                                             m_navigator.getEnd(), m_suggestBpp);
+    }
+    if (m_suggestWidth > 0) m_rawWidth = m_suggestWidth;
     syncRawSliders();      // riallinea l'offset alla nuova larghezza
     recomputeRawPixels();
 }
@@ -57,6 +84,20 @@ void Visualizer::draw3DOptions(bool clickable) {
     }
 }
 
+void Visualizer::setDotSimilarity(bool on) {
+    m_dotSimilarity = on;
+    recomputeWindow();
+}
+
+void Visualizer::drawDotOptions(bool clickable) {
+    OptionBar bar(this, 6, CMD_STATUS_Y + 1, clickable);
+    bar.title("Tipo [T]:");
+    if (bar.option("valori", !m_dotSimilarity))
+        m_pendingOption = [this] { setDotSimilarity(false); };
+    if (bar.option("somiglianza", m_dotSimilarity))
+        m_pendingOption = [this] { setDotSimilarity(true); };
+}
+
 void Visualizer::applyPendingOption() {
     if (!m_pendingOption) return;
     auto action = std::move(m_pendingOption);
@@ -71,6 +112,8 @@ void Visualizer::handleOptionKeys() {
         if (GetKey(olc::Key::OEM_6).bPressed) setBpp((BppMode)(((int)m_bppMode + 1) % 5));
     }
     if (m_mode == ViewMode::STRINGS) handleStringKeys();
+    if (m_mode == ViewMode::DOTPLOT && GetKey(olc::Key::T).bPressed)
+        setDotSimilarity(!m_dotSimilarity);
     if (m_mode == ViewMode::METRICMAP) {
         if (GetKey(olc::Key::C).bPressed)
             setColorMode(MetricMap::nextColorMode(m_colorMode, m_classifier.isReady()));
@@ -103,7 +146,7 @@ void Visualizer::drawRawOptions(bool clickable) {
             m_pendingOption = [this, id] { setRawFilter(RawFilter{id}); };
 
     bar.gap();
-    if (bar.option("[A] larghezza auto", false, m_suggestWidth > 0))
+    if (bar.option("[A] auto", false, hasSuggestion()))
         m_pendingOption = [this] { applySuggestedWidth(); };
 }
 
@@ -132,4 +175,5 @@ void Visualizer::drawOptions(bool clickable) {
     else if (m_mode == ViewMode::METRICMAP) drawMetricOptions(clickable);
     else if (m_mode == ViewMode::STRINGS)   drawStringOptions(clickable);
     else if (m_mode == ViewMode::TRIGRAPH3D) draw3DOptions(clickable);
+    else if (m_mode == ViewMode::DOTPLOT)   drawDotOptions(clickable);
 }

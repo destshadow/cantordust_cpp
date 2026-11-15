@@ -76,6 +76,12 @@ void Visualizer::highlightByPosition(olc::Sprite* spr) {
             } else {                                     // colonna = tratto
                 a = ws + columnStart(x, len);
                 b = ws + columnStart(x + 1, len);
+                if (m_mode == ViewMode::DOTPLOT && m_dotSimilarity) {
+                    // Resta acceso solo cio' che riguarda la sezione: X o Y
+                    const size_t ya = ws + (size_t)y * len / 256;
+                    const size_t yb = ws + (size_t)(y + 1) * len / 256;
+                    if (!(yb < m_hlStart || ya >= m_hlEnd)) continue;
+                }
             }
             if (b < m_hlStart || a >= m_hlEnd) dim(px[(size_t)y * w + x]);
         }

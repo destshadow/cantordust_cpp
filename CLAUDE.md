@@ -101,7 +101,7 @@ serve la voce "Altro ▾" decisa con l'utente (vedi TODO).
   cui sono stati calcolati. `ViewResults::windowStart` li accompagna; non
   usare `m_navigator.getStart()` per interpretarli, puo' essere gia' cambiato.
 - **Tasti**: occupati O S B H N Home Esc, 1-9 0, e per vista A F C V L T
-  `[ ] , .`, nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
+  `[ ] , .` (T anche nel Dot Plot), nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
   una lettera usata dal 3D (W A S D Q E R C F) non puo' diventare globale.
 - **`view_tabs.h` non deve includere olcPGE**: lo usano i test, che non
   collegano il motore. Per questo il tasto di una tab e' un `char`.
@@ -141,10 +141,17 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 
 ## Stato al 2026-11-15
 
-Tutto cio' che segue e' su `origin/main`: Stringhe, Firme, cursore in Raw e
-Metric Map, vista Hex, 3D a cubo/cilindro/sfera, questo file, `tools/`.
-L'utente ha provato e approvato Hex e le forme del 3D. Controllare con
-`git status` se c'e' lavoro non committato.
+Su `origin/main` fino a `275c613`: Stringhe, Firme, cursore in Raw e Metric
+Map, vista Hex, 3D a cubo/cilindro/sfera, questo file, `tools/`.
+
+**Non committato**, provato (test, 0 warning, ASan/UBSan su 8 file, confronto
+pixel) ma non ancora visto dall'utente:
+
+- Somiglianza: `similarity.*`, `visualizer_inspector_similarity.cpp`; e' un
+  modo della vista 2 Dot Plot (`m_dotSimilarity`, tasto `T`), non una tab.
+- `A` nel Raw sceglie anche i byte per pixel: `pixel_guess.*`.
+
+Controllare con `git status` cosa e' ancora da committare.
 
 Nella radice c'e' `_cantor.dust_.7z.zip`: la demo originale del 2012
 (Windows, .NET/XNA, solo vista 3D, senza sorgenti). **Non va su git**; serve
@@ -163,7 +170,10 @@ In ordine (dettagli in `TODO.md`, "Piano del 2026-11-07"):
 2. **Panoramica** — righe di indicatori lungo il file; usa entropia, testo,
    zeri, periodicita', firme.
 3. **Profilo record**.
-4. *(proposta, da confermare con l'utente)* **Somiglianza**: il vero dot plot.
+
+Proposte ancora da confermare con l'utente (vedi TODO, "L'ipotesi sono tutte
+operazioni su immagini"): filtro Raw "differenza con spostamento", test
+chi-quadro sui bit bassi nella Panoramica.
 
 ## Ricerca sul profilo di Christopher Domas (2026-11-15)
 

@@ -101,6 +101,15 @@ VISTE
                   Click = cursore, frecce e PagSu/PagGiu = scorre. Il cursore
                   scelto in un'altra vista qui e' gia' in vista.
 
+SOMIGLIANZA (vista 2, tasto T)
+  Il file confrontato con se stesso: X e Y sono posizioni, un pixel acceso
+  vuol dire che i due tratti hanno sequenze in comune.
+  Diagonale = contenuto ripetuto. Quadrato = zona dello stesso tipo.
+
+A NEL RAW
+  Sceglie da solo byte per pixel e larghezza, se li trova. A 24 bit i colori
+  possono restare scambiati: si sistemano con OFFSET (Ctrl+, e Ctrl+.).
+
 FIRME (file dentro al file)
   Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,
   ELF, PDF...). L'elenco e' nell'Inspector, quando il mouse non e' su nulla.

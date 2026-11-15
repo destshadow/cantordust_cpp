@@ -287,11 +287,49 @@ mancano, dai nomi trovati nel programma:
   - Adjacency Graph = grafo "byte seguito da byte" (l'immagine di esempio
     `example_arbitrary_instruction_sets.png` sembra un grafo a molle)
   - Moire: ignoto
-- [ ] *(proposta)* **Somiglianza** (il vero "dot plot" di Conti e Kaminsky):
-      pixel (i, j) acceso se il tratto i del file somiglia al tratto j. Le
-      diagonali sono ripetizioni, i quadrati zone omogenee. Documentato in
-      Conti & Dean, Black Hat 2008. Nota: il nostro "2 Dot Plot" e' un'altra
-      cosa (X = posizione, Y = valore).
+- [x] **Somiglianza** (vista 2 Dot Plot, tasto `T`; `similarity.*`): il file
+      confrontato con se stesso. Algoritmo di Church e Helfman (1993):
+      gettoni di 4 byte, peso 1/frequenza, 256 celle, cella(i) = i*256/N.
+      Su `dataset/visual_re.example` separa i pezzi e mostra quali sono dello
+      stesso tipo: e' la vista che trova i confini senza intestazioni.
+      100 MB in meno di mezzo secondo.
+      - Differenze dall'articolo: i gettoni si campionano per contenuto (hash)
+        e quelli troppo comuni si confrontano solo con le 32 occorrenze dopo.
+        Quindi un file fatto di centinaia di copie mostra una fascia attorno
+        alla diagonale, non tutta la griglia: stringere la finestra.
+      - [ ] idea: click su un pixel = porta il cursore al tratto Y
+- [x] **`A` nel Raw suggerisce anche i byte per pixel** (`pixel_guess.*`),
+      dalla GIF di riferimento (8 bit coi fantasmi -> 24 bit -> colori giusti).
+      punteggio(p) = 1 - media(mad[p,2p,3p]) / media(mad alle altre distanze).
+      A 4 byte per pixel trova anche da dove iniziano (il byte fisso). A 3
+      byte non si puo' sapere: i colori possono restare scambiati, si corregge
+      con l'offset. Nessuna letteratura trovata: e' una nostra euristica.
+
+### L'ipotesi "sono tutte operazioni su immagini" (2026-11-15)
+
+Dell'utente: Moire e le altre viste ignote sarebbero operazioni da immagini
+applicate al file. Ricerca fatta, esito:
+- Vero in parte. Tecniche da analisi forense di immagini che valgono su
+  qualunque sequenza di byte: piani di bit (fatto), residuo di rumore = filtro
+  passa-alto (i nostri delta), matrice di co-occorrenza (e' il Digraph),
+  spettro (Spettrogramma, in piano), test chi-quadro sui bit bassi (Westfeld e
+  Pfitzmann 2000; non fatto). Nataraj (2011) classifica malware trattando il
+  file come immagine in scala di grigi.
+- Falso per i nomi: "Residue Contact Map" viene dalla biologia (matrice 1 se
+  due elementi distano meno di una soglia: e' un recurrence plot), "Adjacency
+  Graph" dai grafi, "Sliding Histogram" dalla statistica. L'originale pescava
+  da piu' campi: il filo comune e' la sequenza, non l'immagine.
+- Limite: un file diventa immagine solo scelta la larghezza. Le operazioni che
+  guardano i vicini in 2D (bordi, sfocature) hanno senso solo nel Raw con la
+  larghezza giusta.
+- Moire, ipotesi non verificata: e' l'interferenza tra due periodi, con
+  frange di periodo p1*p2/|p1-p2|. Nel Raw si vede gia': con la larghezza
+  sbagliata le righe diventano bande oblique. Sovrapporre il file a una sua
+  copia spostata e' cio' che fa `hexcymatix` (differenza con spostamento).
+- [ ] *(proposta)* Filtro Raw "differenza con spostamento k": generalizza
+      delta (k=1) e delta riga (k=larghezza).
+- [ ] *(proposta)* Test chi-quadro sui bit bassi come riga della Panoramica:
+      trova dati nascosti nei bit meno significativi.
 
 Da valutare dopo:
 - [ ] Un tipo comune per stringhe e firme, solo quando ci sono entrambe e si

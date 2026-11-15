@@ -52,7 +52,7 @@ void Visualizer::updateCanvas() {
 std::vector<uint8_t> Visualizer::getCurrentRGB() const {
     switch (m_mode) {
         case ViewMode::DIGRAPH:    return m_digraph.toRGB();
-        case ViewMode::DOTPLOT:    return m_dotplot.toRGB();
+        case ViewMode::DOTPLOT:    return m_dotSimilarity ? m_similarity.toRGB() : m_dotplot.toRGB();
         case ViewMode::ENTROPY:    return m_entropy.toRGB();
         case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
         case ViewMode::TRIGRAPH3D: return {};
