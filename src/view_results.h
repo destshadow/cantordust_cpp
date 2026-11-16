@@ -8,6 +8,7 @@
 #include "histogram.h"
 #include "metric_map.h"
 #include "one_tuple.h"
+#include "overview.h"
 #include "raw_pixels.h"
 #include "similarity.h"
 #include "string_scan.h"
@@ -48,6 +49,7 @@ struct ViewResults {
     ByteCloud bytecloud;
     OneTuple  onetuple;
     StringScan strings;
+    Overview  overview;
     Autocorr  autocorr;
     int       suggestWidth = 0;
     size_t    suggestBpp   = 1;                // byte per pixel, 1 = nessun indizio

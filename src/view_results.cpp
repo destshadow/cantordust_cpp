@@ -24,6 +24,7 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
         case ViewMode::ONETUPLE:   r->onetuple.compute(window);  break;
         case ViewMode::STRINGS:    r->strings.compute(window);   break;
         case ViewMode::HEX:        break;     // legge i byte direttamente
+        case ViewMode::OVERVIEW:   r->overview.compute(window);  break;
         case ViewMode::RAWPIXELS:
             r->rawpixels.compute(window, p.bpp, p.rawWidth, p.rawOffset, p.rawFilter);
             r->autocorr.compute(window);

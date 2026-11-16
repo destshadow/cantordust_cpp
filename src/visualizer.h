@@ -93,6 +93,13 @@ private:
     bool cursorPixel(int& cx, int& cy) const;
     void drawCursorMarker();
     void updateSimilarityClick();
+    // Vista Panoramica (visualizer_overview.cpp, visualizer_inspector_overview.cpp)
+    bool isOverviewView() const;
+    void overviewStrip(int& x0, int& w) const;
+    int  overviewCellUnderMouse() const;
+    void handleOverviewInput();
+    void drawOverview();
+    void inspectOverview(PanelWriter& pw, int cell);
     // Vista Hex (visualizer_hex.cpp)
     bool   isHexView() const;
     void   syncHexList();
@@ -179,6 +186,8 @@ private:
     size_t           m_stringBase = 0;   // dove inizia la finestra di m_strings
     std::vector<uint32_t> m_stringRows;  // le righe dopo i filtri
     ListView         m_stringList;
+    Overview         m_overview;
+    size_t           m_overviewBase = 0; // dove inizia la finestra di m_overview
     ListView         m_hexList;          // vista Hex: una riga = 16 byte
     size_t           m_hexStart = SIZE_MAX, m_hexEnd = SIZE_MAX;
     int              m_stringMin = 6;

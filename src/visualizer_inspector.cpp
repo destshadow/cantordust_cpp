@@ -32,6 +32,10 @@ void Visualizer::drawInspector() {
     size_t point = pointUnderMouse(over, cx, cy);
     if (point < m_reader.getSize()) { inspectPoint(pw, point); return; }
 
+    if (isOverviewView()) {
+        const int cell = overviewCellUnderMouse();
+        if (cell >= 0) { inspectOverview(pw, cell); return; }
+    }
     if (isStringsView()) {
         const size_t hover = m_stringList.hover;
         const size_t row = hover != ListState::NONE ? hover : m_stringList.state.selected;

@@ -51,6 +51,7 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
         if (m_mode == ViewMode::TRIGRAPH3D) handle3DInput(fElapsedTime);
         else if (!busy && isStringsView())  handleStringsInput();
         else if (!busy && isHexView())      handleHexInput();
+        else if (!busy && isOverviewView()) handleOverviewInput();
         else if (!busy)                     handle2DInput();
     }
 
@@ -151,6 +152,8 @@ void Visualizer::drawFrame(float fElapsedTime, bool busy) {
         drawStrings();
     } else if (isHexView()) {
         drawHex();
+    } else if (isOverviewView()) {
+        drawOverview();
     } else {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna

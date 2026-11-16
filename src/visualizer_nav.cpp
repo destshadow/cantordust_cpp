@@ -79,6 +79,8 @@ void Visualizer::applyResults() {
     m_onetuple     = std::move(r->onetuple);
     m_strings      = std::move(r->strings);
     m_stringBase   = r->windowStart;
+    m_overview     = std::move(r->overview);
+    m_overviewBase = r->windowStart;
     m_autocorr     = std::move(r->autocorr);
     m_suggestWidth = r->suggestWidth;
     m_suggestBpp   = r->suggestBpp;
@@ -123,6 +125,7 @@ void Visualizer::loadFile(const std::string& filepath) {
     m_tripleMaskOn = false;
     m_pick.clear();
     m_strings.clear();
+    m_overview.clear();
     rebuildStringRows();
     m_cursorOffset = SIZE_MAX;
     m_hexStart = m_hexEnd = SIZE_MAX;

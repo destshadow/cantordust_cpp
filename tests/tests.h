@@ -19,6 +19,8 @@
 #include "coord_system.h"
 #include "dotplot.h"
 #include "similarity.h"
+#include "overview.h"
+#include "chi_square.h"
 #include "view_results.h"
 #include "cancel.h"
 #include <cstring>
@@ -54,6 +56,7 @@ void testAutocorr();
 void testBytes();
 void testStrings();
 void testSignatures();
+void testOverview();
 void testMetricMap();
 void testNavigation();
 void test3D();

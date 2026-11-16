@@ -22,8 +22,9 @@ inline constexpr ViewTab VIEW_TABS[] = {
     {"9 One Tuple",   ViewMode::ONETUPLE,   '9'},
     {"0 Stringhe",    ViewMode::STRINGS,    '0'},
     {"H Hex",         ViewMode::HEX,        'H'},
+    {"P Panoramica",  ViewMode::OVERVIEW,   'P'},
 };
-inline constexpr int VIEW_TAB_COUNT = 11;
+inline constexpr int VIEW_TAB_COUNT = 12;
 
 // Ogni tab e' larga quanto il suo testo, cosi' ci stanno piu' viste
 inline constexpr int TAB_PAD = 10;     // pixel ai lati del testo

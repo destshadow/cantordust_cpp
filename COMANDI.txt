@@ -22,7 +22,7 @@ AREE DELLA FINESTRA (1280x800)
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
-  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0 e H.
+  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0, H e P.
 
   NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
 
@@ -112,6 +112,13 @@ SOMIGLIANZA (vista 2, tasto T)
 A NEL RAW
   Sceglie da solo byte per pixel e larghezza, se li trova. A 24 bit i colori
   possono restare scambiati: si sistemano con OFFSET (Ctrl+, e Ctrl+.).
+
+PANORAMICA (tasto P)
+  Il file in orizzontale, una riga per indicatore: entropia, salti di
+  entropia (i confini), testo, zeri, 0xFF, periodo, bit bassi, firme, byte
+  fuori dalle sezioni. Click = cursore su quel tratto, poi H, 6, 7...
+  "Bit bassi": i bit meno significativi sembrano casuali. Normale in foto e
+  audio; insolito in codice e testo, dove puo' voler dire dati nascosti.
 
 FIRME (file dentro al file)
   Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,

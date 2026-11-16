@@ -82,7 +82,7 @@ make -j
 ### Generale
 | Tasto | Azione |
 |-------|--------|
-| `1-9`, `0`, `H` | Cambia vista |
+| `1-9`, `0`, `H`, `P` | Cambia vista |
 | `O` | Apri file |
 | `S` | Salva PNG |
 | `B` | Barre: valore dei byte / entropia |

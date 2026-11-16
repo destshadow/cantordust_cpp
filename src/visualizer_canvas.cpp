@@ -58,6 +58,7 @@ std::vector<uint8_t> Visualizer::getCurrentRGB() const {
         case ViewMode::TRIGRAPH3D: return {};
         case ViewMode::STRINGS:    return {};
         case ViewMode::HEX:        return {};
+        case ViewMode::OVERVIEW:   return {};
         case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
         case ViewMode::METRICMAP:  return m_metricmap.getRGB();
         case ViewMode::BYTECLOUD:  return m_bytecloud.toRGB();
@@ -100,7 +101,7 @@ void Visualizer::draw2DCanvas() {
 // Salva la vista corrente come PNG, alla sua dimensione reale
 void Visualizer::saveView() {
     if (m_mode == ViewMode::TRIGRAPH3D) return;
-    if (m_mode == ViewMode::STRINGS || m_mode == ViewMode::HEX) { m_status = "Questa vista non si salva come immagine"; return; }
+    if (!hasCanvas()) { m_status = "Questa vista non si salva come immagine"; return; }
     if (m_computing) { m_status = "Calcolo in corso: riprova tra un attimo"; return; }
     int w = 256, h = 256;
     contentSize(w, h);

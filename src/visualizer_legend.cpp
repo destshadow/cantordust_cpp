@@ -20,6 +20,8 @@ static const char* legendFor(ViewMode m) {
             return "METRIC MAP  curva: byte vicini nel file = pixel vicini   colore: C   curva: V";
         case ViewMode::BYTECLOUD:
             return "BYTE CLOUD  griglia 16x16 = valori 0x00-0xFF   grandezza = frequenza   00 e FF fuori scala";
+        case ViewMode::OVERVIEW:
+            return "PANORAMICA  X = posizione   una riga per indicatore   click = cursore";
         case ViewMode::HEX:
             return "HEX  16 byte per riga   colore = tipo di byte   click = cursore   frecce, PagSu/PagGiu";
         case ViewMode::STRINGS:

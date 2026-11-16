@@ -85,19 +85,25 @@ Layout (com'e' oggi):
 | 9 | One Tuple: valori usati da ogni tratto | `one_tuple.*` |
 | 0 | Stringhe: ASCII e UTF-16, tag, filtri | `string_scan.*`, `string_tag.cpp` |
 | H | Hex: 16 byte per riga | `hex_layout.h`, `visualizer_hex.cpp` |
+| P | Panoramica: indicatori lungo il file | `overview.*`, `visualizer_overview.cpp` |
 
 In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
 **cursore** (`visualizer_cursor.cpp`).
 
 ## Da fare, in ordine
 
-1. [ ] **Panoramica** (tab; "indicatori", non "triage"): X = posizione nel file,
-       ogni riga un indicatore (entropia, salti di entropia, testo, zeri,
-       periodicita', firme, dati fuori dalle sezioni). Click: seleziona il
-       tratto sulle barre. Viene prima dello Spettrogramma perche' i confini
-       tra le zone li mostra gia' la Somiglianza.
-       - [ ] *(proposta)* riga "bit bassi": test chi-quadro di Westfeld e
-             Pfitzmann (2000), trova dati nascosti nei bit meno significativi
+1. [x] **Panoramica** (tasto `P`; `overview.*`, `chi_square.h`,
+       `visualizer_overview.cpp`): X = posizione, una riga per indicatore
+       (entropia, salti, testo, zeri, 0xFF, periodo, bit bassi, firme, fuori
+       dalle sezioni). Click = cursore. 100 MB in 0,1 s.
+       - "Bit bassi": test chi-quadro di Westfeld e Pfitzmann (2000) su almeno
+         64 KB. Provato: netto su codice e testo (0 contro 1), ma **in foto e
+         audio segnala sempre**, perche' li' i bit bassi sono gia' rumore.
+         Per questo l'etichetta e' "casuali", non "dati nascosti".
+       - "Periodo": quota di byte uguali a quello p posizioni dopo, oltre il
+         caso, per p da 1 a 64, sui primi 4 KB del tratto. Periodi piu' lunghi
+         di 64 non li vede: per quelli c'e' `A` nel Raw.
+       - [ ] idea: trascinare per selezionare un tratto come finestra
 2. [ ] **Spettrogramma** (tab): X = posizione nel file, Y = periodo in byte,
        luce = forza del periodo. Mostra dove cambia il periodo. FFT scritta
        da noi, in un file piccolo. Provarla su un WAV e su record noti.
@@ -111,8 +117,8 @@ In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
 4. [ ] **Versione nativa per Windows** (l'utente lavora da Windows, oggi passa
        da WSL): Makefile per MinGW o MSVC, prova della tastiera.
 
-Le tab sono 11 e arrivano a x=1020 su 1210: ce ne stanno ancora una o due.
-Poi serve la voce **"Altro ▾"** in fondo, con le viste usate meno; le altre
+Le tab sono 12 e arrivano a x=1136 su 1210: non ce ne sta un'altra.
+La prossima vista richiede la voce **"Altro ▾"** in fondo, con le viste usate meno; le altre
 restano sempre visibili. Niente barra scorrevole: nasconde le viste.
 
 ### Robustezza

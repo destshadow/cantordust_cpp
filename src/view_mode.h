@@ -19,5 +19,6 @@ enum class ViewMode {
     BYTECLOUD  = 7,
     ONETUPLE   = 8,
     STRINGS    = 9,
-    HEX        = 10
+    HEX        = 10,
+    OVERVIEW   = 11
 };

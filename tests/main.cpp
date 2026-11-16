@@ -7,6 +7,7 @@ int main() {
     testBytes();
     testStrings();
     testSignatures();
+    testOverview();
     testMetricMap();
     testNavigation();
     testParser();

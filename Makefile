@@ -48,6 +48,9 @@ SRC = src/main.cpp \
       src/classifier_model.cpp \
       src/byte_cloud.cpp \
       src/string_scan.cpp \
+      src/overview.cpp \
+      src/visualizer_overview.cpp \
+      src/visualizer_inspector_overview.cpp \
       src/signatures.cpp \
       src/signature_checks.cpp \
       src/visualizer_signatures.cpp \
@@ -107,7 +110,7 @@ TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
            src/trigraph.cpp src/cloud_frame.cpp src/cloud_color.cpp src/byte_cloud.cpp \
            src/string_scan.cpp src/string_tag.cpp \
            src/signatures.cpp src/signature_checks.cpp src/pixel_guess.cpp \
-           src/view_results.cpp src/digraph.cpp src/histogram.cpp src/one_tuple.cpp
+           src/view_results.cpp src/overview.cpp src/digraph.cpp src/histogram.cpp src/one_tuple.cpp
 
 .PHONY: all clean run test
 test:

@@ -60,7 +60,7 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
   (`ViewResults::mode`). Solo il 3D supera il secondo su
   100 MB; le altre stanno sotto 0,5 s.
 - **Viste**: 1 Digraph, 2 Dot Plot, 3 Entropia, 4 Istogramma, 5 3D, 6 Raw,
-  7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex. Le tab sono in
+  7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex, P Panoramica. Le tab sono in
   `view_tabs.h`, larghe quanto il testo, ognuna con il suo tasto.
 - **3D**: i punti si dispongono a cubo, cilindro o sfera (`coord_system.h`,
   tasto `F`); cambia solo la posizione, non i dati.
@@ -88,9 +88,11 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
 6. `Makefile`: il `.cpp` in `SRC` e, se serve ai test, in `TEST_SRC`.
 7. `COMANDI.txt`, `TODO.md`.
 
-Le cifre sono finite: le tab nuove usano una lettera (Hex = `H`). Le tab
-arrivano a x=1020 su 1210 disponibili: ce ne stanno ancora una o due, poi
-serve la voce "Altro ▾" decisa con l'utente (vedi TODO).
+Le cifre sono finite: le tab nuove usano una lettera (Hex = `H`,
+Panoramica = `P`). Le tab arrivano a x=1136 su 1210: **non ce ne sta
+un'altra**. La prossima vista richiede la voce "Altro ▾" decisa con
+l'utente (vedi TODO), oppure va messa come modo di una vista esistente
+(come la Somiglianza nel Dot Plot).
 
 ## Trappole gia' incontrate
 
@@ -109,7 +111,7 @@ serve la voce "Altro ▾" decisa con l'utente (vedi TODO).
 - **Offset relativi**: i risultati di una vista sono relativi alla finestra su
   cui sono stati calcolati. `ViewResults::windowStart` li accompagna; non
   usare `m_navigator.getStart()` per interpretarli, puo' essere gia' cambiato.
-- **Tasti**: occupati O S B H N Home Esc, 1-9 0, e per vista A F C V L T
+- **Tasti**: occupati O S B H N P Home Esc, 1-9 0, e per vista A F C V L T
   `[ ] , .` (T anche nel Dot Plot), nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
   una lettera usata dal 3D (W A S D Q E R C F) non puo' diventare globale.
 - **`view_tabs.h` non deve includere olcPGE**: lo usano i test, che non
@@ -155,7 +157,7 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 
 ## Stato al 2026-11-15
 
-Tutto committato, compreso il calcolo interrompibile (`cancel.h`). I test
+Tutto committato, Panoramica compresa (`overview.*`, `chi_square.h`). I test
 ora durano circa 20 secondi: quelli sull'annullamento lavorano su 64 MB.
 `Cancel::polls` conta i controlli della bandierina: serve ai test per
 verificare senza cronometro che ogni calcolo lungo la guardi.
@@ -175,15 +177,12 @@ spacciandole per fedeli all'originale.
 
 In ordine (dettagli in `TODO.md`, "Da fare, in ordine"):
 
-1. **Panoramica** — righe di indicatori lungo il file; usa entropia, testo,
-   zeri, periodicita', firme.
-2. **Spettrogramma** — FFT scritta a mano; provarla su un WAV e su record noti.
-3. **Profilo record**.
-4. **Versione nativa per Windows**.
+1. **Spettrogramma** — FFT scritta a mano; provarla su un WAV e su record noti.
+2. **Profilo record**.
+3. **Versione nativa per Windows**.
 
 Proposte ancora da confermare con l'utente (vedi TODO, "L'ipotesi sono tutte
-operazioni su immagini"): filtro Raw "differenza con spostamento", test
-chi-quadro sui bit bassi nella Panoramica.
+operazioni su immagini"): filtro Raw "differenza con spostamento".
 
 ## Ricerca sul profilo di Christopher Domas (2026-11-15)
 
@@ -247,4 +246,4 @@ Conseguenza proposta, ancora da discutere con l'utente:
 | "Apri file" richiede di scrivere il percorso | argomento da riga di comando gia' c'e'; valutare il trascinamento del file |
 | `S` non salva il 3D ne' Stringhe | per il 3D leggere il fotogramma di `cloud_frame` |
 | Stringhe: tante false su dati casuali | filtro per entropia del tratto o lunghezza minima piu' alta di default |
-| Firme: nessuna sui pezzi senza intestazione | e' il limite del metodo: i confini li daranno Panoramica e Spettrogramma |
+| Firme: nessuna sui pezzi senza intestazione | e' il limite del metodo: i confini li mostrano Somiglianza e Panoramica (riga "salti") |

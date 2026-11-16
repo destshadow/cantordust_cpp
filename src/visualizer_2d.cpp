@@ -5,7 +5,7 @@
 
 bool Visualizer::hasCanvas() const {
     return m_mode != ViewMode::TRIGRAPH3D && m_mode != ViewMode::STRINGS &&
-           m_mode != ViewMode::HEX;
+           m_mode != ViewMode::HEX && m_mode != ViewMode::OVERVIEW;
 }
 
 void Visualizer::viewArea(int& x, int& y, int& w, int& h) const {
