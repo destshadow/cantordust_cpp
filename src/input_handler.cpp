@@ -21,6 +21,10 @@ Action InputHandler::handleNormalKeys(olc::PixelGameEngine* pge) {
     // --- Click sulle tab ---
     if (pge->GetMouse(0).bPressed && pge->GetMouseY() < TOPBAR_H) {
         int tabIdx = tabAt(pge->GetMouseX());
+        if (tabIdx == TAB_MORE) {
+            m_lastClickWasTab = true;
+            return Action::OPEN_MENU;
+        }
         if (tabIdx >= 0) {
             m_requestedView   = VIEW_TABS[tabIdx].mode;
             m_lastClickWasTab = true;

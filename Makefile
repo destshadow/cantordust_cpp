@@ -113,10 +113,23 @@ TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
            src/signatures.cpp src/signature_checks.cpp src/pixel_guess.cpp \
            src/view_results.cpp src/overview.cpp src/digraph.cpp src/histogram.cpp src/one_tuple.cpp
 
-.PHONY: all clean run test
+.PHONY: all clean run test golden check-ui
 test:
 	mkdir -p $(dir $(TEST_OUT))
 	$(CXX) $(CXXFLAGS) -I src $(TEST_SRC) -o $(TEST_OUT)
 	./$(TEST_OUT)
+
+# Riscrive le impronte delle immagini (tests/test_golden.cpp). Da usare solo
+# quando un'immagine cambia apposta.
+golden:
+	mkdir -p $(dir $(TEST_OUT))
+	$(CXX) $(CXXFLAGS) -I src $(TEST_SRC) -o $(TEST_OUT)
+	GOLDEN_PRINT=1 ./$(TEST_OUT) > tests/golden_hashes.inc
+	@echo "impronte riscritte: $$(wc -l < tests/golden_hashes.inc) immagini"
+
+# Confronta le schermate dell'app con quelle dell'ultimo commit: una riga di
+# esito. Serve uno schermo X (vedi tools/check_ui.sh).
+check-ui: all
+	@bash tools/check_ui.sh
 
 -include $(OBJ:.o=.d)

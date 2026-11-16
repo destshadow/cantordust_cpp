@@ -23,6 +23,8 @@ AREE DELLA FINESTRA (1280x800)
   +------------------------------------------------------------------------+
 
   TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0, H e P.
+                  "Altro" apre il menu' delle viste senza tab (Byte Cloud,
+                  One Tuple): click o frecce e Invio, Esc chiude.
 
   NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
 

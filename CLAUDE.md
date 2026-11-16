@@ -99,10 +99,14 @@ Restano fuori dalla tabella, per ora, i punti dove conta il TIPO di vista
 `visualizer_links.cpp`, `visualizer_cursor.cpp`, `visualizer_inspector.cpp`.
 
 Le cifre sono finite: le tab nuove usano una lettera (Hex = `H`,
-Panoramica = `P`). Le tab arrivano a x=1136 su 1210: **non ce ne sta
-un'altra**. La prossima vista richiede la voce "Altro ▾" decisa con
-l'utente (vedi TODO), oppure va messa come modo di una vista esistente
-(come la Somiglianza nel Dot Plot).
+Panoramica = `P`). Una vista puo' avere la sua tab o stare nel menu'
+"Altro" (`inMenu` in `view_tabs.h`); il tasto funziona in entrambi i casi.
+
+**Menu'** (`popup_menu.h`, `menu_state.h`): mentre un menu' e' aperto
+`OnUserUpdate` non chiama nessun altro gestore di mouse o tasti, e il menu'
+si disegna per ultimo con i decal. Chi aggiunge un altro elemento a comparsa
+deve passare dalla stessa porta (`menu` in `OnUserUpdate`), non leggere il
+mouse per conto suo.
 
 ## Trappole gia' incontrate
 
@@ -154,9 +158,15 @@ make -j8 && make run FILE=...  # l'app
   L'id si prende con `xwininfo -root -tree | grep -i cantordust`; la
   schermata con `import -window <id> file.png`. Una sola istanza per volta,
   chiuderla con `pkill -x cantordust`.
-- **Confronto pixel**: `tools/shots.sh` su due eseguibili (quello nuovo e uno
-  compilato da `git archive HEAD`), poi `tools/cmp.sh`. Le immagini sono
-  deterministiche: una vista non toccata deve dare 0 pixel diversi.
+- **Immagini, senza farlo a mano**: `make test` confronta 37 immagini delle
+  viste con impronte salvate (`tests/test_golden.cpp`). Se una cambia APPOSTA,
+  `make golden` le riscrive (e si guarda che il cambiamento sia quello
+  voluto). Su un'altra piattaforma le impronte vanno rigenerate una volta.
+- **Schermate dell'app**: `make check-ui` le confronta con l'ultimo commit e
+  stampa una riga di esito (circa 2 minuti e mezzo; si accorge da solo se i
+  tasti non sono arrivati). Va lanciato PRIMA del commit: confronta con HEAD.
+  Sono attese differenze solo dove si e' cambiato qualcosa di proposito. Non
+  rifare questo confronto a mano: costa tempo e gettoni.
 - **File di prova**: `dataset/` (ignorata da git) contiene
   `visual_re.example`, il file dimostrativo del cantor.dust originale: pezzi
   di file diversi cuciti insieme. Coordinate utili: riga opzioni y≈783, tab
@@ -167,9 +177,9 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 
 ## Stato al 2026-11-15
 
-Tutto committato fino alla Panoramica. In corso il lavoro per menu' e
-sottomenu' (vedi TODO, "Impianto per i menu'"): fatta la tabella delle
-viste, da committare se `git status` la mostra. I test
+Tutto committato fino alla Panoramica. L'impianto per i menu' (tabella delle
+viste, menu' "Altro") e i controlli automatici delle immagini sono da
+committare se `git status` li mostra. I test
 ora durano circa 20 secondi: quelli sull'annullamento lavorano su 64 MB.
 `Cancel::polls` conta i controlli della bandierina: serve ai test per
 verificare senza cronometro che ogni calcolo lungo la guardi.

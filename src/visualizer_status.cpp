@@ -31,6 +31,7 @@ void Visualizer::drawChrome(float fElapsedTime, bool busy) {
     state.mouseX         = GetMouseX();
     state.mouseY         = GetMouseY();
     state.inputMode      = m_input.isInputMode();
+    state.menuOpen       = m_menu.isOpen();
     state.inputBuffer    = m_input.getInputBuffer();
     state.cursorBlink    = m_input.getCursorBlink();
 

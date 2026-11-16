@@ -129,13 +129,27 @@ passi mirati, non un sistema generale di componenti:
        vista in un posto solo. Spostamento puro: 34 schermate su 35 identiche
        (la 35esima e' il cursore che lampeggia). I controlli "che vista e'"
        scendono da 102 a 60.
-2. [ ] **Un solo punto che decide chi riceve il mouse**: oggi ogni parte lo
-       legge per conto suo, e un menu' aperto lascerebbe passare i click a
-       cio' che sta sotto.
-3. [ ] **Uno strato sopra tutto** per menu' e tendine (i decal delle viste
-       coprono i pixel normali).
-4. [ ] **Voce "Altro ▾"** nelle tab: il primo uso vero, serve subito perche'
-       le tab sono finite.
+2. [x] **Un menu' aperto prende tutto** (`visualizer.cpp`, `OnUserUpdate`):
+       mentre e' aperto nessun'altra parte riceve mouse o tasti, nemmeno il
+       click che lo chiude. E' la stessa porta gia' usata da "Apri file".
+       Provato: un click su una sezione a menu' aperto non la seleziona.
+3. [x] **Strato sopra tutto**: il menu' si disegna con i decal, per ultimo.
+4. [x] **Voce "Altro"** nelle tab (`popup_menu.h`, `menu_state.h`): contiene
+       Byte Cloud e One Tuple, scelte da me come "usate meno" (si cambia con
+       `inMenu` in `view_tabs.h`). I tasti 8 e 9 funzionano come prima.
+       Le tab ora finiscono a x=1044: c'e' posto per una vista nuova con la
+       sua tab, e quante se ne vuole nel menu'.
+- [ ] Sottomenu': `PopupMenu` e' un elenco piatto. Per i sottomenu' serve una
+      voce che ne apre un altro; la porta che blocca il resto c'e' gia'.
+- [ ] Le opzioni lunghe (es. i filtri del Raw) potrebbero diventare un menu'.
+
+**Controllo delle immagini senza farlo a mano** (2026-11-16):
+- `make test` confronta 37 immagini delle viste con impronte salvate
+  (`tests/test_golden.cpp`); se un'immagine cambia apposta: `make golden`.
+- `make check-ui` confronta le schermate dell'app con l'ultimo commit e
+  stampa una riga (circa 2 minuti e mezzo, serve lo schermo).
+- Trovato dal test: nella Metric Map il colore **Spectrum e' identico a
+  Wavelength** (stesse immagini). Da decidere: toglierlo o dargli un senso.
 
 ### Robustezza
 

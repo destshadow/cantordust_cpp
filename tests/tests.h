@@ -18,6 +18,10 @@
 #include "camera3d.h"
 #include "coord_system.h"
 #include "dotplot.h"
+#include "digraph.h"
+#include "histogram.h"
+#include "one_tuple.h"
+#include <cstdio>
 #include "similarity.h"
 #include "overview.h"
 #include "chi_square.h"
@@ -34,6 +38,7 @@
 #include "byte_cloud.h"
 #include "string_scan.h"
 #include "list_state.h"
+#include "menu_state.h"
 #include "hex_layout.h"
 #include "signatures.h"
 #include <string>
@@ -57,6 +62,7 @@ void testBytes();
 void testStrings();
 void testSignatures();
 void testOverview();
+void testGolden();
 void testMetricMap();
 void testNavigation();
 void test3D();

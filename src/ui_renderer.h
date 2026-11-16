@@ -16,6 +16,7 @@ struct UIState {
     float       scrollH     = 0.0f;
     float       scrollV     = 0.0f;
     bool        inputMode   = false;
+    bool        menuOpen = false;     // il menu' "Altro" e' aperto
     std::string inputBuffer;
     float       cursorBlink = 0.0f;
 

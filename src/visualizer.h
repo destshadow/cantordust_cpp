@@ -27,8 +27,10 @@
 #include "byte_info.h"
 #include "view_results.h"
 #include "view_def.h"
+#include "view_tabs.h"
 #include "occurrences.h"
 #include "list_view.h"
+#include "popup_menu.h"
 #include "signatures.h"
 #include <array>
 #include <functional>
@@ -46,6 +48,11 @@ private:
     static const ViewDef& viewDef(ViewMode mode);
     const ViewDef& view() const { return viewDef(m_mode); }
     float m_dt = 0.0f;                     // durata dell'ultimo frame
+
+    // Menu' a comparsa: mentre e' aperto il resto non riceve mouse ne' tasti
+    PopupMenu m_menu;
+    void openMoreMenu();                   // le viste senza tab
+    void switchView(ViewMode mode);
 
     // I passi di un frame (visualizer.cpp)
     void handleAction(Action action);

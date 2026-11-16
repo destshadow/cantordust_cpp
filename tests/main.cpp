@@ -1,6 +1,7 @@
 #include "tests.h"
 
 int main() {
+    testGolden();     // per primo: e' veloce, e `make golden` esce subito dopo
     testCore();
     testRaw();
     testAutocorr();

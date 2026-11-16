@@ -3,14 +3,61 @@
 void testNavigation() {
     // --- Tab: larghe quanto il testo, senza buchi ne' sovrapposizioni ---
     {
+        int visible = 0, inMenu = 0;
         for (int i = 0; i < VIEW_TAB_COUNT; i++) {
+            if (VIEW_TABS[i].inMenu) {               // nessuna tab propria
+                inMenu++;
+                assert(tabWidth(i) == 0);
+                assert(menuTabOf(VIEW_TABS[i].mode) == &VIEW_TABS[i]);
+                continue;
+            }
+            visible++;
             assert(tabAt(tabX(i)) == i);
             assert(tabAt(tabX(i) + tabWidth(i) - 1) == i);
+            assert(menuTabOf(VIEW_TABS[i].mode) == nullptr);
         }
+        assert(visible + inMenu == VIEW_TAB_COUNT && visible > 0 && inMenu > 0);
         assert(tabAt(-1) == -1);
-        const int end = tabX(VIEW_TAB_COUNT - 1) + tabWidth(VIEW_TAB_COUNT - 1);
+        // "Altro" segue l'ultima tab ed e' abbastanza larga per ogni suo nome
+        assert(tabAt(moreTabX() - 1) >= 0);
+        assert(tabAt(moreTabX()) == TAB_MORE);
+        assert(tabAt(moreTabX() + moreTabWidth() - 1) == TAB_MORE);
+        const int end = moreTabX() + moreTabWidth();
         assert(tabAt(end) == -1);
         assert(end <= 1280 - 70);              // a destra restano gli fps
+        for (const ViewTab& t : VIEW_TABS)
+            if (t.inMenu) assert((int)std::strlen(t.label) * 8 + TAB_PAD * 2 + 16 <= moreTabWidth());
+        // Ogni vista si raggiunge con un tasto diverso
+        for (int i = 0; i < VIEW_TAB_COUNT; i++)
+            for (int k = i + 1; k < VIEW_TAB_COUNT; k++) assert(VIEW_TABS[i].key != VIEW_TABS[k].key);
+    }
+
+    // --- Menu' a comparsa: quale voce sotto il mouse, frecce ---
+    {
+        MenuState m;
+        m.count = 3;
+        const int w = 120;
+        assert(m.height() == 3 * MenuState::ROW_H + 2 * MenuState::PAD);
+        assert(m.rowAt(5, MenuState::PAD, w) == 0);
+        assert(m.rowAt(5, MenuState::PAD + MenuState::ROW_H * 3 - 1, w) == 2);
+        assert(m.rowAt(5, MenuState::PAD - 1, w) == MenuState::NONE);       // sul bordo
+        assert(m.rowAt(5, MenuState::PAD + MenuState::ROW_H * 3, w) == MenuState::NONE);
+        assert(m.rowAt(-1, 10, w) == MenuState::NONE && m.rowAt(w, 10, w) == MenuState::NONE);
+        assert(m.contains(0, 0, w) && !m.contains(0, m.height(), w) && !m.contains(w, 0, w));
+
+        m.move(1);                                  // senza voce: la prima
+        assert(m.hover == 0);
+        m.move(1); m.move(1); m.move(1);            // si ferma all'ultima
+        assert(m.hover == 2);
+        m.move(-5);
+        assert(m.hover == 0);
+        m.hover = MenuState::NONE;
+        m.move(-1);                                 // da sotto: l'ultima
+        assert(m.hover == 2);
+
+        MenuState empty;
+        empty.move(1);
+        assert(empty.hover == MenuState::NONE && empty.rowAt(0, 5, w) == MenuState::NONE);
     }
 
     // --- RangeSel: la selezione delle barre resta sempre valida ---

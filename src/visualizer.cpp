@@ -28,9 +28,17 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     // su Linux l'elenco resta vuoto.
     if (!GetDroppedFiles().empty()) loadFile(GetDroppedFiles().front());
 
+    // Un menu' aperto prende tutto: mouse e tasti non arrivano a nient'altro
+    // in questo frame, nemmeno il click che lo chiude
+    const bool menu = m_menu.isOpen();
+    if (menu) {
+        const int chosen = m_menu.update(this);
+        if (chosen != PopupMenu::NONE) switchView((ViewMode)chosen);
+    }
+
     // Nella finestra "Apri file" i tasti servono solo per scrivere
-    const bool typing = m_input.isInputMode();
-    handleAction(m_input.update(this, fElapsedTime));
+    const bool typing = m_input.isInputMode() || menu;
+    if (!menu) handleAction(m_input.update(this, fElapsedTime));
 
     if (!busy && !typing) handleCommandKeys();
     if (!typing) updateBars();
@@ -56,8 +64,31 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 
     drawFrame(fElapsedTime, busy);
     drawChrome(fElapsedTime, busy);
-    if (!typing) drawOptions(!busy);
+    if (!m_input.isInputMode()) drawOptions(!busy && !menu);
+    m_menu.draw(this);        // per ultimo: sta sopra a tutto
     return true;
+}
+
+void Visualizer::switchView(ViewMode mode) {
+    m_mode = mode;
+    // L'occorrenza scelta resta come cursore nella vista nuova
+    if (m_pick.active()) m_cursorOffset = m_pick.target;
+    m_hexStart = m_hexEnd = SIZE_MAX;   // rientrando, il cursore torna in vista
+    m_pick.clear();     // ogni vista ha i suoi valori
+    m_dragging = false;
+    m_panning  = false;
+    m_scrollDrag = ScrollDrag::NONE;
+    m_recomputeNeeded = true;
+    if (view().enter) view().enter(*this);
+    m_status = "";
+}
+
+// Il menu' sotto la voce "Altro": le viste che non hanno una tab
+void Visualizer::openMoreMenu() {
+    std::vector<PopupMenu::Item> items;
+    for (const ViewTab& t : VIEW_TABS)
+        if (t.inMenu) items.push_back({t.label, (int)t.mode, t.mode == m_mode});
+    m_menu.open(moreTabX(), TOPBAR_H, std::move(items));
 }
 
 // I comandi valgono anche durante un calcolo: la vista nuova parte appena
@@ -65,17 +96,10 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
 void Visualizer::handleAction(Action action) {
     switch (action) {
         case Action::SWITCH_VIEW:
-            m_mode     = m_input.getRequestedView();
-            // L'occorrenza scelta resta come cursore nella vista nuova
-            if (m_pick.active()) m_cursorOffset = m_pick.target;
-            m_hexStart = m_hexEnd = SIZE_MAX;   // rientrando, il cursore torna in vista
-            m_pick.clear();     // ogni vista ha i suoi valori
-            m_dragging = false;
-            m_panning  = false;
-            m_scrollDrag = ScrollDrag::NONE;
-            m_recomputeNeeded = true;
-            if (view().enter) view().enter(*this);
-            m_status = "";
+            switchView(m_input.getRequestedView());
+            break;
+        case Action::OPEN_MENU:
+            openMoreMenu();
             break;
         case Action::OPEN_FILE:
             loadFile(m_input.getRequestedPath());

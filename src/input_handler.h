@@ -6,6 +6,7 @@
 enum class Action {
     NONE,
     SWITCH_VIEW,
+    OPEN_MENU,      // click sulla voce "Altro" delle tab
     OPEN_FILE,
     SAVE_PNG,
     CANCEL

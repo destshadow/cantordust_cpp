@@ -35,6 +35,7 @@ void UIRenderer::drawTopBar(olc::PixelGameEngine* pge,
 
     const int textY = (TOPBAR_H - 8) / 2;
     for (int i = 0; i < VIEW_TAB_COUNT; i++) {
+        if (VIEW_TABS[i].inMenu) continue;
         const int  tx     = tabX(i);
         const int  tw     = tabWidth(i);
         const bool active = state.currentView == VIEW_TABS[i].mode;
@@ -45,6 +46,24 @@ void UIRenderer::drawTopBar(olc::PixelGameEngine* pge,
         }
         pge->DrawString(tx + TAB_PAD, textY, VIEW_TABS[i].label,
                         active ? COL_ACCENT() : hover ? COL_TEXT() : COL_DIM());
+    }
+
+    // "Altro": le viste senza tab. Se quella mostrata e' una di loro, ne
+    // porta il nome ed e' evidenziata come una tab
+    {
+        const ViewTab* current = menuTabOf(state.currentView);
+        const int  tx = moreTabX(), tw = moreTabWidth();
+        const bool hover = state.mouseY < TOPBAR_H && tabAt(state.mouseX) == TAB_MORE;
+        if (current || state.menuOpen) {
+            pge->FillRect(tx, 0, tw, TOPBAR_H - 1, COL_BG_LIGHT());
+            if (current) pge->FillRect(tx, TOPBAR_H - 2, tw, 2, COL_ACCENT());
+        }
+        const olc::Pixel col = current ? COL_ACCENT()
+                             : (hover || state.menuOpen) ? COL_TEXT() : COL_DIM();
+        const std::string label = current ? current->label : TAB_MORE_LABEL;
+        pge->DrawString(tx + TAB_PAD, textY, label, col);
+        const int ax = tx + TAB_PAD + (int)label.size() * 8 + 5, ay = textY + 2;
+        pge->FillTriangle(ax, ay, ax + 6, ay, ax + 3, ay + 4, col);     // freccia in giu'
     }
 
     std::string fps = std::to_string((int)state.fps) + " fps";

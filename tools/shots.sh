@@ -10,6 +10,8 @@ X="$XSEND $W"; shot(){ sleep 0.45; import -window "$W" "$OUT/$1.png"; }
 $X click 700 300 sleep 500
 for k in 1 2 3 4 6 7 8 9 0 h p; do $X key $k sleep 900 move 600 350; shot v$k; $X move 1100 700; shot s$k; done
 $X key 5 sleep 1000 move 1100 700; shot v5; $X move 620 330 sleep 300; shot h5
+# Il menu' "Altro": aperto, poi una voce scelta col mouse
+$X key 1 sleep 700 click 950 12 sleep 400 move 960 52 sleep 300; shot menu; $X click 960 52 sleep 900 move 1100 700; shot menu_scelta
 # Le opzioni di ogni vista, da tastiera e col mouse sulla riga in basso
 $X key 2 sleep 900 key t sleep 1500 move 500 300; shot o2t; $X click 110 783 sleep 1200 move 1100 700; shot o2v
 $X key 7 sleep 900 key c sleep 900 key c sleep 900 key c sleep 900 key c sleep 900 key v sleep 900 move 1100 700; shot o7
