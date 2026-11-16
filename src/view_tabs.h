@@ -25,6 +25,7 @@ inline constexpr ViewTab VIEW_TABS[] = {
     {"P Panoramica",  ViewMode::OVERVIEW,   'P'},
 };
 inline constexpr int VIEW_TAB_COUNT = 12;
+static_assert(VIEW_TAB_COUNT == VIEW_MODE_COUNT, "ogni vista ha la sua tab");
 
 // Ogni tab e' larga quanto il suo testo, cosi' ci stanno piu' viste
 inline constexpr int TAB_PAD = 10;     // pixel ai lati del testo

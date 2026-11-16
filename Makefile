@@ -55,6 +55,7 @@ SRC = src/main.cpp \
       src/signature_checks.cpp \
       src/visualizer_signatures.cpp \
       src/visualizer_cursor.cpp \
+      src/visualizer_views.cpp \
       src/visualizer_hex.cpp \
       src/string_tag.cpp \
       src/visualizer_strings.cpp \

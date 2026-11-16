@@ -121,6 +121,22 @@ Le tab sono 12 e arrivano a x=1136 su 1210: non ce ne sta un'altra.
 La prossima vista richiede la voce **"Altro ▾"** in fondo, con le viste usate meno; le altre
 restano sempre visibili. Niente barra scorrevole: nasconde le viste.
 
+### Impianto per i menu' (deciso il 2026-11-16)
+
+Per poter aggiungere menu', sottomenu' e viste senza rifare il codice. Tre
+passi mirati, non un sistema generale di componenti:
+1. [x] **Tabella delle viste** (`view_def.h`, `visualizer_views.cpp`): ogni
+       vista in un posto solo. Spostamento puro: 34 schermate su 35 identiche
+       (la 35esima e' il cursore che lampeggia). I controlli "che vista e'"
+       scendono da 102 a 60.
+2. [ ] **Un solo punto che decide chi riceve il mouse**: oggi ogni parte lo
+       legge per conto suo, e un menu' aperto lascerebbe passare i click a
+       cio' che sta sotto.
+3. [ ] **Uno strato sopra tutto** per menu' e tendine (i decal delle viste
+       coprono i pixel normali).
+4. [ ] **Voce "Altro ▾"** nelle tab: il primo uso vero, serve subito perche'
+       le tab sono finite.
+
 ### Robustezza
 
 - [ ] File da diversi GB: oggi il file va tutto in memoria (`BinaryReader`).

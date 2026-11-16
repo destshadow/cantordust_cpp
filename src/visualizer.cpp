@@ -19,6 +19,7 @@ bool Visualizer::OnUserCreate() {
 }
 
 bool Visualizer::OnUserUpdate(float fElapsedTime) {
+    m_dt = fElapsedTime;
     applyResults();
     applyPendingOption();
     bool busy = m_computing.load();
@@ -48,11 +49,9 @@ bool Visualizer::OnUserUpdate(float fElapsedTime) {
     busy = m_computing.load();
     if (!typing && !busy) { updateLinks(fElapsedTime); updateSimilarityClick(); }
     if (!typing) {
-        if (m_mode == ViewMode::TRIGRAPH3D) handle3DInput(fElapsedTime);
-        else if (!busy && isStringsView())  handleStringsInput();
-        else if (!busy && isHexView())      handleHexInput();
-        else if (!busy && isOverviewView()) handleOverviewInput();
-        else if (!busy)                     handle2DInput();
+        const ViewDef& v = view();
+        if (v.input && (!busy || v.inputWhileBusy)) v.input(*this);
+        if (v.canvas && !busy) handle2DInput();
     }
 
     drawFrame(fElapsedTime, busy);
@@ -75,7 +74,7 @@ void Visualizer::handleAction(Action action) {
             m_panning  = false;
             m_scrollDrag = ScrollDrag::NONE;
             m_recomputeNeeded = true;
-            if (m_mode == ViewMode::TRIGRAPH3D) buildTripleMask();
+            if (view().enter) view().enter(*this);
             m_status = "";
             break;
         case Action::OPEN_FILE:
@@ -93,10 +92,6 @@ void Visualizer::handleAction(Action action) {
 
 void Visualizer::handleCommandKeys() {
     handleOptionKeys();
-
-    // --- Larghezza / offset / autocorrelazione (solo RawPixels) ---
-    if (!m_computing && m_mode == ViewMode::RAWPIXELS)
-        handleRawInput();
 
     // --- Frecce: disattivate, ora si naviga con le barre a sinistra.
     // Lasciate commentate nel caso servissero di nuovo (la prima
@@ -146,20 +141,15 @@ void Visualizer::updateBars() {
 void Visualizer::drawFrame(float fElapsedTime, bool busy) {
     Clear(olc::BLACK);
 
-    if (m_mode == ViewMode::TRIGRAPH3D) {
-        draw3D(fElapsedTime);
-    } else if (isStringsView()) {
-        drawStrings();
-    } else if (isHexView()) {
-        drawHex();
-    } else if (isOverviewView()) {
-        drawOverview();
-    } else {
+    const ViewDef& v = view();
+    if (v.canvas) {
         // I decal stanno sopra ai pixel: la vista coprirebbe la finestra
         // "Apri file", quindi mentre si scrive non si disegna
         if (!m_input.isInputMode()) { draw2DCanvas(); drawCursorMarker(); }
-        if (m_mode == ViewMode::RAWPIXELS) drawRawPanel();
+    } else {
+        v.draw(*this);
     }
+    if (v.panel) v.panel(*this);
     drawLegend();
     m_bars.draw(this);
     drawInspector();

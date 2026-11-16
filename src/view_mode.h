@@ -22,3 +22,4 @@ enum class ViewMode {
     HEX        = 10,
     OVERVIEW   = 11
 };
+inline constexpr int VIEW_MODE_COUNT = 12;

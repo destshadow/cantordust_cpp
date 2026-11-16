@@ -10,9 +10,7 @@
 // il motore ha in coda per quel frame. Si applica all'inizio del frame dopo.
 
 bool Visualizer::hasOptions() const {
-    return m_mode == ViewMode::RAWPIXELS || m_mode == ViewMode::METRICMAP ||
-           m_mode == ViewMode::STRINGS || m_mode == ViewMode::TRIGRAPH3D ||
-           m_mode == ViewMode::DOTPLOT;
+    return view().options != nullptr;
 }
 
 void Visualizer::setBpp(BppMode m) {
@@ -105,21 +103,10 @@ void Visualizer::applyPendingOption() {
     if (!m_computing) action();
 }
 
+// I tasti delle opzioni della vista: solo a calcolo finito
 void Visualizer::handleOptionKeys() {
     if (m_computing) return;
-    if (m_mode == ViewMode::RAWPIXELS) {
-        if (GetKey(olc::Key::OEM_4).bPressed) setBpp((BppMode)(((int)m_bppMode + 4) % 5));
-        if (GetKey(olc::Key::OEM_6).bPressed) setBpp((BppMode)(((int)m_bppMode + 1) % 5));
-    }
-    if (m_mode == ViewMode::STRINGS) handleStringKeys();
-    if (m_mode == ViewMode::DOTPLOT && GetKey(olc::Key::T).bPressed)
-        setDotSimilarity(!m_dotSimilarity);
-    if (m_mode == ViewMode::METRICMAP) {
-        if (GetKey(olc::Key::C).bPressed)
-            setColorMode(MetricMap::nextColorMode(m_colorMode, m_classifier.isReady()));
-        if (GetKey(olc::Key::V).bPressed)
-            setCurveMode((CurveMode)(((int)m_curveMode + 1) % 3));
-    }
+    if (view().keys) view().keys(*this);
 }
 
 void Visualizer::drawRawOptions(bool clickable) {
@@ -171,9 +158,5 @@ void Visualizer::drawMetricOptions(bool clickable) {
 }
 
 void Visualizer::drawOptions(bool clickable) {
-    if (m_mode == ViewMode::RAWPIXELS)      drawRawOptions(clickable);
-    else if (m_mode == ViewMode::METRICMAP) drawMetricOptions(clickable);
-    else if (m_mode == ViewMode::STRINGS)   drawStringOptions(clickable);
-    else if (m_mode == ViewMode::TRIGRAPH3D) draw3DOptions(clickable);
-    else if (m_mode == ViewMode::DOTPLOT)   drawDotOptions(clickable);
+    if (view().options) view().options(*this, clickable);
 }

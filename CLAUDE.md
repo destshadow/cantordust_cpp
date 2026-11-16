@@ -76,17 +76,27 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
 
 ### Per aggiungere una vista
 
+Ogni vista e' descritta in un posto solo: la tabella in
+`visualizer_views.cpp` (campi in `view_def.h`). Il resto del programma chiede
+alla vista cosa sa fare (`view().draw`, `view().legend`...), non "che vista
+e'?". Non aggiungere `if (m_mode == ...)` nei file comuni: si aggiunge un
+campo alla tabella.
+
 1. Classe di calcolo senza grafica (`nome.h/.cpp`), con test in `tests/`.
-2. `ViewMode` in `view_mode.h`, tab in `view_tabs.h` (e `VIEW_TAB_COUNT`).
+2. `ViewMode` e `VIEW_MODE_COUNT` in `view_mode.h`; tab in `view_tabs.h`.
 3. Campo in `ViewResults`, `case` in `computeViews`, spostamento in
    `applyResults` (`visualizer_nav.cpp`).
-4. Disegno: se e' un'immagine 256x256, `getCurrentRGB` in
-   `visualizer_canvas.cpp`; se no, come Stringhe (`hasCanvas()` falso,
-   `visualizer_strings.cpp`).
-5. Legenda in `visualizer_legend.cpp`, pannello dell'Inspector, eventuali
-   opzioni in `visualizer_options.cpp`.
-6. `Makefile`: il `.cpp` in `SRC` e, se serve ai test, in `TEST_SRC`.
-7. `COMANDI.txt`, `TODO.md`.
+4. Una voce nella tabella: `rgb` se e' un'immagine nel canvas (zoom,
+   scorrimento e cursore sono gia' pronti), altrimenti `canvas = false` e
+   `draw`; poi `legend`, e se servono `input`, `options`, `keys`, `inspect`.
+   La tabella si controlla da sola all'avvio (`assert`).
+5. I file della vista (`visualizer_nome.cpp`) e le dichiarazioni in
+   `visualizer.h`; `Makefile`.
+6. `COMANDI.txt`, `TODO.md`; una riga in `tools/shots.sh`.
+
+Restano fuori dalla tabella, per ora, i punti dove conta il TIPO di vista
+(un pixel e' un punto, un tratto o un valore): `visualizer_highlight.cpp`,
+`visualizer_links.cpp`, `visualizer_cursor.cpp`, `visualizer_inspector.cpp`.
 
 Le cifre sono finite: le tab nuove usano una lettera (Hex = `H`,
 Panoramica = `P`). Le tab arrivano a x=1136 su 1210: **non ce ne sta
@@ -157,7 +167,9 @@ finestra). Va riprovata a mano quando si tocca quella parte.
 
 ## Stato al 2026-11-15
 
-Tutto committato, Panoramica compresa (`overview.*`, `chi_square.h`). I test
+Tutto committato fino alla Panoramica. In corso il lavoro per menu' e
+sottomenu' (vedi TODO, "Impianto per i menu'"): fatta la tabella delle
+viste, da committare se `git status` la mostra. I test
 ora durano circa 20 secondi: quelli sull'annullamento lavorano su 64 MB.
 `Cancel::polls` conta i controlli della bandierina: serve ai test per
 verificare senza cronometro che ogni calcolo lungo la guardi.

@@ -4,8 +4,7 @@
 // Viste 2D: dove sta il contenuto sullo schermo, zoom e scorrimento.
 
 bool Visualizer::hasCanvas() const {
-    return m_mode != ViewMode::TRIGRAPH3D && m_mode != ViewMode::STRINGS &&
-           m_mode != ViewMode::HEX && m_mode != ViewMode::OVERVIEW;
+    return view().canvas;
 }
 
 void Visualizer::viewArea(int& x, int& y, int& w, int& h) const {

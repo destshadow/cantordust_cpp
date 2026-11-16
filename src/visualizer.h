@@ -26,6 +26,7 @@
 #include "ui_widgets.h"
 #include "byte_info.h"
 #include "view_results.h"
+#include "view_def.h"
 #include "occurrences.h"
 #include "list_view.h"
 #include "signatures.h"
@@ -41,6 +42,11 @@ public:
     bool OnUserUpdate(float fElapsedTime) override;
 
 private:
+    // La vista corrente e cio' che sa fare (visualizer_views.cpp)
+    static const ViewDef& viewDef(ViewMode mode);
+    const ViewDef& view() const { return viewDef(m_mode); }
+    float m_dt = 0.0f;                     // durata dell'ultimo frame
+
     // I passi di un frame (visualizer.cpp)
     void handleAction(Action action);
     void handleCommandKeys();

@@ -50,21 +50,7 @@ void Visualizer::updateCanvas() {
 }
 
 std::vector<uint8_t> Visualizer::getCurrentRGB() const {
-    switch (m_mode) {
-        case ViewMode::DIGRAPH:    return m_digraph.toRGB();
-        case ViewMode::DOTPLOT:    return m_dotSimilarity ? m_similarity.toRGB() : m_dotplot.toRGB();
-        case ViewMode::ENTROPY:    return m_entropy.toRGB();
-        case ViewMode::HISTOGRAM:  return m_histogram.toRGB();
-        case ViewMode::TRIGRAPH3D: return {};
-        case ViewMode::STRINGS:    return {};
-        case ViewMode::HEX:        return {};
-        case ViewMode::OVERVIEW:   return {};
-        case ViewMode::RAWPIXELS:  return m_rawpixels.toRGB();
-        case ViewMode::METRICMAP:  return m_metricmap.getRGB();
-        case ViewMode::BYTECLOUD:  return m_bytecloud.toRGB();
-        case ViewMode::ONETUPLE:   return m_onetuple.toRGB();
-    }
-    return {};
+    return view().rgb ? view().rgb(*this) : std::vector<uint8_t>();
 }
 
 void Visualizer::draw2DCanvas() {

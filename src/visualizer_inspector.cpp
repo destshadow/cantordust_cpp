@@ -32,15 +32,7 @@ void Visualizer::drawInspector() {
     size_t point = pointUnderMouse(over, cx, cy);
     if (point < m_reader.getSize()) { inspectPoint(pw, point); return; }
 
-    if (isOverviewView()) {
-        const int cell = overviewCellUnderMouse();
-        if (cell >= 0) { inspectOverview(pw, cell); return; }
-    }
-    if (isStringsView()) {
-        const size_t hover = m_stringList.hover;
-        const size_t row = hover != ListState::NONE ? hover : m_stringList.state.selected;
-        if (const StringScan::Hit* s = stringAtRow(row)) { inspectString(pw, *s); return; }
-    }
+    if (view().inspect && view().inspect(*this, pw)) return;
 
     if (over && w.len > 0 && m_mode == ViewMode::DOTPLOT && m_dotSimilarity) {
         inspectSimilarity(pw, cx, cy);
