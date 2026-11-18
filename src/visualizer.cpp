@@ -11,9 +11,13 @@ bool Visualizer::OnUserCreate() {
     m_decal  = new olc::Decal(m_canvas);
     m_cloudSprite = new olc::Sprite(ByteCloud::SIZE, ByteCloud::SIZE);
     m_cloudDecal  = new olc::Decal(m_cloudSprite);
+    // I campioni del Classifier si leggono in un thread: circa mezzo secondo
+    // che non deve ritardare l'apertura. Finche' non e' pronto il colore
+    // Classifier resta grigio; poi il modello si legge soltanto.
     std::error_code ec;
     if (std::filesystem::is_directory("templates", ec))
-        m_classifier.loadTemplates("templates");
+        m_classifierLoad = std::async(std::launch::async,
+                                      [this] { return m_classifier.loadTemplates("templates"); });
     loadFile(m_initPath.empty() ? "/bin/ls" : m_initPath);
     return true;
 }

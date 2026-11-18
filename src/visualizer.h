@@ -249,6 +249,7 @@ private:
 
     // Threading
     std::future<void>  m_future;
+    std::future<int>   m_classifierLoad;  // dopo m_classifier: si aspetta prima di distruggerlo
     std::atomic<bool>  m_computing{false};
     std::atomic<bool>  m_cancel{false};   // chiede al calcolo in corso di smettere
     void cancelCompute();                 // e aspetta che abbia smesso

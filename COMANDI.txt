@@ -126,6 +126,23 @@ FIRME (file dentro al file)
   Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,
   ELF, PDF...). L'elenco e' nell'Inspector, quando il mouse non e' su nulla.
   N / Shift+N     firma dopo / prima. Si riconosce solo l'inizio.
+  Anche gli script nascosti: "#!/bin/sh" (script #!), "<?php" (PHP),
+  "<script" (JavaScript), "<html" e "<!DOCTYPE html" (HTML).
+
+CLASSIFIER (a cosa somiglia un tratto)
+  Serve la cartella templates/, che non e' su git. Una volta sola:
+    sh tools/get_templates.sh     scarica i 22 campioni di Battelle (87 MB)
+    sh tools/make_templates.sh    fa i campioni degli script (JavaScript,
+                                  Python, shell, HTML, PHP) e allarga testo
+                                  e UTF-16, con i file di questa macchina
+  Poi, all'avvio, si carica in mezzo secondo (finche' carica, il colore
+  Classifier e' grigio). Il programma va avviato dalla cartella del progetto.
+  Metric Map, colore Classifier: ogni pixel ha il colore della classe.
+    rosso/arancio/giallo = codice macchina, verde = bytecode Java/.NET,
+    blu = testo, azzurro-verde = script, viola = compresso e immagini,
+    grigio = zeri, bianco = 0xFF.
+  Inspector, su un punto del file (in ogni vista): SOMIGLIA = la classe dei
+  64 byte intorno. E' una somiglianza, non una certezza.
 
 CURSORE
   Il punto scelto (una firma, una stringa, un'occorrenza) e' la riga bianca
@@ -221,8 +238,10 @@ VISTA 7 — METRIC MAP
 
   C               cambia colore (si parte da Entropy):
                   Wavelength / Entropy / Gradient /
-                  Spectrum / Tipo di byte / Classifier (serve la
-                  cartella templates/)
+                  Frequenza / Tipo di byte / Classifier (vedi
+                  CLASSIFIER sopra)
+                  Frequenza: quanto e' comune ogni byte nella zona,
+                  blu = comune, rosso = raro (scala relativa alla zona)
                   Tipo di byte: grigio = zero, verde = controllo,
                   blu = testo, rosso = alti, bianco = 0xFF
   V               cambia curva: Hilbert / Z-Order / Linear

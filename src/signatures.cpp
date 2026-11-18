@@ -50,6 +50,15 @@ const Sig TABLE[] = {
     {"SQLite",  MAGIC("SQLite format 3\0"), 0, nullptr},
     {"XML",     MAGIC("<?xml "), 0, nullptr},
     {"PEM",     MAGIC("-----BEGIN "), 0, nullptr},
+    // Script e pagine: codice di testo dentro un file qualunque
+    {"script #!", MAGIC("#!"), 0, SigCheck::shebang},
+    {"PHP",     MAGIC("<?php"), 0, SigCheck::phpTag},
+    {"JavaScript", MAGIC("<script"), 0, SigCheck::scriptTag},
+    {"JavaScript", MAGIC("<SCRIPT"), 0, SigCheck::scriptTag},
+    {"HTML",    MAGIC("<!DOCTYPE html"), 0, nullptr},
+    {"HTML",    MAGIC("<!doctype html"), 0, nullptr},
+    {"HTML",    MAGIC("<html"), 0, SigCheck::htmlTag},
+    {"HTML",    MAGIC("<HTML"), 0, SigCheck::htmlTag},
     // Audio e video
     {"RIFF",    MAGIC("RIFF"), 0, SigCheck::riff},
     {"MP4",     MAGIC("ftyp"), 4, SigCheck::mp4},

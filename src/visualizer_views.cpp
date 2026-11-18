@@ -66,6 +66,10 @@ const ViewDef& Visualizer::viewDef(ViewMode mode) {
         {   ViewDef& d = add(ViewMode::METRICMAP);
             d.rgb    = [](const V& v) -> Rgb { return v.m_metricmap.getRGB(); };
             d.legend = [](const V& v) -> std::string {
+                if (v.m_colorMode == ColorMode::CLASSIFIER)
+                    return "METRIC MAP  classifier: colore = contenuto a cui somiglia (nome nell'Inspector)";
+                if (v.m_colorMode == ColorMode::FREQUENCY)
+                    return "METRIC MAP  frequenza nella zona: blu = byte comune   rosso = byte raro";
                 return v.m_colorMode == ColorMode::BYTE_CLASS
                     ? "METRIC MAP  grigio=zero  verde=controllo  blu=testo  rosso=alti  bianco=0xFF"
                     : "METRIC MAP  curva: byte vicini nel file = pixel vicini   colore: C   curva: V"; };

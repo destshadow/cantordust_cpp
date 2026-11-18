@@ -10,6 +10,7 @@ int main() {
     testSignatures();
     testOverview();
     testMetricMap();
+    testClassifier();
     testNavigation();
     testParser();
     test3D();

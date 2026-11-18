@@ -34,3 +34,6 @@ digraph_export.png
 *:Zone.Identifier
 .DS_Store
 Thumbs.db
+
+# Template del Classifier (scaricati o generati)
+templates/

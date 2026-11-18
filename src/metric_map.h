@@ -4,15 +4,16 @@
 #include "hilbert.h"
 #include "space_curves.h"
 #include "wavelength_rgb.h"
+#include <array>
 
 // Modalita' di colorazione della MetricMap
 enum class ColorMode {
     WAVELENGTH,   // byte → lunghezza d'onda (arcobaleno fisico)
     ENTROPY,      // entropia locale → rosso/blu
     GRADIENT,     // posizione nel file → gradiente blu→rosso
-    SPECTRUM,     // variante dello spettro
+    FREQUENCY,    // quanto e' comune il byte nella zona: comune = freddo, raro = caldo
     BYTE_CLASS,   // tipo di byte: zero, controllo, testo, alti, 0xFF
-    CLASSIFIER,   // classificazione NGram → colore per classe
+    CLASSIFIER,   // a quale contenuto somiglia (x86, testo...): un colore per classe
 };
 
 // Modalita' di curva spaziale
@@ -22,11 +23,7 @@ enum class CurveMode {
     LINEAR,   // serpentine scan
 };
 
-// Dati classificatore passati opzionalmente
-struct ClassifierData {
-    const std::vector<int>* classifications = nullptr;
-    int blockSize = 512;
-};
+class ClassifierModel;
 
 class MetricMap {
 public:
@@ -38,7 +35,7 @@ public:
                  ColorMode  colorMode  = ColorMode::WAVELENGTH,
                  CurveMode  curveMode  = CurveMode::HILBERT,
                  int        order      = 8,
-                 const ClassifierData* classData = nullptr);
+                 const ClassifierModel* classifier = nullptr);   // per CLASSIFIER
     void clear();
 
     const std::vector<uint8_t>& getRGB()  const { return m_rgb; }
@@ -60,8 +57,11 @@ private:
     WavelengthRGB::RGB colorForByte(uint8_t   byte_val,
                                     size_t    file_idx,
                                     size_t    total,
-                                    ColorMode mode,
-                                    const ClassifierData* cd) const;
+                                    ColorMode mode) const;
+
+    // Colore di ogni valore di byte secondo quante volte compare in bytes
+    static std::array<WavelengthRGB::RGB, 256>
+        frequencyColors(const std::vector<uint8_t>& bytes);
 
     float localEntropy(const std::vector<uint8_t>& bytes,
                        size_t idx) const;
@@ -69,4 +69,5 @@ private:
     std::vector<uint8_t> m_rgb;
     std::vector<size_t>  m_indexMap;
     int       m_size      = 256;
+    std::array<WavelengthRGB::RGB, 256> m_freqColor{};   // solo per FREQUENCY
 };

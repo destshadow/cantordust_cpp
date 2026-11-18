@@ -1,4 +1,5 @@
 #include "signature_checks.h"
+#include <cctype>
 #include <cstring>
 
 namespace SigCheck {
@@ -80,5 +81,31 @@ bool tiff(const Bytes& b, size_t at) {
         : ((uint32_t)b[at + 4] << 24) | (b[at + 5] << 16) | (b[at + 6] << 8) | b[at + 7];
     return ifd >= 8 && ifd % 2 == 0 && ifd < (1u << 28);
 }
+
+namespace {
+bool tagEnd(const Bytes& b, size_t i) {
+    return i < b.size() && (b[i] == '>' || b[i] == ' ' || b[i] == '\n' ||
+                            b[i] == '\r' || b[i] == '\t');
+}
+} // namespace
+
+// "#!" poi, forse uno spazio, un percorso assoluto di lettere e "/._-+",
+// lungo almeno 4 ("/bin" e' gia' troppo poco per un interprete: "/bin/sh"),
+// chiuso da spazio o fine riga. Su dati casuali "#!/" capita: il percorso no.
+bool shebang(const Bytes& b, size_t at) {
+    size_t i = at + 2;
+    if (i < b.size() && b[i] == ' ') i++;
+    if (i >= b.size() || b[i] != '/') return false;
+    const size_t from = i;
+    while (i < b.size() && i - from < 64 &&
+           (std::isalnum(b[i]) || b[i] == '/' || b[i] == '.' || b[i] == '_' ||
+            b[i] == '-' || b[i] == '+'))
+        i++;
+    return i - from >= 7 && tagEnd(b, i) && b[i] != '>';
+}
+
+bool phpTag(const Bytes& b, size_t at)    { return tagEnd(b, at + 5) && b[at + 5] != '>'; }
+bool scriptTag(const Bytes& b, size_t at) { return tagEnd(b, at + 7); }
+bool htmlTag(const Bytes& b, size_t at)   { return tagEnd(b, at + 5); }
 
 } // namespace SigCheck

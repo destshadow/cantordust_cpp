@@ -62,5 +62,5 @@ struct ViewResults {
 // Se `cancel` viene alzata durante il calcolo restituisce nullptr appena puo'.
 std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
                                           const ComputeParams& params,
-                                          ClassifierModel& classifier,
+                                          const ClassifierModel& classifier,
                                           const std::atomic<bool>* cancel = nullptr);

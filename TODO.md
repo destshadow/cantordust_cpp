@@ -148,8 +148,10 @@ passi mirati, non un sistema generale di componenti:
   (`tests/test_golden.cpp`); se un'immagine cambia apposta: `make golden`.
 - `make check-ui` confronta le schermate dell'app con l'ultimo commit e
   stampa una riga (circa 2 minuti e mezzo, serve lo schermo).
-- Trovato dal test: nella Metric Map il colore **Spectrum e' identico a
-  Wavelength** (stesse immagini). Da decidere: toglierlo o dargli un senso.
+- Trovato dal test: nella Metric Map il colore **Spectrum era identico a
+  Wavelength** (stesse immagini). Sostituito (2026-11-18) da **Frequenza**:
+  ogni byte colorato per quanto e' comune nella zona, su scala logaritmica
+  dal piu' comune (blu) al piu' raro (rosso).
 
 ### Robustezza
 
@@ -190,10 +192,6 @@ passi mirati, non un sistema generale di componenti:
       (8/16 bit), per riconoscere il PCM.
 - [ ] Un tipo comune per stringhe e firme, solo se serve davvero. Vale per i
       risultati discreti: entropia e periodicita' sono curve, non elenchi.
-- `ClassifierModel` e' collegato (cartella `templates/`, un `.bin` per classe)
-  ma i template non ci sono: senza, il colore Classifier viene saltato.
-  L'originale ne ha 22 (87 MB, Apache 2.0): da non mettere nel repo;
-  eventualmente uno script che li scarica.
 
 ### Fuori dal progetto
 
@@ -222,7 +220,17 @@ passi mirati, non un sistema generale di componenti:
 - `A` nel Raw: a 3 byte per pixel non si puo' sapere da quale byte inizia il
   pixel, quindi i colori possono restare scambiati (si corregge con OFFSET).
 - Firme: solo l'inizio di un formato, non la fine. Nessuna firma sui pezzi
-  senza intestazione. Non incluse perche' troppo corte: zlib, MP3, script.
+  senza intestazione. Non incluse perche' troppo corte: zlib, MP3. Gli script
+  si trovano solo dal marcatore (`#!/...`, `<?php`, `<script`, `<html`);
+  senza marcatore li cerca il Classifier.
+- Classifier (misurato il 2026-11-18, finestre di 64 byte mai viste):
+  x86/x64/MIPS/SPARC/PowerPC/testo 92-100%; JavaScript 92%, Python 85%,
+  HTML 82%, PHP 97%; ARM a 32 bit (arm7) 47%, bytecode Java 74%.
+  Compresso, PNG e immagine si confondono fra loro (sono tutti quasi
+  casuali). Su cio' che non somiglia a nessun campione l'etichetta e' la
+  meno lontana, non "sconosciuto". 108 MB di memoria (2^20 secchi x 27).
+  I cinque campioni a 64 bit di Battelle sono solo modelli: non si puo'
+  tenere da parte un pezzo per misurarli, quindi non sono misurati.
 - Tag delle stringhe: indizi (`1.2.3.4` puo' essere una versione).
 - Tastiera provata solo su X11 (italiana e americana).
 - `FileNavigator::moveForward/moveBackward` restano solo per le frecce
@@ -410,6 +418,17 @@ Previsioni dai formati, ancora da provare su file veri:
        fuori dalla selezione non la fa piu' saltare; `goToOffset` tiene la
        dimensione della finestra; le scrollbar della vista si trascinano
        anche uscendo dalla barra. Test a caso su 80.000 mosse.
+
+15. [x] **Classifier funzionante (2026-11-18)**: campioni di Battelle
+       (`tools/get_templates.sh`) letti nei loro tre formati
+       (`template_file.*`: prima si allenava anche sul modello serializzato
+       in coda ai file), piu' 5 classi di script dai file della macchina
+       (`tools/make_templates.sh`). Modello riscritto come quello di Battelle
+       (secchi fissi, logaritmi, LAMBDA fisso), contesto di 64 byte, un
+       calcolo per pixel invece che per blocco, annullabile, caricato in un
+       thread. Le classi "rumore" (compresso, PNG) vincono solo sopra 5 bit
+       di entropia su 64 byte. Riga SOMIGLIA nell'Inspector. Firme per gli
+       script. Al posto di Spectrum (identico a Wavelength) c'e' Frequenza.
 
 Dal CantorDust originale sono venuti: barre `macro`/`micro` con maniglie ed
 entropia, luminosita' col 90esimo percentile (`density.h`), click ripetuto per

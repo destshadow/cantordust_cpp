@@ -1,120 +1,79 @@
 #include "ngram_model.h"
-#include <sstream>
-#include <iomanip>
 #include <cmath>
-#include <stdexcept>
 
-NGramModel::NGramModel(const std::vector<uint8_t>& data, int n) {
-    generateModel(data, 0, (int)data.size(), n);
+namespace {
+
+// Finale di murmur3: sparpaglia 4-grammi simili su secchi lontani
+inline uint32_t bucketOf(uint32_t h) {
+    h ^= h >> 16;  h *= 0x85ebca6bu;
+    h ^= h >> 13;  h *= 0xc2b2ae35u;
+    h ^= h >> 16;
+    return h & uint32_t(NGramModel::BUCKETS - 1);
 }
 
-NGramModel::NGramModel(const std::vector<uint8_t>& data,
-                       int startIndex, int length, int n) {
-    generateModel(data, startIndex, length, n);
-}
-
-// --- generateModel ---
-// Scorre il buffer con una finestra scorrevole di N byte
-// Conta le occorrenze di ogni sequenza unica
-// Poi divide per il totale per ottenere probabilita'
-void NGramModel::generateModel(const std::vector<uint8_t>& data,
-                                int startIndex, int length, int n) {
-    if (n <= 0 || startIndex < 0 || length < 0 ||
-        size_t(startIndex) > data.size() || size_t(length) > data.size() - size_t(startIndex))
-        throw std::invalid_argument("Invalid NGram range or order");
-    m_n = n;
-
-    // Conta le occorrenze di ogni NGram
-    // Usa una mappa temporanea di conteggi (interi)
-    std::unordered_map<VectorN, double,
-                       VectorNHash, VectorNEqual> counts;
-
-    int end = startIndex + length;
-    for (int i = startIndex; i < end; i++) {
-        // Controlla che ci siano abbastanza byte per un NGram completo
-        if (n > end - i) break;
-
-        // Costruisce il VectorN per questa finestra
-        VectorN v(n);
-        for (int k = 0; k < n; k++)
-            v.setAt(k, data[i + k]);
-
-        // Incrementa il conteggio
-        auto it = counts.find(v);
-        if (it != counts.end())
-            it->second += 1.0;
-        else
-            counts[v] = 1.0;
+// Chiama f(secchio) per ogni 4-gramma di [p, p+n)
+template <class F>
+void eachGram(const uint8_t* p, size_t n, F f) {
+    uint32_t key = 0;
+    for (size_t i = 0; i < n; i++) {
+        key = (key << 8) | p[i];
+        if (i + 1 >= (size_t)NGramModel::N) f(bucketOf(key));
     }
-
-    // Calcola il totale degli NGram
-    // modelEntries = lunghezza - n + 1 (numero di finestre possibili)
-    m_modelEntries = length - n + 1;
-    if (m_modelEntries < 0) m_modelEntries = 0;
-
-    // Converti conteggi in probabilita'
-    // p(NGram) = conteggio / modelEntries
-    m_model.clear();
-    for (auto& [key, count] : counts)
-        m_model[key] = count / (double)m_modelEntries;
 }
 
-// --- evaluate ---
-// Confronta questo modello con un template pre-calcolato
-// Algoritmo:
-//   Per ogni NGram nel modello corrente:
-//     k = numero di occorrenze (conteggio)
-//     Se l'NGram esiste nel template:
-//       p = probabilita' nel template
-//       score *= p^k   (quante volte questa sequenza appare nel template)
-//     Altrimenti:
-//       score *= MINIMUM (penalita' per sequenze non nel template)
-//   Punteggio finale: piu' alto = piu' simile al template
-ExponentialNotation NGramModel::evaluate(
-    const NGramModel& templateModel) const {
+} // namespace
 
-    // Fattore minimo per NGram non trovati nel template
-    // Evita che un singolo NGram sconosciuto azzeri tutto
-    static const ExponentialNotation MIN_FACTOR(
-        MIN_FREQ_COEFF, MIN_FREQ_EXP);
+NGramModel::NGramModel(int classes)
+    : m_classes(classes > 0 ? classes : 0),
+      m_counts(BUCKETS * size_t(m_classes), 0),
+      m_total(size_t(m_classes), 0) {}
 
-    // Punteggio iniziale = 1 (neutro per la moltiplicazione)
-    ExponentialNotation score(1.0);
+void NGramModel::add(int cls, const uint8_t* p, size_t n) {
+    if (cls < 0 || cls >= m_classes || m_counts.empty()) return;
+    const size_t k = size_t(m_classes);
+    eachGram(p, n, [&](uint32_t b) { m_counts[b * k + size_t(cls)] += 1.0f; });
+    if (n >= (size_t)N) m_total[size_t(cls)] += double(n - N + 1);
+}
 
-    for (auto& [v, prob] : m_model) {
-        // Ricostruisci il conteggio dall'entropia
-        // k = round(prob * modelEntries)
-        int k = (int)(prob * m_modelEntries + 0.5);
-        if (k <= 0) continue;
+void NGramModel::addGram(int cls, uint32_t gram, double weight) {
+    if (cls < 0 || cls >= m_classes || m_counts.empty() || !(weight > 0)) return;
+    m_counts[bucketOf(gram) * size_t(m_classes) + size_t(cls)] += float(weight);
+    m_total[size_t(cls)] += weight;
+}
 
-        auto it = templateModel.m_model.find(v);
-        if (it != templateModel.m_model.end()) {
-            // NGram trovato nel template
-            // Calcola p^k con la potenza veloce
-            ExponentialNotation pClass(it->second);
-            score = score.multiply(MathUtils::fastPow(pClass, k));
-        } else {
-            // NGram non trovato — applica penalita' minima
-            // Dividiamo per modelEntries per scalare la penalita'
-            ExponentialNotation penalty =
-                ExponentialNotation(1.0)
-                .divide(ExponentialNotation((double)m_modelEntries))
-                .multiply(MIN_FACTOR);
-            score = score.multiply(MathUtils::fastPow(penalty, k));
+void NGramModel::finish() {
+    const size_t k = size_t(m_classes);
+    m_logP.assign(BUCKETS * k, 0.0f);
+    const double uniform = LAMBDA / double(BUCKETS);
+    for (size_t c = 0; c < k; c++) {
+        const double total = double(m_total[c]);
+        for (size_t b = 0; b < BUCKETS; b++) {
+            const double seen = total > 0 ? m_counts[b * k + c] / total : 0.0;
+            m_logP[b * k + c] = float(std::log((1.0 - LAMBDA) * seen + uniform));
         }
     }
-
-    return score;
+    m_counts.clear();
+    m_counts.shrink_to_fit();
 }
 
-std::string NGramModel::toString() const {
-    std::ostringstream oss;
-    oss << m_modelEntries << " entries:\n";
-    for (auto& [key, prob] : m_model) {
-        int count = (int)(prob * m_modelEntries);
-        oss << "\t" << key.toString()
-            << " : " << count
-            << " (" << prob << ")\n";
+bool NGramModel::hasData(int cls) const {
+    return cls >= 0 && cls < m_classes && m_total[size_t(cls)] > 0;
+}
+
+int NGramModel::best(const uint8_t* p, size_t n, std::vector<double>* score) const {
+    if (n < (size_t)N || m_logP.empty()) return -1;
+    const size_t k = size_t(m_classes);
+    double sum[64] = {};                    // le classi sono poche decine
+    if (k > 64) return -1;
+    eachGram(p, n, [&](uint32_t b) {
+        const float* row = &m_logP[b * k];
+        for (size_t c = 0; c < k; c++) sum[c] += row[c];
+    });
+    int bestCls = -1;
+    for (size_t c = 0; c < k; c++) {
+        if (m_total[c] == 0) continue;
+        if (bestCls < 0 || sum[c] > sum[size_t(bestCls)]) bestCls = int(c);
     }
-    return oss.str();
+    if (score) score->assign(sum, sum + k);
+    return bestCls;
 }

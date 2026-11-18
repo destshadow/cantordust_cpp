@@ -170,25 +170,6 @@ void testCore() {
     nav.selectRange(120, 45);
     assert(nav.getStart() == 120 && nav.getEnd() == 165);
 
-    NGramModel exact(std::vector<uint8_t>{1, 2}, 2);
-    assert(exact.getModelSize() == 1 && exact.getModelEntries() == 1);
-    NGramModel window(std::vector<uint8_t>(10, 42), 0, 4, 2);
-    assert(window.getModelSize() == 1 && window.getModelEntries() == 3);
-    NGramModel distinct(std::vector<uint8_t>{1, 2, 3, 4}, 2);
-    assert(distinct.getModelSize() == 3);
-    bool rejected = false;
-    try { NGramModel invalid(std::vector<uint8_t>{1}, 0, 2, 1); }
-    catch (const std::invalid_argument&) { rejected = true; }
-    assert(rejected);
-
-    ClassifierModel classifier;
-    classifier.generateTemplates({{}, std::vector<uint8_t>(64, 42)}, 2);
-    classifier.classifyFile(std::vector<uint8_t>(515, 42));
-    assert(classifier.getBlockCount() == 2);
-    assert(classifier.classAtIndex(0) == 1 && classifier.classAtIndex(514) == 1);
-    assert(classifier.classAtIndex(515 + 512) == -1);
-    classifier.classifyFile({});
-    assert(classifier.getBlockCount() == 0);
 
     BinaryParser parser;
     std::vector<uint8_t> pe(64, 0);
@@ -243,12 +224,6 @@ void testCore() {
     for (int i = 0; i < 16; ++i) unique[i] = i;
     map.compute(unique, ColorMode::ENTROPY, CurveMode::LINEAR);
     assert(map.getRGB()[0] > 0); // High local entropy reaches the red channel.
-    ClassifierData cd;
-    std::vector<int> classes{1}; cd.classifications = &classes;
-    map.compute(unique, ColorMode::CLASSIFIER, CurveMode::LINEAR, 8, &cd);
-    auto rgb = map.getRGB();
-    map.compute(unique, ColorMode::WAVELENGTH, CurveMode::LINEAR);
-    assert(rgb != map.getRGB());
 
     BinaryReader reader;
     assert(reader.load("src/main.cpp"));

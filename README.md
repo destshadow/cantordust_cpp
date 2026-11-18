@@ -177,14 +177,18 @@ cantordust_cpp/
 
 ## Classificatore N-gram e verifiche
 
-La modalità Classifier della MetricMap usa campioni binari in
-`templates/<classe>.bin`, relativi alla directory da cui si avvia il programma.
-I nomi delle classi sono elencati in `src/classifier_model.h` (per esempio
-`ascii.bin`, `x86.bin`, `x64.bin`). I campioni devono contenere almeno 4 byte.
-Le classi prive di campioni non partecipano al confronto. Senza template validi
-la modalità viene saltata con un messaggio; non vengono generate classificazioni
-fittizie. I blocchi troppo corti per un N-gram sono mostrati in grigio.
-Questa è una classificazione statistica, non una rete neurale.
+La modalità Classifier della MetricMap (e la riga SOMIGLIA dell'Inspector)
+dice a quale tipo di contenuto somigliano i 64 byte intorno a un punto: 27
+classi (x86, ARM, testo, compresso, JavaScript, PHP...). I campioni stanno in
+`templates/`, che non è su git:
+
+    sh tools/get_templates.sh    # i 22 campioni del CantorDust di Battelle
+    sh tools/make_templates.sh   # script e testo, dai file di questa macchina
+
+I nomi delle classi sono in `src/classifier_model.cpp`; i formati dei file in
+`src/template_file.h`. Le classi senza campione non partecipano. Senza
+campioni la modalità resta grigia. È una somiglianza statistica sui 4-grammi,
+non una rete neurale e non un riconoscimento certo.
 Le cartelle Python e dataset sono predisposizioni attualmente senza codice.
 
 Eseguire `make test` per i test di regressione senza interfaccia grafica.

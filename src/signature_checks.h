@@ -19,5 +19,10 @@ bool mp4(const Bytes& b, size_t at);     // "ftyp" al byte 4
 bool riff(const Bytes& b, size_t at);
 bool bzip2(const Bytes& b, size_t at);
 bool tiff(const Bytes& b, size_t at);
+// Script nascosti: il marcatore deve essere seguito da cio' che lo chiude
+bool shebang(const Bytes& b, size_t at);   // "#!/bin/sh", "#! /usr/bin/env python"
+bool phpTag(const Bytes& b, size_t at);    // "<?php" + spazio
+bool scriptTag(const Bytes& b, size_t at); // "<script" + spazio o '>'
+bool htmlTag(const Bytes& b, size_t at);   // "<html" + spazio o '>'
 
 } // namespace SigCheck

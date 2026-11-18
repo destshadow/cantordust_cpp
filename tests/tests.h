@@ -64,5 +64,6 @@ void testSignatures();
 void testOverview();
 void testGolden();
 void testMetricMap();
+void testClassifier();
 void testNavigation();
 void test3D();

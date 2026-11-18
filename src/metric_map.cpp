@@ -1,4 +1,6 @@
 #include "metric_map.h"
+#include "classifier_model.h"
+#include "cancel.h"
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -37,11 +39,12 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
                          ColorMode  colorMode,
                          CurveMode  curveMode,
                          int        order,
-                         const ClassifierData* classData) {
+                         const ClassifierModel* classifier) {
     clear();
     if (bytes.empty()) return;
 
     m_size      = 1 << order;  // 2^order
+    if (colorMode == ColorMode::FREQUENCY) m_freqColor = frequencyColors(bytes);
 
     int totalPixels = m_size * m_size;
     m_rgb.assign(totalPixels * 3, 0);
@@ -92,10 +95,15 @@ void MetricMap::compute(const std::vector<uint8_t>& bytes,
             col.r = (uint8_t)(255.0f * curve_val);
             col.g = 0;
             col.b = (uint8_t)(255.0f * e * e);
+        } else if (colorMode == ColorMode::CLASSIFIER) {
+            // Il calcolo piu' lungo della mappa (64 byte per 27 classi a
+            // pixel): si guarda la bandierina ogni 1024 pixel
+            if ((i & 1023) == 0 && Cancel::requested()) return;
+            const int cls = classifier ? classifier->classAt(bytes.data(), bytes.size(), fileIdx) : -1;
+            const ContentClass& c = ClassifierModel::info(cls);
+            col = {c.r, c.g, c.b};
         } else {
-            col = colorForByte(bytes[fileIdx],
-                               fileIdx, bytes.size(),
-                               colorMode, classData);
+            col = colorForByte(bytes[fileIdx], fileIdx, bytes.size(), colorMode);
         }
 
         int bufIdx = (py * m_size + px) * 3;

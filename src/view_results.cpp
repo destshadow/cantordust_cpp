@@ -4,7 +4,7 @@
 
 std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
                                           const ComputeParams& p,
-                                          ClassifierModel& classifier,
+                                          const ClassifierModel& classifier,
                                           const std::atomic<bool>* cancel) {
     const Cancel::Scope scope(cancel);
     auto r = std::make_unique<ViewResults>();
@@ -32,12 +32,8 @@ std::unique_ptr<ViewResults> computeViews(const std::vector<uint8_t>& window,
             r->suggestBpp   = PixelGuess::bytesPerPixel(r->autocorr.differences());
             break;
         case ViewMode::METRICMAP: {
-            ClassifierData cd;
-            if (p.colorMode == ColorMode::CLASSIFIER && classifier.isReady()) {
-                classifier.classifyFile(window);
-                cd.classifications = &classifier.getClassifications();
-            }
-            r->metricmap.compute(window, p.colorMode, p.curveMode, 8, &cd);
+            r->metricmap.compute(window, p.colorMode, p.curveMode, 8,
+                                 classifier.isReady() ? &classifier : nullptr);
             break;
         }
     }

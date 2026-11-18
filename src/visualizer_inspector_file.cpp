@@ -27,6 +27,11 @@ void Visualizer::inspectPoint(PanelWriter& pw, size_t point) {
     pw.field("OFFSET", "0x" + hex(point, 8) + "  (" + std::to_string(point) + ")", COL_ACCENT());
     writeSectionField(pw, point);
     pw.field("BYTE", byteDesc(bytes[point]), classPixel(ByteInfo::classOf(bytes[point])));
+    if (m_classifier.isReady()) {      // a cosa somigliano i 64 byte intorno
+        const ContentClass& c = ClassifierModel::info(
+            m_classifier.classAt(bytes.data(), bytes.size(), point));
+        pw.field("SOMIGLIA", c.label, olc::Pixel(c.r, c.g, c.b));
+    }
     pw.separator("byte intorno");
     writeHexDump(pw, point, point, 6);
     pw.separator("zona: 1 KB intorno");

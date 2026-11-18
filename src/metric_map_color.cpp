@@ -1,11 +1,12 @@
 #include "metric_map.h"
-#include "classifier_model.h"
 #include "byte_info.h"
+#include "cancel.h"
+#include <cmath>
+#include <cstdint>
 
 WavelengthRGB::RGB MetricMap::colorForByte(
     uint8_t byte_val, size_t file_idx,
-    size_t total, ColorMode mode,
-    const ClassifierData* cd) const {
+    size_t total, ColorMode mode) const {
 
     switch (mode) {
         case ColorMode::WAVELENGTH:
@@ -19,10 +20,8 @@ WavelengthRGB::RGB MetricMap::colorForByte(
                      (uint8_t)((1.0f-t)*255) };
         }
 
-        case ColorMode::SPECTRUM: {
-            double wave = 380.0 + (byte_val/255.0) * 400.0;
-            return WavelengthRGB::wavelengthToRGB(wave);
-        }
+        case ColorMode::FREQUENCY:
+            return m_freqColor[byte_val];
 
         case ColorMode::BYTE_CLASS: {
             WavelengthRGB::RGB c{};
@@ -30,27 +29,42 @@ WavelengthRGB::RGB MetricMap::colorForByte(
             return c;
         }
 
-        case ColorMode::CLASSIFIER: {
-            // Usa la classificazione NGram se disponibile
-            // Ogni classe ha un colore distinto tramite WavelengthRGB
-            if (cd && cd->classifications && cd->blockSize > 0) {
-                size_t blockIdx = file_idx / cd->blockSize;
-                if (blockIdx < cd->classifications->size()) {
-                    int cls = (*cd->classifications)[blockIdx];
-                    if (cls < 0 || cls >= NUM_CLASSES) return {128, 128, 128};
-                    // Mappa classe [0,16] → lunghezza d'onda [400,780]
-                    double t    = (double)cls / (double)(NUM_CLASSES-1);
-                    double wave = 400.0 + t * (780.0 - 400.0);
-                    return WavelengthRGB::wavelengthToRGB(wave);
-                }
-            }
-            // Fallback se classificatore non disponibile
-            return WavelengthRGB::byteToRainbow(byte_val);
-        }
-
         default:
             return WavelengthRGB::byteToRainbow(byte_val);
     }
+}
+
+// Frequenza: si contano i byte della zona e si mette il conteggio su scala
+// logaritmica (altrimenti lo zero, che spesso domina, schiaccia tutto il
+// resto). La scala va dal valore piu' comune della zona (450 nm, blu) al
+// piu' raro fra quelli presenti (650 nm, rosso): un pezzo con byte insoliti
+// per quel file risalta in caldo anche se in Wavelength sembra uguale agli
+// altri. I colori sono relativi alla zona, non assoluti.
+std::array<WavelengthRGB::RGB, 256>
+MetricMap::frequencyColors(const std::vector<uint8_t>& bytes) {
+    std::array<uint64_t, 256> count{};
+    for (size_t i = 0; i < bytes.size(); i++) {
+        if (Cancel::every(i)) break;
+        count[bytes[i]]++;
+    }
+    uint64_t most = 0, least = UINT64_MAX;
+    for (uint64_t c : count) {
+        if (c == 0) continue;
+        most  = std::max(most, c);
+        least = std::min(least, c);
+    }
+
+    std::array<WavelengthRGB::RGB, 256> col{};
+    const double lo = least == UINT64_MAX ? 0.0 : std::log((double)least);
+    const double span = most > least && least != UINT64_MAX
+                      ? std::log((double)most) - lo : 0.0;
+    for (int b = 0; b < 256; b++) {
+        // Un solo conteggio per tutti (o zona vuota): tutto "comune"
+        const double t = span > 0 && count[b] > 0
+                       ? (std::log((double)count[b]) - lo) / span : 1.0;
+        col[b] = WavelengthRGB::wavelengthToRGB(450.0 + (1.0 - t) * 200.0);
+    }
+    return col;
 }
 
 ColorMode MetricMap::nextColorMode(ColorMode m, bool classifierReady) {
@@ -64,7 +78,7 @@ const char* MetricMap::colorModeName(ColorMode m) {
         case ColorMode::WAVELENGTH:  return "Wavelength";
         case ColorMode::ENTROPY:     return "Entropy";
         case ColorMode::GRADIENT:    return "Gradient";
-        case ColorMode::SPECTRUM:    return "Spectrum";
+        case ColorMode::FREQUENCY:   return "Frequenza";
         case ColorMode::BYTE_CLASS:  return "Tipo di byte";
         case ColorMode::CLASSIFIER:  return "Classifier";
     }

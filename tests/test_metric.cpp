@@ -102,12 +102,30 @@ void testMetricMap() {
     }
 
     {   // Metric Map: giro dei colori, senza template si salta il classifier
-        ColorMode m = ColorMode::SPECTRUM;
+        ColorMode m = ColorMode::FREQUENCY;
         m = MetricMap::nextColorMode(m, false);
         assert(m == ColorMode::BYTE_CLASS);
         assert(MetricMap::nextColorMode(m, false) == ColorMode::WAVELENGTH);
         assert(MetricMap::nextColorMode(m, true)  == ColorMode::CLASSIFIER);
         assert(MetricMap::nextColorMode(ColorMode::CLASSIFIER, true) == ColorMode::WAVELENGTH);
+    }
+
+    {   // Metric Map: Frequenza. Il byte piu' comune e' freddo (blu), uno raro
+        // caldo (rosso), e il risultato non e' uguale a Wavelength
+        std::vector<uint8_t> b(1000, 0x41);
+        b[500] = 0x42;
+        MetricMap m;
+        m.compute(b, ColorMode::FREQUENCY, CurveMode::LINEAR);
+        const auto& f = m.getRGB();
+        assert(f[2] > f[0]);                            // 0x41, comune: blu
+        int x = 0, y = 0;
+        assert(m.pixelOf(500, x, y) && m.fileIndexAt(x, y) == 500);
+        const size_t at = size_t(y * m.getSize() + x) * 3;
+        assert(f[at] > f[at + 2]);                      // 0x42, raro: rosso
+        MetricMap w;
+        w.compute(b, ColorMode::WAVELENGTH, CurveMode::LINEAR);
+        assert(w.getRGB() != f);
+        assert(std::string(MetricMap::colorModeName(ColorMode::FREQUENCY)) == "Frequenza");
     }
 
     {   // Metric Map: colore per tipo di byte

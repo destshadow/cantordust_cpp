@@ -27,6 +27,36 @@ void testSignatures() {
         assert(Signatures::next({}, 0) == SIZE_MAX);
     }
 
+    // --- Script nascosti: il marcatore e cio' che lo chiude ---
+    {
+        std::vector<uint8_t> b(4096, 0xEE);
+        putStr(b, 10,   "#!/bin/sh\n");
+        putStr(b, 100,  "#! /usr/bin/env python3\n");
+        putStr(b, 200,  "<?php echo 1;");
+        putStr(b, 300,  "<script>alert(1)");
+        putStr(b, 400,  "<SCRIPT type=x>");
+        putStr(b, 500,  "<!DOCTYPE html>");
+        putStr(b, 600,  "<html lang=it>");
+        // Falsi: percorso troppo corto, niente '/', marcatori non chiusi
+        putStr(b, 1000, "#!/b ");
+        putStr(b, 1100, "#!bin/sh\n");
+        putStr(b, 1200, "#!/bin/sh>");
+        putStr(b, 1300, "<?phpx");
+        putStr(b, 1400, "<?php>");
+        putStr(b, 1500, "<scripted ");
+        putStr(b, 1600, "<htmlx");
+        putStr(b, 4087, "#!/bin/sh");                  // finisce con il file: niente a capo
+        auto h = scan(b);
+        assert(h.size() == 7);
+        const char* names[] = {"script #!", "script #!", "PHP", "JavaScript",
+                               "JavaScript", "HTML", "HTML"};
+        const size_t offs[] = {10, 100, 200, 300, 400, 500, 600};
+        for (size_t i = 0; i < 7; i++)
+            assert(h[i].offset == offs[i] && std::string(h[i].name) == names[i]);
+        std::vector<uint8_t> tail = {'<', '?', 'p', 'h', 'p'};   // finisce col marcatore
+        assert(scan(tail).empty());
+    }
+
     // --- Firme corte: servono anche i campi dell'intestazione ---
     {
         std::vector<uint8_t> b(2048, 0);

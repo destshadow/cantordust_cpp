@@ -1,105 +1,68 @@
 #pragma once
-#include <vector>
-#include <string>
-#include <array>
-#include <cstdint>
 #include "ngram_model.h"
-#include "exponential_notation.h"
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
-// Classificatore NGram per sezioni di file binari
-// Basato su ClassifierModel.java del codice originale CantorDust
+// Classifier: a quale tipo di contenuto somiglia un tratto di byte (codice
+// x86, ARM, testo, compresso, uno script...). E' una somiglianza statistica
+// sui 4-grammi, non un riconoscimento: dice "somiglia a", mai "e'".
 //
-// Funzionamento:
-//   1. Carica template pre-calcolati per ogni classe
-//   2. Per ogni blocco del file, costruisce un NGramModel
-//   3. Confronta con tutti i template e sceglie la classe migliore
+// Il campione "compresso" e' quasi uniforme: da' a ogni 4-gramma la stessa
+// probabilita', piccola ma mai minima. Cosi' vincerebbe su qualunque tratto
+// con 4-grammi che gli altri campioni non hanno visto (cifre in UTF-16, dati
+// di un formato raro). Per questo le classi `noise` vincono solo se i byte
+// sembrano davvero casuali (NOISE_MIN_BITS).
 //
-// Le 17 classi supportate (stesse del codice Java originale)
-static constexpr int NUM_CLASSES = 17;
-static const std::array<const char*, NUM_CLASSES> CLASS_NAMES = {{
-    "arm4",         // ARM 32-bit little-endian
-    "arm7",         // ARM 32-bit big-endian
-    "ascii",        // Testo ASCII inglese
-    "compressed",   // Dati compressi (zlib, lz4...)
-    "java",         // Bytecode Java
-    "mips",         // MIPS assembly
-    "msil",         // .NET MSIL bytecode
-    "ones",         // Sequenze di 0xFF
-    "png",          // Dati PNG compressi
-    "powerpc",      // PowerPC assembly
-    "sparc_32",     // SPARC 32-bit
-    "utf_16",       // Testo UTF-16
-    "x64",          // x86-64 assembly
-    "x86",          // x86 assembly
-    "x86_padding",  // NOP padding x86
-    "zeros",        // Sequenze di 0x00
-    "embedded_image"// Immagini embedded
-}};
-
-// Colori per ogni classe — usati nell'overlay ColorClassifier
-static const std::array<std::array<uint8_t,3>, NUM_CLASSES> CLASS_COLORS = {{
-    {255, 100, 100},  // arm4        → rosso
-    {255, 150,  50},  // arm7        → arancione
-    {200, 255, 100},  // ascii       → verde chiaro
-    {100, 100, 255},  // compressed  → blu
-    {255, 255, 100},  // java        → giallo
-    {100, 255, 200},  // mips        → turchese
-    {200, 100, 255},  // msil        → viola
-    { 50,  50,  50},  // ones        → grigio scuro
-    {255, 200, 100},  // png         → oro
-    {100, 200, 255},  // powerpc     → azzurro
-    {255, 100, 200},  // sparc_32    → rosa
-    {150, 255, 150},  // utf_16      → verde
-    {255,  50,  50},  // x64         → rosso brillante
-    {255, 150, 150},  // x86         → rosso chiaro
-    { 80,  80,  80},  // x86_padding → grigio
-    {200, 200, 200},  // zeros       → bianco
-    {100, 255, 100},  // embedded    → verde brillante
-}};
+// Il funzionamento e' quello del CantorDust di Battelle (ClassifierModel.java):
+// ogni etichetta si decide su CONTEXT byte centrati sul punto, perche' su
+// 12 byte (9 quattro-grammi) loro misurano il 77% di risposte giuste e su 64
+// il 91%. Qui si classifica solo dove serve (un punto per pixel), non tutto
+// il file a blocchi.
+//
+// I campioni stanno in templates/: <nome>.template sono quelli originali di
+// Battelle (tools/get_templates.sh), <nome>.bin quelli fatti su questa
+// macchina (tools/make_templates.sh). Se ci sono entrambi si usano entrambi.
+// Senza nessun campione il Classifier non c'e' e il resto funziona uguale.
+struct ContentClass {
+    const char* file;        // nome dei file in templates/
+    const char* label;       // per l'Inspector
+    uint8_t r, g, b;
+    bool noise = false;      // dati quasi casuali: compresso e PNG (non "immagine":
+                             // e' un bitmap, entropia media 2,8 bit su 64 byte)
+};
 
 class ClassifierModel {
 public:
-    static constexpr int DEFAULT_GRAMS = 4;   // N per gli NGram
-    static constexpr int BLOCK_SIZE    = 512;  // byte per blocco
+    static constexpr size_t CONTEXT    = 64;          // byte per decidere
+    static constexpr size_t MAX_SAMPLE = 4u << 20;    // byte letti per classe
+    static constexpr size_t CHUNK      = 64u << 10;   // a pezzi da 64 KB
+    // Sotto questa entropia (bit, su 64 byte; massimo 6) un tratto non e'
+    // casuale e le classi `noise` non possono vincere. Misurato: 64 byte
+    // casuali non scendono sotto 5,4; testo UTF-16 sta intorno a 3.
+    static constexpr double NOISE_MIN_BITS = 5.0;
 
-    ClassifierModel();
+    static int count();
+    static const ContentClass& info(int cls);         // cls fuori: "?" grigio
 
-    // Carica i template da file .bin nella cartella specificata
-    // Ogni template e' un file binario pre-campionato dalla classe
-    // Es: templates/x86.bin, templates/ascii.bin, ...
-    bool loadTemplates(const std::string& templateDir,
-                       int grams = DEFAULT_GRAMS);
+    // Legge i campioni e allena il modello: circa un secondo, va chiamata
+    // FUORI dal thread dell'interfaccia. Dopo, il modello si legge soltanto
+    // e isReady() diventa vero. Restituisce quante classi hanno un campione.
+    int loadTemplates(const std::string& dir);
 
-    // Genera i template dai dati grezzi passati
-    // Utile se non hai file template pre-calcolati
-    void generateTemplates(
-        const std::vector<std::vector<uint8_t>>& classSamples,
-        int grams = DEFAULT_GRAMS);
+    // Per i test: un campione per classe, nell'ordine di info()
+    void train(const std::vector<std::vector<uint8_t>>& samples);
 
-    // Classifica un singolo blocco di byte
-    // Ritorna l'indice della classe (0-16)
-    int classify(const std::vector<uint8_t>& data,
-                 int low, int high) const;
+    bool isReady() const { return m_ready.load(std::memory_order_acquire); }
+    bool hasClass(int cls) const { return isReady() && m_model.hasData(cls); }
 
-    // Classifica l'intero file dividendolo in blocchi
-    void classifyFile(const std::vector<uint8_t>& data);
-
-    // Classe del byte all'indice specificato
-    int classAtIndex(size_t index) const;
-
-    // Getters
-    bool isReady()             const { return m_ready; }
-    int  getBlockCount()       const { return (int)m_blockClassifications.size(); }
-    const std::vector<int>&
-         getClassifications()  const { return m_blockClassifications; }
-
-    // Colore RGB per una classe
-    static void getClassColor(int classIdx,
-                               uint8_t& r, uint8_t& g, uint8_t& b);
+    // A cosa somiglia il contenuto intorno a data[at]; -1 se non pronto o
+    // se ci sono meno di 4 byte
+    int classAt(const uint8_t* data, size_t size, size_t at) const;
 
 private:
-    std::vector<NGramModel> m_templates;
-    std::vector<int>        m_blockClassifications;
-    int                     m_grams = DEFAULT_GRAMS;
-    bool                    m_ready = false;
+    NGramModel        m_model;
+    std::atomic<bool> m_ready{false};
 };
