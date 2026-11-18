@@ -1,4 +1,5 @@
 #include "one_tuple.h"
+#include "cancel.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -35,7 +36,10 @@ void OneTuple::compute(const std::vector<uint8_t>& bytes,
         size_t b = start + (size_t)(r + 1) * len / m_rows;
         std::array<uint32_t, 256> count{};
         uint32_t maxC = 0;
-        for (size_t i = a; i < b; i++) maxC = std::max(maxC, ++count[bytes[i]]);
+        for (size_t i = a; i < b; i++) {
+            if (Cancel::every(i)) return;
+            maxC = std::max(maxC, ++count[bytes[i]]);
+        }
         if (maxC == 0) continue;
         float norm = std::log1p((float)maxC);
         for (int v = 0; v < 256; v++) {

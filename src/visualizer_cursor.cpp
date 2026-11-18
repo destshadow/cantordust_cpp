@@ -36,7 +36,7 @@ bool Visualizer::cursorPixel(int& cx, int& cy) const {
             return true;
         case ViewMode::ONETUPLE:
             if (m_onetuple.getRows() <= 0) return false;
-            cy = (int)(rel * m_onetuple.getRows() / len);
+            cy = (int)partOf(rel, len, (size_t)m_onetuple.getRows());
             return true;
         default: return false;
     }
@@ -91,5 +91,5 @@ void Visualizer::updateSimilarityClick() {
     if (std::abs(GetMouseX() - m_pressX) > 2 || std::abs(GetMouseY() - m_pressY) > 2) return;
     const InspectWindow w = inspectWindow();
     if (w.len == 0) return;
-    goToOffset(std::min(w.start + (size_t)cy * w.len / Similarity::SIZE, w.end - 1));
+    goToOffset(std::min(w.start + columnStart(cy, w.len), w.end - 1));
 }

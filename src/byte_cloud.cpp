@@ -1,4 +1,5 @@
 #include "byte_cloud.h"
+#include "cancel.h"
 #include <algorithm>
 #include <cmath>
 
@@ -44,7 +45,10 @@ void ByteCloud::clear() {
 void ByteCloud::compute(const std::vector<uint8_t>& bytes) {
     clear();
     std::array<size_t, 256> counts{};
-    for (uint8_t b : bytes) counts[b]++;
+    for (size_t i = 0; i < bytes.size(); i++) {
+        if (Cancel::every(i)) return;
+        counts[bytes[i]]++;
+    }
 
     // 00 e FF non entrano nella scala: dominerebbero tutti gli altri
     size_t maxCount = 0;

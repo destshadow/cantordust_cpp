@@ -1,4 +1,5 @@
 #include "digraph.h"
+#include "cancel.h"
 #include "density.h"
 #include <algorithm>
 #include <cmath>
@@ -16,6 +17,7 @@ void DiGraph::compute(const std::vector<uint8_t>& bytes) {
 
     // Sliding window: ogni coppia (bytes[i], bytes[i+1]) → punto sul canvas
     for (size_t i = 0; i < bytes.size() - 1; i++) {
+        if (Cancel::every(i)) return;
         uint8_t x = bytes[i];
         uint8_t y = bytes[i + 1];
         m_canvas[y][x]++;

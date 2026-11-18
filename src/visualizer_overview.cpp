@@ -82,8 +82,9 @@ void Visualizer::drawOverview() {
     size_t nextSig = 0;
     for (int c = 0; c < n; c++) {
         const int cx = cellX(c), cw = std::max(1, cellX(c + 1) - cx);
-        const size_t a = offsetOf(c), b = offsetOf(c + 1 < n ? c + 1 : c) + (c + 1 < n ? 0 : 1);
-        const bool dim = section && (a >= m_hlEnd || std::max(b, a + 1) <= m_hlStart);
+        const size_t a = offsetOf(c);
+        const size_t end = c + 1 < n ? offsetOf(c + 1) : m_computedEnd;
+        const bool dim = section && (a >= m_hlEnd || std::max(end, a + 1) <= m_hlStart);
 
         for (int r = 0; r < VALUE_ROWS; r++) {
             const float v = std::clamp(ROWS[r].value(cells[c]), 0.0f, 1.0f);
@@ -95,7 +96,6 @@ void Visualizer::drawOverview() {
         }
 
         // Firme che iniziano in questo tratto
-        const size_t end = c + 1 < n ? offsetOf(c + 1) : m_computedEnd;
         while (nextSig < m_signatures.size() && m_signatures[nextSig].offset < a) nextSig++;
         if (nextSig < m_signatures.size() && m_signatures[nextSig].offset < end)
             FillRect(cx, rowY(VALUE_ROWS), std::max(cw, 2), rowH, olc::Pixel(90, 220, 255));

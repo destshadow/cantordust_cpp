@@ -87,8 +87,8 @@ void Overview::compute(const std::vector<uint8_t>& bytes) {
         cell.text  = (float)(printable / n);
         cell.zeros = (float)(h[0x00] / n);
         cell.ff    = (float)(h[0xFF] / n);
-        cell.period = periodicity(&bytes[a], &bytes[std::min(b, a + PERIOD_SAMPLE)],
-                                  cell.periodLen);
+        cell.period = periodicity(bytes.data() + a,
+                                  bytes.data() + std::min(b, a + PERIOD_SAMPLE), cell.periodLen);
 
         for (int v = 0; v < 256; v++) upTo[c + 1][v] = upTo[c][v] + h[v];
     }

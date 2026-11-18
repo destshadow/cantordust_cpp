@@ -92,6 +92,30 @@ void testOverview() {
         assert(edge > 0.9f && inside < 0.3f);
     }
 
+    // --- Dal tratto alla posizione e ritorno: sempre lo stesso tratto ---
+    {
+        for (size_t n : {size_t(1), size_t(7), size_t(255), size_t(257), size_t(1000),
+                         size_t(163957), size_t(1) << 33})
+            for (size_t parts : {size_t(1), size_t(3), size_t(256), size_t(624)}) {
+                if (parts > n) continue;
+                for (size_t c = 0; c < parts; c += std::max<size_t>(1, parts / 97)) {
+                    const size_t start = c * n / parts, end = (c + 1) * n / parts;
+                    assert(partOf(start, n, parts) == c);
+                    assert(partOf(end - 1, n, parts) == c);
+                }
+                assert(partOf(n - 1, n, parts) == parts - 1);
+                assert(partOf(n + 5, n, parts) == parts - 1);      // oltre la fine: l'ultimo
+            }
+        assert(partOf(0, 0, 10) == 0 && partOf(3, 10, 0) == 0);
+        // Dot Plot, Entropia, Somiglianza: colonna = i * 256 / n, inizio = columnStart
+        for (size_t n : {size_t(300), size_t(1000), size_t(163957)})
+            for (int x = 0; x < 256; x++) {
+                const size_t start = columnStart(x, n);
+                if (start >= n || columnStart(x + 1, n) == start) continue;   // colonna vuota
+                assert(start * 256 / n == (size_t)x);
+            }
+    }
+
     // --- File minuscoli: mai piu' tratti che byte ---
     {
         Overview o;

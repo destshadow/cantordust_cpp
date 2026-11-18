@@ -1,4 +1,5 @@
 #include "histogram.h"
+#include "cancel.h"
 #include <cmath>
 #include <algorithm>
 
@@ -12,7 +13,9 @@ void Histogram::compute(const std::vector<uint8_t>& bytes) {
     if (bytes.empty()) return;
 
     // Conta quante volte appare ogni valore byte 0-255
-    for (uint8_t b : bytes) {
+    for (size_t i = 0; i < bytes.size(); i++) {
+        if (Cancel::every(i)) return;
+        const uint8_t b = bytes[i];
         m_freq[b]++;
         if (m_freq[b] > m_max)
             m_max = m_freq[b];

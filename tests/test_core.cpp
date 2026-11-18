@@ -43,10 +43,15 @@ void testCore() {
             assert(full && full->mode == c.mode);
 
             // Bandierina gia' alzata: nessun risultato, e in una frazione del tempo
+            // (il migliore di tre: un singolo tempo puo' essere rovinato da
+            // un attimo di carico della macchina)
             std::atomic<bool> cancel{true};
-            t0 = Clock::now();
-            assert(computeViews(*c.data, p, model, &cancel) == nullptr);
-            const double stopped = seconds(t0);
+            double stopped = 1e9;
+            for (int attempt = 0; attempt < 3; attempt++) {
+                t0 = Clock::now();
+                assert(computeViews(*c.data, p, model, &cancel) == nullptr);
+                stopped = std::min(stopped, seconds(t0));
+            }
             assert(stopped < 0.05 || stopped < whole / 4);
 
             // Alzata a meta' da un altro thread: torna poco dopo, mai bloccato
@@ -59,7 +64,9 @@ void testCore() {
                 t0 = Clock::now();
                 const auto r = run.get();
                 const double after = seconds(t0);
-                assert(after < 0.05 || after < whole / 4);
+                // Largo apposta: qui conta che torni, la prontezza la misurano
+                // il controllo sopra e il conteggio dei controlli piu' sotto
+                assert(after < 0.25 || after < whole / 2);
                 assert(!r || r->mode == c.mode);     // finito prima, o annullato
             }
         }
@@ -109,6 +116,16 @@ void testCore() {
             assert(polled(noise.size(), [&] { dots.compute(noise); }));
             Entropy entropy;
             assert(polled(noise.size(), [&] { entropy.compute(noise); }));
+            DiGraph pairs;
+            assert(polled(noise.size(), [&] { pairs.compute(noise); }));
+            Histogram hist;
+            assert(polled(noise.size(), [&] { hist.compute(noise); }));
+            ByteCloud cloud;
+            assert(polled(noise.size(), [&] { cloud.compute(noise); }));
+            OneTuple rows;
+            assert(polled(noise.size(), [&] { rows.compute(noise); }));
+            Overview overview;
+            assert(polled(noise.size(), [&] { overview.compute(noise); }));
         }
 
         // Poll controlla ogni 64 KB percorsi, qualunque sia il passo

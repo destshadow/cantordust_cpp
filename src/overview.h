@@ -1,4 +1,6 @@
 #pragma once
+#include "view_mode.h"
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -32,9 +34,7 @@ public:
     const std::vector<Cell>& cells() const { return m_cells; }
     // Il tratto della finestra coperto dalla cella c: [start, end)
     size_t cellStart(size_t c) const { return m_cells.empty() ? 0 : c * m_len / m_cells.size(); }
-    size_t cellOf(size_t offset) const {
-        return m_len ? std::min(m_cells.size() - 1, offset * m_cells.size() / m_len) : 0;
-    }
+    size_t cellOf(size_t offset) const { return partOf(offset, m_len, m_cells.size()); }
 
     // Test del chi-quadro di Westfeld e Pfitzmann (2000) su un istogramma: se
     // il bit meno significativo e' casuale, i valori 2k e 2k+1 compaiono lo

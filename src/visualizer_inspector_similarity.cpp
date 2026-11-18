@@ -9,8 +9,8 @@ using namespace Inspect;
 void Visualizer::inspectSimilarity(PanelWriter& pw, int cx, int cy) {
     const InspectWindow w = inspectWindow();
     auto range = [&](int cell, size_t& a, size_t& b) {
-        a = std::min(w.start + (size_t)cell * w.len / Similarity::SIZE, w.end - 1);
-        b = std::min(std::max(w.start + (size_t)(cell + 1) * w.len / Similarity::SIZE, a + 1), w.end);
+        a = std::min(w.start + columnStart(cell, w.len), w.end - 1);
+        b = std::min(std::max(w.start + columnStart(cell + 1, w.len), a + 1), w.end);
     };
     size_t xa, xb, ya, yb;
     range(cx, xa, xb);
