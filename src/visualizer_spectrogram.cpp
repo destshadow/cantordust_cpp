@@ -53,10 +53,30 @@ void Visualizer::handleSpectroInput() {
     if (std::abs(GetMouseX() - m_pressX) > 2 || std::abs(GetMouseY() - m_pressY) > 2) return;
     int cx, cy;
     if (!mouseToContent(GetMouseX(), GetMouseY(), cx, cy) || cx >= m_spectrogram.columns()) return;
-    const int period = periodUnder(cx, cy);
+    // Una riga luminosa e' spesso un'armonica (40 accende anche 20, 10, 4):
+    // se la riga cliccata divide il periodo di base del tratto, si usa quello
+    int period = periodUnder(cx, cy);
+    const int base = m_spectrogram.baseRow(cx);
+    if (base >= 0) {
+        const int p0 = periodUnder(cx, base);
+        const double m = double(p0) / period;
+        if (m >= 1 && std::abs(m - std::lround(m)) <= 0.05 * m) period = p0;
+    }
     const int bpp = (int)RawPixels::bytesPerPixel(m_bppMode);
-    goToOffset(m_computedStart + m_spectrogram.columnStart(cx));
+    // La ZONA diventa il tratto dove quel periodo dura: Raw e Profilo record
+    // guardano solo quello (Home torna al file intero)
+    int first, last;
+    if (m_spectrogram.runAt(cx, cy, first, last)) {
+        m_bars.selectRange(m_computedStart + m_spectrogram.columnStart(first),
+                           m_computedStart + m_spectrogram.columnStart(last + 1));
+        syncNavigator();
+        m_cursorOffset = m_computedStart + m_spectrogram.columnStart(first);
+    } else {
+        goToOffset(m_computedStart + m_spectrogram.columnStart(cx));
+    }
     m_rawWidth = std::max(1, (period + bpp / 2) / bpp);
+    m_recordPeriod = std::min(period, RecordProfile::MAX_PERIOD);   // anche per il Profilo
+    m_recordPhase  = 0;
     syncRawSliders();
     switchView(ViewMode::RAWPIXELS);
     m_status = "Raw largo " + std::to_string(m_rawWidth) + " = il periodo";

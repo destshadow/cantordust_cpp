@@ -40,6 +40,8 @@ public:
     void setCursor(size_t offset) { m_cursor = offset; }   // SIZE_MAX = nessuno
     void setSignatures(std::vector<size_t> offsets) { m_sigs = std::move(offsets); }
     void goTo(size_t offset);    // sposta le selezioni solo se e' fuori
+    // ZONA = [a, b); se esce dalla zona di FILE, FILE torna al file intero
+    void selectRange(size_t a, size_t b);
 
     int  hoveredSection() const { return m_hoverSec; }   // -1 = nessuna
     // Byte sotto il mouse, se e' sopra una delle due barre

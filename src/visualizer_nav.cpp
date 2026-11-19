@@ -29,6 +29,8 @@ void Visualizer::recomputeWindow() {
         params.similarity = m_dotSimilarity;
         params.spectroSize = m_spectroSize;
         params.spectroFlat = m_spectroFlat;
+        params.recordPeriod = m_recordPeriod;
+        params.recordPhase  = m_recordPhase;
         params.windowStart = m_computedStart;
         if (m_mode == ViewMode::TRIGRAPH3D) params.sections = sectionRanges();
 
@@ -84,6 +86,7 @@ void Visualizer::applyResults() {
     m_overview     = std::move(r->overview);
     m_overviewBase = r->windowStart;
     m_spectrogram  = std::move(r->spectrogram);
+    m_record       = std::move(r->record);
     m_autocorr     = std::move(r->autocorr);
     m_suggestWidth = r->suggestWidth;
     m_suggestBpp   = r->suggestBpp;

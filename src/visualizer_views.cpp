@@ -136,6 +136,14 @@ const ViewDef& Visualizer::viewDef(ViewMode mode) {
             d.keys    = [](V& v) { v.handleSpectroKeys(); };
             d.inspect = [](V& v, PanelWriter& pw) { return v.inspectSpectrogram(pw); };
         }
+        {   ViewDef& d = add(ViewMode::RECORD);
+            d.rgb    = [](const V& v) -> Rgb { return v.m_record.toRGB(); };
+            d.legend = [](const V&) -> std::string {
+                return "PROFILO RECORD  X = byte nel record   Y = valore   colore = tipo di campo"; };
+            d.options = [](V& v, bool click) { v.drawRecordOptions(click); };
+            d.keys    = [](V& v) { v.handleRecordKeys(); };
+            d.inspect = [](V& v, PanelWriter& pw) { return v.inspectRecord(pw); };
+        }
 
         // Ogni vista ha la sua voce, completa
         for (size_t i = 0; i < t.size(); i++) {

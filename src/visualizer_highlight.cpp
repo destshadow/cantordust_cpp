@@ -46,6 +46,7 @@ void Visualizer::applyHighlight(olc::Sprite* spr) {
             highlightByValue(spr);
             break;
         case ViewMode::TRIGRAPH3D:
+        case ViewMode::RECORD:          // una colonna e' un byte del record, non un tratto
             break;
         default:
             highlightByPosition(spr);

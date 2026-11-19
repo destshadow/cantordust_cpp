@@ -56,6 +56,11 @@ public:
     float level(int col, int row) const;
     int   baseRow(int col) const;                // -1 se nessun periodo spicca
 
+    // Le colonne vicine a `col` dove la riga `row` (o una accanto) resta
+    // accesa, almeno 3 volte la media; si salta un buco di una colonna.
+    // false se in (col, row) non c'e' niente di acceso.
+    bool runAt(int col, int row, int& first, int& last) const;
+
     // Il periodo intero vicino a `approx` (entro il 6%, almeno +-1) per cui
     // piu' byte di [from, from+len) sono uguali a quello `periodo` dopo.
     // Le righe sono in scala log e un periodo letto da una riga e' 23,9 o

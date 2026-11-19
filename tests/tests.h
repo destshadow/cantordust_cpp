@@ -24,6 +24,7 @@
 #include <cstdio>
 #include "similarity.h"
 #include "spectrogram.h"
+#include "record_profile.h"
 #include "overview.h"
 #include "chi_square.h"
 #include "view_results.h"
@@ -67,5 +68,6 @@ void testGolden();
 void testMetricMap();
 void testClassifier();
 void testSpectrogram();
+void testRecordProfile();
 void testNavigation();
 void test3D();

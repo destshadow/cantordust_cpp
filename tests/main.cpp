@@ -12,6 +12,7 @@ int main() {
     testMetricMap();
     testClassifier();
     testSpectrogram();
+    testRecordProfile();
     testNavigation();
     testParser();
     test3D();

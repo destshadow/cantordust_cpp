@@ -12,6 +12,7 @@
 #include "raw_pixels.h"
 #include "similarity.h"
 #include "spectrogram.h"
+#include "record_profile.h"
 #include "string_scan.h"
 #include "trigraph.h"
 #include "view_mode.h"
@@ -32,6 +33,8 @@ struct ComputeParams {
     bool      similarity = false;            // Dot Plot: il file con se stesso
     int       spectroSize = 1024;            // Spettrogramma: byte per FFT
     bool      spectroFlat = false;           // Spettrogramma: togli lo spettro medio
+    int       recordPeriod = 16;             // Profilo record: byte per record
+    int       recordPhase  = 0;              // e da dove inizia il primo
     size_t    windowStart = 0;               // Stringhe: per gli offset nel file
     RawFilter rawFilter;
     std::vector<TriGraph::Range> sections;   // 3D: relative alla finestra
@@ -54,6 +57,7 @@ struct ViewResults {
     StringScan strings;
     Overview  overview;
     Spectrogram spectrogram;
+    RecordProfile record;
     Autocorr  autocorr;
     int       suggestWidth = 0;
     size_t    suggestBpp   = 1;                // byte per pixel, 1 = nessun indizio

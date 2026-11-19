@@ -94,7 +94,8 @@ Layout (com'e' oggi):
 | 0 | Stringhe: ASCII e UTF-16, tag, filtri | `string_scan.*`, `string_tag.cpp` |
 | H | Hex: 16 byte per riga | `hex_layout.h`, `visualizer_hex.cpp` |
 | P | Panoramica: indicatori lungo il file | `overview.*`, `visualizer_overview.cpp` |
-| G | Spettrogramma: periodi lungo il file (menu' "Altro") | `fft.*`, `spectrogram.*`, `visualizer_spectrogram.cpp` |
+| G | Spettrogramma: periodi lungo il file (menu' "Altro") | `fft.*`, `spectrogram*.cpp`, `visualizer_spectrogram.cpp` |
+| K | Profilo record: com'e' fatto un record (menu' "Altro") | `record_profile.*`, `record_field.cpp`, `visualizer_record.cpp` |
 
 In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
 **cursore** (`visualizer_cursor.cpp`).
@@ -113,7 +114,7 @@ In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
          caso, per p da 1 a 64, sui primi 4 KB del tratto. Periodi piu' lunghi
          di 64 non li vede: per quelli c'e' `A` nel Raw.
        - [ ] idea: trascinare per selezionare un tratto come finestra
-2. [x] **Spettrogramma** (tasto `G`, menu' "Altro"; `fft.*`, `spectrogram.*`,
+2. [x] **Spettrogramma** (tasto `G`, menu' "Altro"; `fft.*`, `spectrogram*.cpp`,
        `visualizer_spectrogram.cpp`), 2026-11-18: X = posizione, Y = periodo
        (log, da 2 byte a meta' della FFT), luce = potenza rispetto alla media
        del tratto. FFT nostra (radice 2), Hann, 256 FFT per finestra: 8 ms su
@@ -125,9 +126,19 @@ In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
        - [ ] picchi: i periodi piu' forti del file, cliccabili
        - [ ] click su un periodo: dove compare, con i segni sulle barre
              (l'"immagine modale" della tesi di Davis, cap. 3)
-3. [ ] **Profilo record** (tab): dato un periodo, mostra colonna per colonna i
-       campi fissi, i contatori e quelli casuali. Conteggio di valori per
-       posizione nel record.
+3. [x] **Profilo record** (tasto `K`, menu' "Altro"; `record_profile.*`,
+       `record_field.cpp`, `visualizer_record.cpp`), 2026-11-19: X = byte nel
+       record, Y = valore, luce = quante volte, colore = tipo di campo
+       (fisso, contatore, testo, pochi valori, vario, casuale; soglie in
+       `record_field.cpp`). Oltre 65536 record si campiona. Lo Spettrogramma
+       ci porta: il click seleziona come ZONA il tratto dove il periodo dura
+       e passa il periodo di base anche se si clicca un'armonica.
+       - [ ] inizio del record automatico: oggi il disegno puo' uscire
+             "ruotato" (si sistema con `[ ]`). Idea: dopo la corsa piu'
+             lunga di colonne fisse uguali (il riempimento), o prima di un
+             contatore. Da provare su formati veri prima di sceglierla.
+       - [ ] campi su piu' byte (un contatore a 16/32 bit oggi e' un
+             contatore + colonne "pochi valori")
 4. [ ] **Versione nativa per Windows** (l'utente lavora da Windows, oggi passa
        da WSL): Makefile per MinGW o MSVC, prova della tastiera.
 

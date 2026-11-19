@@ -28,8 +28,9 @@ inline constexpr ViewTab VIEW_TABS[] = {
     {"H Hex",         ViewMode::HEX,        'H', false},
     {"P Panoramica",  ViewMode::OVERVIEW,   'P', false},
     {"G Spettrogramma", ViewMode::SPECTROGRAM, 'G', true},
+    {"K Profilo record", ViewMode::RECORD,     'K', true},
 };
-inline constexpr int VIEW_TAB_COUNT = 13;
+inline constexpr int VIEW_TAB_COUNT = 14;
 static_assert(VIEW_TAB_COUNT == VIEW_MODE_COUNT, "ogni vista ha la sua tab");
 
 // Ogni tab e' larga quanto il suo testo, cosi' ci stanno piu' viste

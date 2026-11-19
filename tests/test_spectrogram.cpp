@@ -95,6 +95,14 @@ void testSpectrogram() {
         assert(near(basePeriod(s, 20), 24, 0.04));
         assert(near(basePeriod(s, 240), 40, 0.04));
         assert(s.columnOf(240000) < s.columnOf(250000));
+        // Il tratto dove dura il periodo 24: dall'inizio fin quasi al cambio
+        // (i record da 24 sono 240000 byte su 480000: meta' delle colonne)
+        int first = -1, last = -1;
+        assert(s.runAt(20, s.rowOf(24), first, last));
+        assert(first == 0 && last >= 120 && last <= 130);
+        assert(s.runAt(240, s.rowOf(40), first, last) && first >= 126 && first <= 132 && last == 255);
+        assert(!s.runAt(20, s.rowOf(100), first, last));     // li' non c'e' niente
+        assert(!s.runAt(-1, 0, first, last) && !s.runAt(300, 0, first, last));
     }
     {   // Dati casuali: quasi tutto scuro, nessun periodo di base
         std::mt19937 g(3);

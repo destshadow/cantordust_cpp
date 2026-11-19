@@ -67,6 +67,8 @@ void testGolden() {
     { OneTuple v;   v.compute(b); image("onetuple", v.toRGB()); }
     { Spectrogram v; v.compute(b, 1024);       image("spettrogramma", v.toRGB());
                      v.compute(b, 1024, true); image("spettrogramma_medio", v.toRGB()); }
+    { RecordProfile v; v.compute(b, 24, 0);   image("profilo_24", v.toRGB());
+                       v.compute(b, 300, 7);  image("profilo_300", v.toRGB()); }
 
     const BppMode bpps[] = {BppMode::BPP_8, BppMode::BPP_16, BppMode::BPP_24,
                             BppMode::BPP_32, BppMode::BPP_64};

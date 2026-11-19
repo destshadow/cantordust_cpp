@@ -79,7 +79,10 @@ int NavBars::sectionAtY(int mx, int my) const {
 
 void NavBars::selectSection(int index) {
     const auto& s = (*m_secs)[index];
-    size_t a = s.offset, b = s.offset + s.size;
+    selectRange(s.offset, s.offset + s.size);
+}
+
+void NavBars::selectRange(size_t a, size_t b) {
     if (a < m_macro.lo || b > m_macro.hi)   // fuori dalla zona: si allarga
         m_macro.set(0, m_macro.max);
     m_micro.setBounds(m_macro.lo, m_macro.hi);

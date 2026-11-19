@@ -119,6 +119,11 @@ private:
     void handleSpectroInput();
     bool inspectSpectrogram(PanelWriter& pw);
     int  periodUnder(int cx, int cy) const;
+    // Profilo record (visualizer_record.cpp)
+    void setRecordShape(int period, int phase);
+    void drawRecordOptions(bool clickable);
+    void handleRecordKeys();
+    bool inspectRecord(PanelWriter& pw);
     void drawOverview();
     void inspectOverview(PanelWriter& pw, int cell);
     // Vista Hex (visualizer_hex.cpp)
@@ -217,6 +222,9 @@ private:
     Spectrogram      m_spectrogram;
     int              m_spectroSize = 1024;   // byte per FFT: 256 ... 8192
     bool             m_spectroFlat = false;  // togli lo spettro medio
+    RecordProfile    m_record;
+    int              m_recordPeriod = 16;    // Profilo record: byte per record
+    int              m_recordPhase  = 0;     // inizio del primo record
 
     // Canvas (256x256) e canvas raw pixel (dimensione variabile)
     olc::Sprite*  m_canvas    = nullptr;

@@ -22,9 +22,10 @@ AREE DELLA FINESTRA (1280x800)
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
-  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0, H, P, G.
+  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0, H, P, G, K.
                   "Altro" apre il menu' delle viste senza tab (Byte Cloud,
-                  One Tuple, Spettrogramma): click o frecce e Invio, Esc chiude.
+                  One Tuple, Spettrogramma, Profilo record): click o frecce e
+                  Invio, Esc chiude.
 
   NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
 
@@ -133,8 +134,23 @@ SPETTROGRAMMA (tasto G, nel menu' "Altro")
                   piu' lunghi e piu' precisi)
   T               togli lo spettro medio: si accende cio' che e' diverso
                   dal resto della finestra
-  Click           cursore su quel tratto e Raw largo quel periodo: i record
-                  si mettono in colonna
+  Click           la ZONA diventa il tratto dove quel periodo dura, e si
+                  apre il Raw largo quel periodo: i record si mettono in
+                  colonna. Se la riga cliccata e' un'armonica (40 accende
+                  anche 20, 10...) si usa il periodo di base. Home = di nuovo
+                  il file intero.
+
+PROFILO RECORD (tasto K, nel menu' "Altro")
+  La zona tagliata in record, e per ogni byte del record (X) quali valori
+  contiene (Y), su tutti i record. Colore = tipo di campo:
+    bianco = fisso, giallo = contatore, azzurro = testo,
+    verde = pochi valori (flag), viola = vario, rosso = casuale.
+  L'Inspector dice il campo sotto il mouse e "il record" in una riga:
+  AA 55 = valori fissi, C contatore, t testo, e pochi valori, . vario,
+  ? casuale. Il periodo arriva dal click nello Spettrogramma.
+  , .             periodo +-1 (Shift = 10)
+  [ ]             inizio del record +-1 (se il disegno e' "ruotato")
+  A               periodo suggerito dall'autocorrelazione
 
 FIRME (file dentro al file)
   Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,

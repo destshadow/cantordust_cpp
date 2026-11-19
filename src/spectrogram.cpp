@@ -130,53 +130,6 @@ float Spectrogram::level(int col, int row) const {
     return m_level[size_t(row) * SIZE + size_t(col)];
 }
 
-// Il periodo di base: somma dei sottoarmonici (Hermes, "Measurement of
-// pitch by subharmonic summation", 1988). Per ogni periodo p acceso (almeno
-// 3 volte la media) si sommano le sue armoniche p/m con peso 0,84^(m-1), fino
-// a 15: il periodo vero raccoglie anche le righe delle sue armoniche, un suo
-// sottomultiplo no. Provato prima e scartato:
-//   - solo 4 armoniche, peso uguale: su record da 24 con 12 zeri vinceva 8;
-//   - tutte le armoniche, peso uguale: un periodo lunghissimo (una deriva
-//     lenta) ha armoniche su tutte le righe e vinceva sempre.
-// In piu' p deve starci almeno 8 volte nei byte analizzati.
-int Spectrogram::baseRow(int col) const {
-    constexpr double WEIGHT = 0.84;
-    constexpr int    HARMONICS = 15;
-    int best = -1;
-    double bestScore = 0;
-    for (int r = 0; r < SIZE; r++) {
-        const double p = periodAt(r);
-        if (level(col, r) < 0.5f || p * 8 > m_n) continue;
-        double score = 0, w = 1;
-        for (int m = 1; m <= HARMONICS && p / m >= MIN_PERIOD; m++, w *= WEIGHT)
-            score += w * std::max(0.0f, level(col, rowOf(p / m)));
-        if (score > bestScore * 1.05) { bestScore = score; best = r; }
-    }
-    return best;
-}
-
-int Spectrogram::exactPeriod(const std::vector<uint8_t>& bytes, size_t from, size_t len,
-                             double approx) {
-    const int mid = std::max(1, int(std::lround(approx)));
-    const int span = std::max(1, int(std::ceil(approx * 0.06)));
-    from = std::min(from, bytes.size());
-    const size_t end = std::min(bytes.size(), from + len);
-    int best = mid;
-    size_t bestSame = 0;
-    for (int q = std::max(1, mid - span); q <= mid + span; q++) {
-        size_t same = 0;
-        for (size_t i = from; i + size_t(q) < end; i++) same += bytes[i] == bytes[i + size_t(q)];
-        // a parita' vince il piu' vicino a `approx` (si scorre da sinistra:
-        // basta un ">" e un confronto della distanza)
-        if (same > bestSame || (same == bestSame &&
-                                std::abs(q - approx) < std::abs(best - approx))) {
-            bestSame = same;
-            best = q;
-        }
-    }
-    return best;
-}
-
 std::vector<uint8_t> Spectrogram::toRGB() const {
     std::vector<uint8_t> rgb(size_t(SIZE) * SIZE * 3, 0);
     for (int r = 0; r < SIZE; r++)

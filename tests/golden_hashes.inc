@@ -7,6 +7,8 @@
     {"onetuple", 0xfc4d30b696dafe0eULL},
     {"spettrogramma", 0x9f3388781fc87836ULL},
     {"spettrogramma_medio", 0x88799baf08dc306dULL},
+    {"profilo_24", 0xe52f200af0b34315ULL},
+    {"profilo_300", 0x98569aafb0a8adaeULL},
     {"raw_8bpp", 0xf59285057d11bf8dULL},
     {"raw_16bpp", 0xcc012b24de2e8393ULL},
     {"raw_24bpp", 0x4df09e5bf7376681ULL},

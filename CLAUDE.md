@@ -65,7 +65,7 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
   100 MB; le altre stanno sotto 0,5 s.
 - **Viste**: 1 Digraph, 2 Dot Plot, 3 Entropia, 4 Istogramma, 5 3D, 6 Raw,
   7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex, P Panoramica,
-  G Spettrogramma (nel menu' "Altro"). Le tab sono in
+  G Spettrogramma e K Profilo record (nel menu' "Altro"). Le tab sono in
   `view_tabs.h`, larghe quanto il testo, ognuna con il suo tasto.
 - **3D**: i punti si dispongono a cubo, cilindro o sfera (`coord_system.h`,
   tasto `F`); cambia solo la posizione, non i dati.
@@ -130,8 +130,9 @@ mouse per conto suo.
 - **Offset relativi**: i risultati di una vista sono relativi alla finestra su
   cui sono stati calcolati. `ViewResults::windowStart` li accompagna; non
   usare `m_navigator.getStart()` per interpretarli, puo' essere gia' cambiato.
-- **Tasti**: occupati O S B H N P G Home Esc, 1-9 0, e per vista A F C V L T
-  `[ ] , .` (T anche nel Dot Plot e nello Spettrogramma, `[ ]` anche li'), nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
+- **Tasti**: occupati O S B H N P G K Home Esc, 1-9 0, e per vista A F C V L T
+  `[ ] , .` (T anche nel Dot Plot e nello Spettrogramma, `[ ]` anche li';
+  `, . [ ] A` nel Profilo record), nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
   una lettera usata dal 3D (W A S D Q E R C F) non puo' diventare globale.
 - **`view_tabs.h` non deve includere olcPGE**: lo usano i test, che non
   collegano il motore. Per questo il tasto di una tab e' un `char`.

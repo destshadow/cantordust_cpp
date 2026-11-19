@@ -49,11 +49,15 @@ SRC = src/main.cpp \
       src/template_file.cpp \
       src/fft.cpp \
       src/spectrogram.cpp \
+      src/spectrogram_period.cpp \
+      src/record_profile.cpp \
+      src/record_field.cpp \
       src/byte_cloud.cpp \
       src/string_scan.cpp \
       src/overview.cpp \
       src/visualizer_overview.cpp \
       src/visualizer_spectrogram.cpp \
+      src/visualizer_record.cpp \
       src/visualizer_inspector_overview.cpp \
       src/signatures.cpp \
       src/signature_checks.cpp \
@@ -108,7 +112,7 @@ run: all
 
 TEST_OUT ?= build/core_tests
 TEST_SRC = $(wildcard tests/*.cpp) src/file_navigator.cpp src/ngram_model.cpp \
-           src/classifier_model.cpp src/template_file.cpp src/fft.cpp src/spectrogram.cpp src/binary_format.cpp src/binary_format_elf.cpp \
+           src/classifier_model.cpp src/template_file.cpp src/fft.cpp src/spectrogram.cpp src/spectrogram_period.cpp src/record_profile.cpp src/record_field.cpp src/binary_format.cpp src/binary_format_elf.cpp \
            src/binary_format_pe.cpp src/binary_reader.cpp \
            src/dotplot.cpp src/similarity.cpp src/entropy.cpp src/metric_map.cpp src/metric_map_color.cpp src/hilbert.cpp src/wavelength_rgb.cpp \
            src/autocorr.cpp src/autocorr_period.cpp src/raw_pixels.cpp src/occurrences.cpp \

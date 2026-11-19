@@ -32,6 +32,7 @@ enum class ViewMode {
     STRINGS    = 9,
     HEX        = 10,
     OVERVIEW   = 11,
-    SPECTROGRAM = 12
+    SPECTROGRAM = 12,
+    RECORD     = 13
 };
-inline constexpr int VIEW_MODE_COUNT = 13;
+inline constexpr int VIEW_MODE_COUNT = 14;
