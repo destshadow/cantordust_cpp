@@ -31,6 +31,7 @@ SRC = src/main.cpp \
       src/input_handler.cpp \
       src/ui_renderer.cpp \
       src/visualizer.cpp \
+      src/visualizer_commands.cpp \
       src/visualizer_2d.cpp \
       src/visualizer_canvas.cpp \
       src/visualizer_status.cpp \

@@ -115,8 +115,8 @@ void testSpectrogram() {
         for (size_t i = 0; i < rgb.size(); i += 3) bright += rgb[i + 1] > 128;   // giallo o piu'
         assert(bright < rgb.size() / 3 / 200);
         int withBase = 0;
-        for (int c = 0; c < 256; c++) withBase += s.baseRow(c) >= 0 && s.level(c, s.baseRow(c)) > 1.5f;
-        assert(withBase < 5);
+        for (int c = 0; c < 256; c++) withBase += s.baseRow(c) >= 0;
+        assert(withBase < 3);                       // il caso non inventa periodi
     }
     {   // Bordi: vuoto, troppo corto, costante, piu' corto della FFT
         Spectrogram s;

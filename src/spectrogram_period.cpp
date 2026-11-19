@@ -13,21 +13,30 @@
 //   - solo 4 armoniche, peso uguale: su record da 24 con 12 zeri vinceva 8;
 //   - tutte le armoniche, peso uguale: un periodo lunghissimo (una deriva
 //     lenta) ha armoniche su tutte le righe e vinceva sempre.
-// In piu' p deve starci almeno 8 volte nei byte analizzati.
+// In piu' p deve starci almeno 8 volte nei byte analizzati, e una riga della
+// famiglia (p o un'armonica) deve essere forte: sui dati casuali qualche
+// riga supera 3 volte la media per caso (livello massimo misurato 1,1),
+// sui record la riga di base sta sopra 1,6.
 int Spectrogram::baseRow(int col) const {
     constexpr double WEIGHT = 0.84;
     constexpr int    HARMONICS = 15;
+    constexpr float  STRONG = 1.2f;                  // circa 16 volte la media
     int best = -1;
     double bestScore = 0;
+    float bestPeak = 0;
     for (int r = 0; r < SIZE; r++) {
         const double p = periodAt(r);
         if (level(col, r) < 0.5f || p * 8 > m_n) continue;
         double score = 0, w = 1;
-        for (int m = 1; m <= HARMONICS && p / m >= MIN_PERIOD; m++, w *= WEIGHT)
-            score += w * std::max(0.0f, level(col, rowOf(p / m)));
-        if (score > bestScore * 1.05) { bestScore = score; best = r; }
+        float peak = 0;
+        for (int m = 1; m <= HARMONICS && p / m >= MIN_PERIOD; m++, w *= WEIGHT) {
+            const float lv = level(col, rowOf(p / m));
+            score += w * std::max(0.0f, lv);
+            peak = std::max(peak, lv);
+        }
+        if (score > bestScore * 1.05) { bestScore = score; best = r; bestPeak = peak; }
     }
-    return best;
+    return bestPeak >= STRONG ? best : -1;
 }
 
 bool Spectrogram::runAt(int col, int row, int& first, int& last) const {
