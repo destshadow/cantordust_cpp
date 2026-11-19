@@ -22,9 +22,9 @@ AREE DELLA FINESTRA (1280x800)
   | stato / ultimo comando                                elenco comandi   |
   +------------------------------------------------------------------------+
 
-  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0, H e P.
+  TAB (in alto)   Click = cambia vista. Stesso effetto dei tasti 1-9, 0, H, P, G.
                   "Altro" apre il menu' delle viste senza tab (Byte Cloud,
-                  One Tuple): click o frecce e Invio, Esc chiude.
+                  One Tuple, Spettrogramma): click o frecce e Invio, Esc chiude.
 
   NAVIGAZIONE     Si sceglie cosa guardare da qui. Tre colonne:
 
@@ -121,6 +121,20 @@ PANORAMICA (tasto P)
   fuori dalle sezioni. Click = cursore su quel tratto, poi H, 6, 7...
   "Bit bassi": i bit meno significativi sembrano casuali. Normale in foto e
   audio; insolito in codice e testo, dove puo' voler dire dati nascosti.
+
+SPETTROGRAMMA (tasto G, nel menu' "Altro")
+  X = posizione, Y = periodo in byte (2 in alto, scala log), luce = quanto
+  quel periodo e' forte rispetto alla media del tratto (nero sotto 4 volte).
+  Riga orizzontale luminosa = un periodo che dura: record, righe di
+  un'immagine, campioni audio. Dove la riga cambia, cambia il tipo di dati.
+  Dati casuali o compressi: scuro. Un periodo p accende anche p/2, p/3...:
+  l'Inspector dice il periodo DI BASE, misurato sui byte veri.
+  [ ]             byte analizzati per tratto: 256 ... 8192 (piu' = periodi
+                  piu' lunghi e piu' precisi)
+  T               togli lo spettro medio: si accende cio' che e' diverso
+                  dal resto della finestra
+  Click           cursore su quel tratto e Raw largo quel periodo: i record
+                  si mettono in colonna
 
 FIRME (file dentro al file)
   Tacche azzurre sulle barre = punti dove inizia un formato noto (PNG, ZIP,

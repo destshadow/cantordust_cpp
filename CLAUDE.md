@@ -33,6 +33,10 @@ che non si ricava da quei file o dal codice. Ultimo aggiornamento: 2026-11-15.
 - Non cancellare: le frecce commentate in `visualizer.cpp`, i file vecchi nella
   radice (`test_digraph*`, `test_reader`, `test_screenshot`,
   `digraph_export.png`), le immagini di riferimento.
+- Classifier: i campioni stanno in `templates/` (non su git), si rifanno con
+  `tools/get_templates.sh` e `tools/make_templates.sh`. I `.template` di
+  Battelle hanno tre formati (`template_file.h`): non leggerli come byte
+  grezzi.
 - Il "passo 5" del TODO (miniature al posto delle tab) e' rimandato
   dall'utente: non riproporlo.
 
@@ -60,7 +64,8 @@ Un frame, in `visualizer.cpp`: `applyResults` → `applyPendingOption` → input
   (`ViewResults::mode`). Solo il 3D supera il secondo su
   100 MB; le altre stanno sotto 0,5 s.
 - **Viste**: 1 Digraph, 2 Dot Plot, 3 Entropia, 4 Istogramma, 5 3D, 6 Raw,
-  7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex, P Panoramica. Le tab sono in
+  7 Metric Map, 8 Byte Cloud, 9 One Tuple, 0 Stringhe, H Hex, P Panoramica,
+  G Spettrogramma (nel menu' "Altro"). Le tab sono in
   `view_tabs.h`, larghe quanto il testo, ognuna con il suo tasto.
 - **3D**: i punti si dispongono a cubo, cilindro o sfera (`coord_system.h`,
   tasto `F`); cambia solo la posizione, non i dati.
@@ -125,8 +130,8 @@ mouse per conto suo.
 - **Offset relativi**: i risultati di una vista sono relativi alla finestra su
   cui sono stati calcolati. `ViewResults::windowStart` li accompagna; non
   usare `m_navigator.getStart()` per interpretarli, puo' essere gia' cambiato.
-- **Tasti**: occupati O S B H N P Home Esc, 1-9 0, e per vista A F C V L T
-  `[ ] , .` (T anche nel Dot Plot), nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
+- **Tasti**: occupati O S B H N P G Home Esc, 1-9 0, e per vista A F C V L T
+  `[ ] , .` (T anche nel Dot Plot e nello Spettrogramma, `[ ]` anche li'), nel 3D W A S D Q E R C F. I tasti globali valgono in ogni vista:
   una lettera usata dal 3D (W A S D Q E R C F) non puo' diventare globale.
 - **`view_tabs.h` non deve includere olcPGE**: lo usano i test, che non
   collegano il motore. Per questo il tasto di una tab e' un `char`.
@@ -253,10 +258,12 @@ Conseguenza proposta, ancora da discutere con l'utente:
 - Non e' provato che `hexcymatix` corrisponda alla vecchia **Residue Contact
   Map**. Rafforza l'idea di autosomiglianza, ma non va presentato come
   ricostruzione fedele.
-- Nessuna nuova evidenza per le altre viste misteriose. Restano inferenze:
-  Adjacency Graph = grafo pesato delle transizioni; Adjacency Bin = matrice
-  delle transizioni; Sliding Histogram = molto vicino a One Tuple; Moire =
-  ignoto.
+- Aggiornamento 2026-11-18, dall'eseguibile della demo (dettagli in
+  `TODO.md`, "Cosa c'e' davvero nella demo"): **Moire e' un font, non una
+  vista**. Le icone dei pulsanti mostrano le altre viste; "Locality
+  Translation" ha l'icona del Byte Presence di Conti, "Bit Map" del suo Bit
+  Plot. Adjacency Graph/Bin e Residue Contact Map restano ipotesi guidate
+  dalle icone: non presentarle come fedeli.
 
 ## Punti deboli noti e come affrontarli
 

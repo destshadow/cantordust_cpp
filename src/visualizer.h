@@ -111,6 +111,14 @@ private:
     void overviewStrip(int& x0, int& w) const;
     int  overviewCellUnderMouse() const;
     void handleOverviewInput();
+    // Spettrogramma (visualizer_spectrogram.cpp)
+    void setSpectroSize(int n);
+    void setSpectroFlat(bool on);
+    void drawSpectroOptions(bool clickable);
+    void handleSpectroKeys();
+    void handleSpectroInput();
+    bool inspectSpectrogram(PanelWriter& pw);
+    int  periodUnder(int cx, int cy) const;
     void drawOverview();
     void inspectOverview(PanelWriter& pw, int cell);
     // Vista Hex (visualizer_hex.cpp)
@@ -206,6 +214,9 @@ private:
     int              m_stringMin = 6;
     StringScan::Tag  m_stringTag = StringScan::Tag::NONE;
     ClassifierModel  m_classifier;
+    Spectrogram      m_spectrogram;
+    int              m_spectroSize = 1024;   // byte per FFT: 256 ... 8192
+    bool             m_spectroFlat = false;  // togli lo spettro medio
 
     // Canvas (256x256) e canvas raw pixel (dimensione variabile)
     olc::Sprite*  m_canvas    = nullptr;

@@ -16,6 +16,14 @@ La sicurezza e' un caso d'uso, non l'obiettivo. Regola per ogni funzione nuova:
 aiuta a scoprire struttura o contenuto in qualunque sequenza di byte; la
 conoscenza di un formato puo' arricchire il risultato, mai essere necessaria.
 
+**Meta (decisa il 2026-11-18): esploratore universale "spendibile e che fa la
+sua figura"**, non una ricostruzione fedele dell'originale. Le funzioni si
+scelgono per la domanda a cui rispondono su un file sconosciuto (cosa c'e',
+dove cambia, cosa si ripete, che periodo ha, com'e' fatto un record); le viste
+dell'originale entrano solo dove coincidono. La versione Windows nativa non e'
+una priorita'. In futuro l'utente potrebbe provare a venderlo: licenze, dati
+di terzi e nome contano (vedi "Se un giorno si vende").
+
 ## Principi di design (decisi il 2026-11-03)
 
 1. **Ogni vista dice cosa mostra**: una riga di legenda in alto
@@ -86,6 +94,7 @@ Layout (com'e' oggi):
 | 0 | Stringhe: ASCII e UTF-16, tag, filtri | `string_scan.*`, `string_tag.cpp` |
 | H | Hex: 16 byte per riga | `hex_layout.h`, `visualizer_hex.cpp` |
 | P | Panoramica: indicatori lungo il file | `overview.*`, `visualizer_overview.cpp` |
+| G | Spettrogramma: periodi lungo il file (menu' "Altro") | `fft.*`, `spectrogram.*`, `visualizer_spectrogram.cpp` |
 
 In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
 **cursore** (`visualizer_cursor.cpp`).
@@ -104,13 +113,18 @@ In ogni vista: **Firme** (`N`, tacche azzurre sulle barre; `signatures.*`) e
          caso, per p da 1 a 64, sui primi 4 KB del tratto. Periodi piu' lunghi
          di 64 non li vede: per quelli c'e' `A` nel Raw.
        - [ ] idea: trascinare per selezionare un tratto come finestra
-2. [ ] **Spettrogramma** (tab): X = posizione nel file, Y = periodo in byte,
-       luce = forza del periodo. Mostra dove cambia il periodo. FFT scritta
-       da noi, in un file piccolo. Provarla su un WAV e su record noti.
+2. [x] **Spettrogramma** (tasto `G`, menu' "Altro"; `fft.*`, `spectrogram.*`,
+       `visualizer_spectrogram.cpp`), 2026-11-18: X = posizione, Y = periodo
+       (log, da 2 byte a meta' della FFT), luce = potenza rispetto alla media
+       del tratto. FFT nostra (radice 2), Hann, 256 FFT per finestra: 8 ms su
+       100 MB (81 ms con 8192 byte). Periodo DI BASE con la somma dei
+       sottoarmonici di Hermes (1988), poi l'intero esatto contando i byte
+       uguali a distanza p. Click = cursore e Raw largo quel periodo.
+       Provato: record da 24 e 40 byte, WAV (Alarm01: le note e le righe di
+       2 e 4 byte del 16 bit stereo), il file dimostrativo.
        - [ ] picchi: i periodi piu' forti del file, cliccabili
        - [ ] click su un periodo: dove compare, con i segni sulle barre
              (l'"immagine modale" della tesi di Davis, cap. 3)
-       - [ ] togliere lo spettro medio, per far risaltare le zone diverse
 3. [ ] **Profilo record** (tab): dato un periodo, mostra colonna per colonna i
        campi fissi, i contatori e quelli casuali. Conteggio di valori per
        posizione nel record.
@@ -193,6 +207,24 @@ passi mirati, non un sistema generale di componenti:
 - [ ] Un tipo comune per stringhe e firme, solo se serve davvero. Vale per i
       risultati discreti: entropia e periodicita' sono curve, non elenchi.
 
+### Se un giorno si vende
+
+Deciso dall'utente il 2026-11-18, se ne prende lui la responsabilita': il
+repository resta privato e non sara' mai pubblico; il nome si sceglie dopo;
+i campioni del Classifier li faremo noi. Restano come promemoria:
+
+- olcPixelGameEngine: licenza OLC-3 (tipo BSD), uso commerciale permesso
+  tenendo l'avviso di copyright. stb: pubblico dominio o MIT.
+- Il nostro codice e' MIT: chiunque potrebbe rivenderlo. Se si vuole
+  venderlo, decidere la licenza prima di pubblicare altro.
+- Template del Classifier: quelli di Battelle sono Apache 2.0 (serve
+  l'avviso), ma contengono byte di programmi di terzi; quelli PHP vengono da
+  PHPMailer (LGPL) e Slim (MIT). Oggi non sono nel repository: non
+  distribuirli senza aver controllato; meglio campioni fatti da noi.
+- Il nome "CantorDust" e' di Domas e Battelle: per un prodotto serve un nome
+  nostro.
+- Idee prese da Battelle (Apache 2.0) e da articoli: citarle in un NOTICE.
+
 ### Fuori dal progetto
 
 - Import e capacita', protezioni (hardening), regole e IOC, tabella delle
@@ -257,8 +289,79 @@ passi mirati, non un sistema generale di componenti:
     Somiglianza, ma non e' provato che coincidano)
   - Adjacency Graph = grafo "byte seguito da byte"; Adjacency Bin = la sua
     matrice (sarebbe il Digraph)
-  - Moire: ignoto; vedi sotto
+  - Moire: non e' una vista, e' un font (vedi sotto, "Cosa c'e' davvero")
 - `hexcymatix` di Domas (2026) e l'avatar GitHub: note in `CLAUDE.md`.
+
+**Cosa c'e' davvero nella demo del 2012 (letto nell'eseguibile, 2026-11-18).**
+Metodo: stringhe .NET in ordine (il codice generato da Visual Studio scrive
+per ogni controllo immagine, nome, testo), tabella delle risorse .NET, le 12
+icone da 30x30 dei pulsanti. Il codice e' offuscato (Dotfuscator): niente
+formule. La demo implementa solo il 3-tuple; gli altri pulsanti dicono
+"Come see the complete set".
+- **Moire NON e' una vista: e' un font** (Moire, Microsoft, di Jim Ford). La
+  stringa e' nella finestra About: `"Moire"` (font) → `labelLoading` (nome)
+  → `"..cantor.dust.."` (testo) → `label1` → `"v0.0.00001a"`.
+- La About dice: *"with research from greg conti and aldo cortesi"*. Conti e
+  Dean, Black Hat 2008 ("Visual Forensic Analysis", VizSEC 2008): Bitplot,
+  BytePlot, RGBPlot, BytePresence, ByteFrequency, Digram, Dotplot, Dynamic
+  DotPlot (solo una finestra di 500x500 lungo la diagonale). Cortesi: curve
+  di Hilbert e colore per entropia (binvis).
+- Pulsante (nome interno → scritta → com'e' l'icona → ipotesi):
+  - Presence → **Locality Translation** → verde con zone nere a triangolo →
+    combacia con il **Byte Presence** di Conti: righe = tratti del file,
+    colonne = 256 valori, acceso se il valore c'e' nel tratto. Il nome
+    "Locality Translation" resta strano: forse scritta e pulsante scambiati.
+  - Bit → **Bit Map** → trattini su una griglia → **Bit Plot** di Conti, un
+    pixel per bit
+  - BytePlot → **Metric Map** → rumore azzurro → byteplot lungo la curva
+    (nell'eseguibile ci sono tabelle `hilbert_2d_1d`)
+  - Frequency → **Histogram** → istogramma rosso → c'e'
+  - SlidingHistogram → **Sliding Histogram** → grigio a grana, piu' chiaro in
+    alto → istogramma per tratto in luminosita' (come One Tuple)
+  - ContactMap → **Residue Contact Map** → curve e anelli verdi su nero →
+    ipotesi: recurrence plot (|b_i - b_j| < soglia) su una finestra, che su
+    segnali lisci fa proprio curve; il Dot Plot esatto fa solo diagonali
+  - AdjacencyGraph → **Adjacency Graph** → nodi luminosi blu uniti da linee
+    dritte → ipotesi: punti = coppie di byte, una linea da ogni coppia alla
+    successiva; i nodi luminosi sono gli stati frequenti
+  - AdjacencyBin → **Adjacency Bin** → fasci curvi grigi → ipotesi: le stesse
+    linee accumulate in una griglia (densita'), non disegnate una per una
+  - 2TupleSystem, 3TupleSystem, Cloud, Hex: ci sono gia'
+- Altro: modi di colore del 3D `Time`/`Space`, effetti di animazione dei punti
+  (Wiggle, Wind, Shatter, Tornado, Explode, RiseExplode, Bounce,
+  ParametricBoredom), `GenerateExcludedFrequency` (frequenza escludendo
+  certi valori, es. lo zero), "Open as Raw".
+
+**Ricerca sulle viste ignote (2026-11-18).** Nessuna fonte usa i nomi della
+demo per i binari; queste sono le tecniche piu' vicine.
+- *Moire come tecnica*: due schemi periodici sovrapposti danno frange di
+  periodo ingrandito, p1*p2/|p1-p2|; lo spettro della sovrapposizione mostra
+  i periodi (Amidror e Hersch, EPFL). Nei nostri dati nasce da solo quando
+  si campiona (Metric Map su file grandi: un byte ogni `step`) o con la
+  larghezza sbagliata nel Raw: e' aliasing. Una vista "moire" voluta:
+  sovrapporre il file a una copia spostata di k byte (o disegnata con
+  larghezza W e W+1) e far vedere dove le frange si fermano = dove il
+  periodo coincide. E' parente di `hexcymatix` (diff con copia spostata) e
+  dell'autocorrelazione del Raw. Nella demo pero' "Moire" e' solo il font.
+- *Residue Contact Map*: in biologia, matrice simmetrica 1/0 delle coppie
+  di residui piu' vicine di una soglia (6-12 A). Per una sequenza e' il
+  recurrence plot di Eckmann, Kamphorst e Ruelle (1987):
+  R(i,j) = 1 se |x_i - x_j| <= eps. Con eps = 0 e' il nostro Dot Plot dei
+  valori; con eps > 0 vede le ripetizioni "quasi uguali".
+- *Byte Presence*: solo nominato da Conti e Dean (slide BH 2008: immagine
+  verde con buchi neri). Parenti documentati: "unique bytes in a sliding
+  window" (R-bloggers 2013: HTML ~15% di valori distinti per 256 byte, tgz
+  molto di piu'), la "Layered Distribution" di ImHex (una riga di densita'
+  per pezzo di file).
+- *Sliding Histogram*: nessuna fonte con questo nome; la Layered
+  Distribution di ImHex e' la stessa idea (istogramma impilato lungo il
+  file), cioe' il nostro One Tuple.
+- *Adjacency Graph*: nessuna fonte con byte come nodi; il piu' vicino e' il
+  "Markov byte plot" (Donahue, Paturi, Mukkamala 2009) per il malware
+  impacchettato: matrice delle transizioni, come il Digraph.
+Fonti: Conti e Dean BH 2008; Amidror-Hersch (lspwww.epfl.ch/publications/
+moire); en.wikipedia.org/wiki/Recurrence_plot; r-bloggers.com "Unique bytes
+in a sliding window"; docs.werwolv.net/imhex/views/data-information.
 
 **Formule usate.**
 - 3D a cilindro e sfera: Veles, `trigram/coords.glsl` (codilime/veles).
@@ -287,7 +390,7 @@ applicate al file. Ricerca fatta, esito:
 - Limite: un file diventa immagine solo scelta la larghezza. Le operazioni che
   guardano i vicini in 2D (bordi, sfocature) hanno senso solo nel Raw con la
   larghezza giusta.
-- Moire, ipotesi non verificata: e' l'interferenza tra due periodi, con
+- (Superata: Moire e' un font, vedi sopra.) Moire, ipotesi: e' l'interferenza tra due periodi, con
   frange di periodo p1*p2/|p1-p2|. Nel Raw si vede gia': con la larghezza
   sbagliata le righe diventano bande oblique. Sovrapporre il file a una sua
   copia spostata e' cio' che fa `hexcymatix` (differenza con spostamento).

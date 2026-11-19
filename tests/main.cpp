@@ -11,6 +11,7 @@ int main() {
     testOverview();
     testMetricMap();
     testClassifier();
+    testSpectrogram();
     testNavigation();
     testParser();
     test3D();

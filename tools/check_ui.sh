@@ -18,6 +18,9 @@ gcc "$ROOT/tools/xsend.c" -o "$XSEND" -lX11 -lXtst || { echo "check-ui: manca Xl
 # La versione dell'ultimo commit, con lo script di cattura di adesso
 git -C "$ROOT" archive HEAD | tar -x -C "$WORK/base"
 cp "$ROOT/tools/shots.sh" "$WORK/base/tools/shots.sh"
+# I campioni del Classifier non sono su git: senza, l'ultimo commit
+# mostrerebbe la Metric Map e l'Inspector senza Classifier (differenze finte)
+[ -d "$ROOT/templates" ] && ln -s "$ROOT/templates" "$WORK/base/templates"
 make -C "$WORK/base" -j8 >/dev/null 2>&1 || { echo "check-ui: l'ultimo commit non compila"; exit 2; }
 
 (cd "$WORK/base" && bash tools/shots.sh ./cantordust "$WORK/ref" >/dev/null 2>&1)

@@ -23,6 +23,7 @@
 #include "one_tuple.h"
 #include <cstdio>
 #include "similarity.h"
+#include "spectrogram.h"
 #include "overview.h"
 #include "chi_square.h"
 #include "view_results.h"
@@ -65,5 +66,6 @@ void testOverview();
 void testGolden();
 void testMetricMap();
 void testClassifier();
+void testSpectrogram();
 void testNavigation();
 void test3D();

@@ -125,6 +125,17 @@ const ViewDef& Visualizer::viewDef(ViewMode mode) {
                 return cell >= 0;
             };
         }
+        {   ViewDef& d = add(ViewMode::SPECTROGRAM);
+            d.rgb    = [](const V& v) -> Rgb { return v.m_spectrogram.toRGB(); };
+            d.legend = [](const V& v) -> std::string {
+                return v.m_spectroFlat
+                    ? "SPETTROGRAMMA  X = posizione   Y = periodo   luce = diverso dal resto del file"
+                    : "SPETTROGRAMMA  X = posizione   Y = periodo (2 in alto, log)   luce = forza   click = Raw"; };
+            d.input   = [](V& v) { v.handleSpectroInput(); };
+            d.options = [](V& v, bool click) { v.drawSpectroOptions(click); };
+            d.keys    = [](V& v) { v.handleSpectroKeys(); };
+            d.inspect = [](V& v, PanelWriter& pw) { return v.inspectSpectrogram(pw); };
+        }
 
         // Ogni vista ha la sua voce, completa
         for (size_t i = 0; i < t.size(); i++) {

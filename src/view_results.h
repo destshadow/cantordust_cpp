@@ -11,6 +11,7 @@
 #include "overview.h"
 #include "raw_pixels.h"
 #include "similarity.h"
+#include "spectrogram.h"
 #include "string_scan.h"
 #include "trigraph.h"
 #include "view_mode.h"
@@ -29,6 +30,8 @@ struct ComputeParams {
     int       rawWidth  = 256;
     size_t    rawOffset = 0;
     bool      similarity = false;            // Dot Plot: il file con se stesso
+    int       spectroSize = 1024;            // Spettrogramma: byte per FFT
+    bool      spectroFlat = false;           // Spettrogramma: togli lo spettro medio
     size_t    windowStart = 0;               // Stringhe: per gli offset nel file
     RawFilter rawFilter;
     std::vector<TriGraph::Range> sections;   // 3D: relative alla finestra
@@ -50,6 +53,7 @@ struct ViewResults {
     OneTuple  onetuple;
     StringScan strings;
     Overview  overview;
+    Spectrogram spectrogram;
     Autocorr  autocorr;
     int       suggestWidth = 0;
     size_t    suggestBpp   = 1;                // byte per pixel, 1 = nessun indizio

@@ -5,6 +5,8 @@
     {"istogramma", 0xbd9ab446646d5dbeULL},
     {"bytecloud", 0x49754ef89235981bULL},
     {"onetuple", 0xfc4d30b696dafe0eULL},
+    {"spettrogramma", 0x9f3388781fc87836ULL},
+    {"spettrogramma_medio", 0x88799baf08dc306dULL},
     {"raw_8bpp", 0xf59285057d11bf8dULL},
     {"raw_16bpp", 0xcc012b24de2e8393ULL},
     {"raw_24bpp", 0x4df09e5bf7376681ULL},

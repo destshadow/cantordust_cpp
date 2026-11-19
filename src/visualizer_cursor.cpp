@@ -34,6 +34,9 @@ bool Visualizer::cursorPixel(int& cx, int& cy) const {
             cx = (int)(rel * 256 / len);
             if (m_dotSimilarity) cy = cx;          // X e Y sono la stessa posizione
             return true;
+        case ViewMode::SPECTROGRAM:
+            cx = m_spectrogram.columnOf(rel);
+            return cx >= 0;
         case ViewMode::ONETUPLE:
             if (m_onetuple.getRows() <= 0) return false;
             cy = (int)partOf(rel, len, (size_t)m_onetuple.getRows());

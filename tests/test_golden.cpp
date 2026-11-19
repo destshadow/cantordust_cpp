@@ -65,6 +65,8 @@ void testGolden() {
     { Histogram v;  v.compute(b); image("istogramma", v.toRGB()); }
     { ByteCloud v;  v.compute(b); image("bytecloud", v.toRGB()); }
     { OneTuple v;   v.compute(b); image("onetuple", v.toRGB()); }
+    { Spectrogram v; v.compute(b, 1024);       image("spettrogramma", v.toRGB());
+                     v.compute(b, 1024, true); image("spettrogramma_medio", v.toRGB()); }
 
     const BppMode bpps[] = {BppMode::BPP_8, BppMode::BPP_16, BppMode::BPP_24,
                             BppMode::BPP_32, BppMode::BPP_64};
